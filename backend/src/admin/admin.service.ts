@@ -230,8 +230,11 @@ export class AdminService {
         });
 
         // Add exact credentials
-        const superAdminEmail = 'ceo@rentalapp.com';
-        const superAdminPassword = 'StrictPassword2026!';
+        const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'ceo@rentalapp.com';
+        const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
+        if (!superAdminPassword) {
+            throw new ForbiddenException('SUPER_ADMIN_PASSWORD is required');
+        }
         const hashedPassword = await bcrypt.hash(superAdminPassword, 10);
 
         const superAdmin = await this.prisma.user.upsert({

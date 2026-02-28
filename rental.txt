@@ -2,7 +2,7 @@ rentalapp
 
 * tk super-admin ( localhost4173 )  : 
 ceo@rentalapp.com
-StrictPassword2026!
+<ROTATED - CHECK SECURE PASSWORD STORE>
 
 
 * kill a port : 
