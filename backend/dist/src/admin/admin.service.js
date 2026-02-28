@@ -1,0 +1,277 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AdminService = void 0;
+const common_1 = require("@nestjs/common");
+const bcrypt = __importStar(require("bcrypt"));
+const prisma_service_1 = require("../prisma/prisma.service");
+const roles_enum_1 = require("../security/roles.enum");
+let AdminService = class AdminService {
+    prisma;
+    constructor(prisma) {
+        this.prisma = prisma;
+    }
+    async getAllUsers(skip = 0, take = 50) {
+        const [users, total] = await Promise.all([
+            this.prisma.user.findMany({
+                where: { role: roles_enum_1.Role.USER },
+                skip: Number(skip),
+                take: Number(take),
+                select: {
+                    id: true, name: true, email: true, phone: true, status: true, created_at: true, deleted_at: true, role: true
+                }
+            }),
+            this.prisma.user.count({ where: { role: roles_enum_1.Role.USER } })
+        ]);
+        return { users, total, skip: Number(skip), take: Number(take) };
+    }
+    async getAllAdmins(skip = 0, take = 50) {
+        const [admins, total] = await Promise.all([
+            this.prisma.user.findMany({
+                where: { role: { in: [roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN] } },
+                skip: Number(skip),
+                take: Number(take),
+                select: {
+                    id: true, name: true, email: true, phone: true, role: true, status: true, created_at: true, deleted_at: true
+                }
+            }),
+            this.prisma.user.count({ where: { role: { in: [roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN] } } })
+        ]);
+        return { admins, total, skip: Number(skip), take: Number(take) };
+    }
+    async changeRole(adminId, newRole) {
+        const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
+        if (!admin)
+            throw new common_1.NotFoundException('User not found');
+        if (admin.role === roles_enum_1.Role.SUPER_ADMIN) {
+            throw new common_1.ForbiddenException('Cannot modify SUPER_ADMIN role');
+        }
+        return this.prisma.user.update({
+            where: { id: adminId },
+            data: { role: newRole },
+            select: { id: true, name: true, role: true }
+        });
+    }
+    async changeStatus(adminId, status) {
+        const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
+        if (!admin)
+            throw new common_1.NotFoundException('User not found');
+        if (admin.role === roles_enum_1.Role.SUPER_ADMIN) {
+            throw new common_1.ForbiddenException('Cannot modify SUPER_ADMIN status');
+        }
+        return this.prisma.user.update({
+            where: { id: adminId },
+            data: { status },
+            select: { id: true, name: true, status: true }
+        });
+    }
+    async softDeleteAdmin(adminId) {
+        const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
+        if (!admin)
+            throw new common_1.NotFoundException('User not found');
+        if (admin.role === roles_enum_1.Role.SUPER_ADMIN) {
+            throw new common_1.ForbiddenException('Cannot delete SUPER_ADMIN');
+        }
+        return this.prisma.user.update({
+            where: { id: adminId },
+            data: { deleted_at: new Date() },
+            select: { id: true, name: true, deleted_at: true }
+        });
+    }
+    async restoreUser(userId) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: { deleted_at: null },
+            select: { id: true, name: true, deleted_at: true }
+        });
+    }
+    async restoreHouse(houseId) {
+        const house = await this.prisma.house.findUnique({ where: { id: houseId } });
+        if (!house)
+            throw new common_1.NotFoundException('House not found');
+        return this.prisma.house.update({
+            where: { id: houseId },
+            data: { deleted_at: null },
+        });
+    }
+    async getLoginLogs(skip = 0, take = 50, status) {
+        const where = {};
+        if (status === 'failed') {
+            where.success = false;
+        }
+        else if (status === 'success') {
+            where.success = true;
+        }
+        const [items, total] = await Promise.all([
+            this.prisma.loginLog.findMany({
+                where,
+                skip: Number(skip),
+                take: Number(take),
+                orderBy: { timestamp: 'desc' }
+            }),
+            this.prisma.loginLog.count({ where })
+        ]);
+        return { items, total, skip: Number(skip), take: Number(take) };
+    }
+    async getSystemMetrics() {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+        const [totalUsers, totalAdmins, totalProperties, deletedProperties, loginAttemptsToday] = await Promise.all([
+            this.prisma.user.count({ where: { role: roles_enum_1.Role.USER } }),
+            this.prisma.user.count({ where: { role: { in: [roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN] } } }),
+            this.prisma.house.count({ where: { deleted_at: null } }),
+            this.prisma.house.count({ where: { deleted_at: { not: null } } }),
+            this.prisma.loginLog.count({ where: { timestamp: { gte: todayStart } } })
+        ]);
+        const recentLogins = await this.prisma.loginLog.findMany({
+            where: { timestamp: { gte: sevenDaysAgo } },
+            select: { success: true, timestamp: true }
+        });
+        const loginDataMap = {};
+        for (let i = 0; i <= 6; i++) {
+            const d = new Date(sevenDaysAgo);
+            d.setDate(d.getDate() + i);
+            loginDataMap[d.toISOString().split('T')[0]] = { logins: 0, failed: 0 };
+        }
+        for (const log of recentLogins) {
+            const dateStr = log.timestamp.toISOString().split('T')[0];
+            if (loginDataMap[dateStr]) {
+                if (log.success)
+                    loginDataMap[dateStr].logins++;
+                else
+                    loginDataMap[dateStr].failed++;
+            }
+        }
+        const loginData = Object.keys(loginDataMap).map(dateStr => ({
+            day: dateStr,
+            logins: loginDataMap[dateStr].logins,
+            failed: loginDataMap[dateStr].failed
+        }));
+        const recentAudits = await this.prisma.auditLog.findMany({
+            where: { createdAt: { gte: sevenDaysAgo } },
+            select: { actionType: true, createdAt: true }
+        });
+        const actionDataMap = {};
+        for (let i = 0; i <= 6; i++) {
+            const d = new Date(sevenDaysAgo);
+            d.setDate(d.getDate() + i);
+            actionDataMap[d.toISOString().split('T')[0]] = { creates: 0, updates: 0, deletes: 0 };
+        }
+        for (const log of recentAudits) {
+            const dateStr = log.createdAt.toISOString().split('T')[0];
+            if (actionDataMap[dateStr]) {
+                const type = log.actionType.toUpperCase();
+                if (type.includes('CREATE'))
+                    actionDataMap[dateStr].creates++;
+                else if (type.includes('DELETE'))
+                    actionDataMap[dateStr].deletes++;
+                else
+                    actionDataMap[dateStr].updates++;
+            }
+        }
+        const actionData = Object.keys(actionDataMap).map(dateStr => ({
+            day: dateStr,
+            creates: actionDataMap[dateStr].creates,
+            updates: actionDataMap[dateStr].updates,
+            deletes: actionDataMap[dateStr].deletes
+        }));
+        return {
+            overview: {
+                totalUsers,
+                totalAdmins,
+                totalProperties,
+                deletedProperties,
+                loginAttemptsToday
+            },
+            charts: {
+                loginData,
+                actionData
+            }
+        };
+    }
+    async seedSuperAdmin() {
+        await this.prisma.user.updateMany({
+            where: { role: roles_enum_1.Role.SUPER_ADMIN },
+            data: { role: roles_enum_1.Role.ADMIN }
+        });
+        const superAdminEmail = 'ceo@rentalapp.com';
+        const superAdminPassword = 'StrictPassword2026!';
+        const hashedPassword = await bcrypt.hash(superAdminPassword, 10);
+        const superAdmin = await this.prisma.user.upsert({
+            where: { email: superAdminEmail },
+            update: {
+                role: roles_enum_1.Role.SUPER_ADMIN,
+                status: 'ACTIVE',
+                deleted_at: null,
+                password: hashedPassword
+            },
+            create: {
+                name: 'Master System Administrator',
+                username: 'superadmin_ceo',
+                email: superAdminEmail,
+                password: hashedPassword,
+                role: roles_enum_1.Role.SUPER_ADMIN,
+                status: 'ACTIVE',
+                phone: '+1-555-0199'
+            }
+        });
+        return {
+            message: 'Strict SUPER_ADMIN established',
+            email: superAdmin.email,
+            password_used_in_seed: superAdminPassword
+        };
+    }
+};
+exports.AdminService = AdminService;
+exports.AdminService = AdminService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+], AdminService);
+//# sourceMappingURL=admin.service.js.map
