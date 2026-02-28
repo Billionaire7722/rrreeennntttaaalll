@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Platform } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import createContextHook from "@nkzw/create-context-hook";
 import { Property, PropertyStatus } from "@shared/types/property";
+import { HOUSES_API_URL } from "@shared/constants/api";
 
 
 export type FilterOptions = {
@@ -31,16 +31,6 @@ const DEFAULT_FILTERS: FilterOptions = {
   status: null,
 };
 
-// API URL for NestJS backend
-// Use the exact local IP so physical devices on the LAN can connect via Expo Go
-const getApiUrl = () => {
-  if (Platform.OS === 'web') {
-    return "http://127.0.0.1:3000/houses";
-  }
-  return "http://192.168.100.129:3000/houses";
-};
-const API_URL = getApiUrl();
-
 export const [PropertyProvider, useProperties] = createContextHook(() => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [filters, setFilters] = useState<FilterOptions>(DEFAULT_FILTERS);
@@ -50,7 +40,7 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
     queryKey: ["houses"],
     queryFn: async () => {
       try {
-        const response = await fetch(`${API_URL}?skip=0&take=100`);
+        const response = await fetch(`${HOUSES_API_URL}?skip=0&take=100`);
         if (!response.ok) throw new Error("Failed to fetch houses");
         const json = await response.json();
         const rawData = json.data || json;
@@ -87,7 +77,7 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
   const addProperty = useCallback(async (property: Omit<Property, "id">) => {
     // Send to NestJS backend
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(HOUSES_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -139,7 +129,7 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
 
   const removeProperty = useCallback(async (id: string) => {
     try {
-      const response = await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(`${HOUSES_API_URL}/${id}`, {
         method: "DELETE"
       });
       if (response.ok) {
@@ -152,7 +142,7 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
 
   const updateStatus = useCallback(async (id: string, status: PropertyStatus) => {
     try {
-      const response = await fetch(`${API_URL}/${id}/status`, {
+      const response = await fetch(`${HOUSES_API_URL}/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
@@ -183,7 +173,7 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
         body.image_url_3 = updated.images[2] || null;
       }
 
-      const response = await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(`${HOUSES_API_URL}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

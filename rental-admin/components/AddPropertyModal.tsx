@@ -19,6 +19,7 @@ import { Picker } from "@react-native-picker/picker";
 import DistrictSearchInput from "./DistrictSearchInput";
 import Colors from "@shared/constants/colors";
 import { Property, PropertyStatus } from "@shared/types/property";
+import { UPLOAD_IMAGE_URL, UPLOAD_VIDEO_URL } from "@shared/constants/api";
 // @ts-ignore
 import provinceData from "@shared/data/province.json";
 // @ts-ignore
@@ -137,7 +138,7 @@ export default React.memo(function AddPropertyModal({
         } else {
           formData.append("file", { uri, type: "image/jpeg", name: "defaultimage.jpg" } as any);
         }
-        const res = await fetch("http://localhost:3000/upload/image", { method: "POST", body: formData });
+        const res = await fetch(UPLOAD_IMAGE_URL, { method: "POST", body: formData });
         if (res.ok) {
           const data = await res.json();
           if (data.url) finalImages = [data.url];
@@ -221,7 +222,7 @@ export default React.memo(function AddPropertyModal({
         const uploadedUrls: string[] = [];
         for (const asset of result.assets) {
           const formData = await buildFormData(asset, "image");
-          const response = await fetch("http://localhost:3000/upload/image", {
+          const response = await fetch(UPLOAD_IMAGE_URL, {
             method: "POST",
             body: formData,
           });
@@ -262,7 +263,7 @@ export default React.memo(function AddPropertyModal({
       setIsUploadingVideo(true);
       try {
         const formData = await buildFormData(result.assets[0], "video");
-        const response = await fetch("http://localhost:3000/upload/video", {
+        const response = await fetch(UPLOAD_VIDEO_URL, {
           method: "POST",
           body: formData,
         });

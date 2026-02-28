@@ -18,6 +18,7 @@ import { Picker } from "@react-native-picker/picker";
 import DistrictSearchInput from "./DistrictSearchInput";
 import Colors from "@shared/constants/colors";
 import { Property } from "@shared/types/property";
+import { API_BASE_URL } from "@shared/constants/api";
 // @ts-ignore
 import provinceData from "@shared/data/province.json";
 // @ts-ignore
@@ -29,8 +30,6 @@ interface EditPropertyModalProps {
     onClose: () => void;
     onSave: (id: string, updated: Partial<Property>) => void;
 }
-
-const BACKEND_URL = "http://localhost:3000";
 
 export default React.memo(function EditPropertyModal({
     visible,
@@ -104,7 +103,7 @@ export default React.memo(function EditPropertyModal({
             formData.append('file', { uri: asset.uri, type: mimeType, name: fileName } as any);
         }
 
-        const response = await fetch(`${BACKEND_URL}/upload/${type}`, {
+        const response = await fetch(`${API_BASE_URL}/upload/${type}`, {
             method: 'POST',
             body: formData,
             // No Content-Type header — fetch auto-adds it with the boundary

@@ -63,6 +63,19 @@ services:
     networks:
       - rental_net
 
+  rental-admin:
+    build:
+      context: ./rental-admin
+      dockerfile: Dockerfile
+      args:
+        EXPO_PUBLIC_API_BASE_URL: http://103.200.22.111:3000
+    container_name: rental_admin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    networks:
+      - rental_net
+
 volumes:
   rental_pg_data:
 

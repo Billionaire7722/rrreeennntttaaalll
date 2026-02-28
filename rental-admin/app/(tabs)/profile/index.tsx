@@ -31,6 +31,7 @@ import { Property } from "@shared/types/property";
 import AddPropertyModal from "@/components/AddPropertyModal";
 import EditPropertyModal from "@/components/EditPropertyModal";
 import { useRouter } from "expo-router";
+import { UPLOAD_IMAGE_URL } from "@shared/constants/api";
 
 export default function AdminScreen() {
   const router = useRouter();
@@ -74,7 +75,7 @@ export default function AdminScreen() {
           formData.append('file', { uri: asset.uri, type: mimeType, name: fileName } as any);
         }
 
-        const response = await fetch('http://localhost:3000/upload/image', {
+        const response = await fetch(UPLOAD_IMAGE_URL, {
           method: 'POST',
           body: formData,
           // No Content-Type header — fetch auto-adds it with the boundary
