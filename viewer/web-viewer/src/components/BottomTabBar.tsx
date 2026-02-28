@@ -13,7 +13,7 @@ export default function BottomTabBar() {
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center h-[60px] z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/98 backdrop-blur border-t border-gray-200 flex justify-around items-center h-[60px] z-[1200] shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
             {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = pathname === tab.href;
