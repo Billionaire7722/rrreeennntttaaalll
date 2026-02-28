@@ -13,6 +13,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
+ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 
 RUN npm run build
 
@@ -23,6 +25,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs

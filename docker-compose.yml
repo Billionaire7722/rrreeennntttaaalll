@@ -56,8 +56,12 @@ services:
     build:
       context: ./viewer/web-viewer
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://103.200.22.111:3000
     container_name: rental_web_viewer
     restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://103.200.22.111:3000
     ports:
       - "3002:3002"
     networks:

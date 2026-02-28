@@ -7,6 +7,17 @@ import { useAuth } from '@/context/useAuth';
 import { Heart, MessageCircle, User as UserIcon, Camera, MapPin, ChevronRight, Clock } from 'lucide-react';
 import Link from 'next/link';
 
+const resolveUploadImageUrl = () => {
+    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (envUrl) return `${envUrl.replace(/\/+$/, '')}/upload/image`;
+
+    if (typeof window !== 'undefined' && window.location?.hostname) {
+        return `${window.location.protocol}//${window.location.hostname}:3000/upload/image`;
+    }
+
+    return 'http://localhost:3000/upload/image';
+};
+
 export default function ProfilePage() {
     const { user, loading: authLoading } = useAuth();
     const [favorites, setFavorites] = useState<any[]>([]);
@@ -77,7 +88,7 @@ export default function ProfilePage() {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                const response = await fetch('http://localhost:3000/upload/image', {
+                const response = await fetch(resolveUploadImageUrl(), {
                     method: 'POST',
                     body: formData,
                 });
