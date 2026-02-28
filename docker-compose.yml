@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # ── Infrastructure ──────────────────────────────────────────────
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: rental_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: rental
+    volumes:
+      - rental_pg_data:/var/lib/postgresql/data
+    networks:
+      - rental_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: rental_redis
+    restart: unless-stopped
+    networks:
+      - rental_net
+
+  # ── Backend (NestJS) ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rental_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - rental_net
+
+  # ── Super-Admin Dashboard (Vite + React → nginx) ─────────────────
+  super-admin:
+    build:
+      context: ./super-admin-dashboard
+      dockerfile: Dockerfile
+    container_name: rental_super_admin
+    restart: unless-stopped
+    ports:
+      - "5174:80"
+    networks:
+      - rental_net
+
+  # ── Web-Viewer (Next.js) ─────────────────────────────────────────
+  web-viewer:
+    build:
+      context: ./viewer/web-viewer
+      dockerfile: Dockerfile
+    container_name: rental_web_viewer
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    networks:
+      - rental_net
+
+volumes:
+  rental_pg_data:
+
+
+networks:
+  rental_net:
+    driver: bridge
