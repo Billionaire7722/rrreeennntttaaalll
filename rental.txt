@@ -1,16 +1,2 @@
-rentalapp
-
-* tk super-admin ( localhost4173 )  : 
-ceo@rentalapp.com
-<ROTATED - CHECK SECURE PASSWORD STORE>
-
-
-* kill a port : 
-step 1 : netstat -ano | findstr :3000
-
-example : TCP    0.0.0.0:3000    0.0.0.0:0    LISTENING    12345
-
-step 2 : taskkill /PID 12345 /F
-
 
 
