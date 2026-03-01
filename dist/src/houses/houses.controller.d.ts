@@ -1,0 +1,73 @@
+import { HousesService } from './houses.service';
+export declare class HousesController {
+    private readonly housesService;
+    constructor(housesService: HousesService);
+    getHouses(skip?: string, take?: string): Promise<{
+        data: any;
+        meta: {
+            total: any;
+            skip: number;
+            take: number;
+            hasMore: boolean;
+        };
+    }>;
+    getHouseById(id: string): Promise<any>;
+    createHouse(data: any, req: any): Promise<any>;
+    updateHouse(id: string, data: any, req: any): Promise<any>;
+    updateStatus(id: string, status: string): Promise<{
+        id: string;
+        original_id: string;
+        name: string;
+        address: string;
+        district: string;
+        city: string;
+        latitude: number | null;
+        longitude: number | null;
+        price: number | null;
+        payment_method: string | null;
+        bedrooms: number | null;
+        square: number | null;
+        image_url_1: string | null;
+        image_url_2: string | null;
+        image_url_3: string | null;
+        image_url_4: string | null;
+        image_url_5: string | null;
+        image_url_6: string | null;
+        image_url_7: string | null;
+        image_url_8: string | null;
+        description: string | null;
+        status: string | null;
+        is_private_bathroom: boolean;
+        created_at: Date;
+        updated_at: Date;
+        deleted_at: Date | null;
+    }>;
+    removeHouse(id: string): Promise<{
+        id: string;
+        original_id: string;
+        name: string;
+        address: string;
+        district: string;
+        city: string;
+        latitude: number | null;
+        longitude: number | null;
+        price: number | null;
+        payment_method: string | null;
+        bedrooms: number | null;
+        square: number | null;
+        image_url_1: string | null;
+        image_url_2: string | null;
+        image_url_3: string | null;
+        image_url_4: string | null;
+        image_url_5: string | null;
+        image_url_6: string | null;
+        image_url_7: string | null;
+        image_url_8: string | null;
+        description: string | null;
+        status: string | null;
+        is_private_bathroom: boolean;
+        created_at: Date;
+        updated_at: Date;
+        deleted_at: Date | null;
+    }>;
+}

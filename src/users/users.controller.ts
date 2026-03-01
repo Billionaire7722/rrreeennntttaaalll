@@ -1,0 +1,60 @@
+import { Controller, Get, Post, Body, UseGuards, Request, Param, Query } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
+import { SendMessageDto } from './dto/send-message.dto';
+import { RolesGuard } from '../security/roles.guard';
+import { Roles } from '../security/roles.decorator';
+import { Role } from '../security/roles.enum';
+
+@Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class UsersController {
+    constructor(private readonly usersService: UsersService) { }
+
+    @Get('profile')
+    @Roles(Role.VIEWER)
+    getProfile(@Request() req) {
+        return this.usersService.getProfile(req.user.userId);
+    }
+
+    @Get('favorites')
+    @Roles(Role.VIEWER)
+    getFavorites(@Request() req) {
+        return this.usersService.getFavorites(req.user.userId);
+    }
+
+    @Post('favorites/toggle')
+    @Roles(Role.VIEWER)
+    toggleFavorite(@Request() req, @Body() toggleFavoriteDto: ToggleFavoriteDto) {
+        return this.usersService.toggleFavorite(req.user.userId, toggleFavoriteDto);
+    }
+
+    @Get('messages')
+    @Roles(Role.VIEWER)
+    getMessages(@Request() req) {
+        return this.usersService.getMessages(req.user.userId);
+    }
+
+    @Post('messages')
+    @Roles(Role.VIEWER)
+    sendMessage(@Request() req, @Body() sendMessageDto: SendMessageDto) {
+        return this.usersService.sendMessage(req.user.userId, sendMessageDto);
+    }
+
+    @Get('admin/messages')
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    getViewerMessages(@Query('skip') skip?: number, @Query('take') take?: number) {
+        return this.usersService.getViewerMessages(skip, take);
+    }
+
+    @Post('admin/messages/:viewerId/reply')
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    replyToViewer(
+        @Request() req,
+        @Param('viewerId') viewerId: string,
+        @Body() sendMessageDto: SendMessageDto
+    ) {
+        return this.usersService.replyToViewer(req.user.userId, req.user.role, viewerId, sendMessageDto);
+    }
+}
