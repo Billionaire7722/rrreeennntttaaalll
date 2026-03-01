@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿# Rental Platform Project
 
 This project is a comprehensive property rental platform consisting of a high-performance backend API and multiple frontend applications.
@@ -214,3 +215,6 @@ cd viewer/web-viewer
    *The Next.js viewer web application will compile and launch instantly at `http://localhost:3002` (resolving any port 3000 backend conflicts).*
 
 
+=======
+
+>>>>>>> 804f8e5e1e854cc0ccd747c2229aa3d712df41eb

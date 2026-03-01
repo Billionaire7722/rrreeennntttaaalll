@@ -1,5 +1,5 @@
-# Changelog
 
+<<<<<<< HEAD
 ## [0.0.8] - 2026-02-28
 ### Changed
 
@@ -165,3 +165,5 @@
 - **Audit System**: Server-side tracking of user login attempts and sensitive mutations, with persistent `LoginLog` and `AuditLog` records.
 - **Soft Deletion**: Upgraded Database schema to intercept property and user deletions without cascading destructions, utilizing `deleted_at`.
 - **Rate Limiting**: Integrated `AbnormalActivityGuard` to suspend brute-force action bots and unauthorized admins from hitting destructive routes natively.
+=======
+>>>>>>> 804f8e5e1e854cc0ccd747c2229aa3d712df41eb

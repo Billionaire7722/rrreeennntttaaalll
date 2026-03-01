@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Deploy Guide (Local -> GitHub -> VPS)
 
 ## 0) Sensitive Info Rules
@@ -201,3 +202,6 @@ docker-compose up -d --no-deps backend web-viewer rental-admin super-admin
 ```
 
 Then inspect logs and open a fix commit.
+=======
+
+>>>>>>> 804f8e5e1e854cc0ccd747c2229aa3d712df41eb
