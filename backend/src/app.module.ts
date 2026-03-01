@@ -13,6 +13,7 @@ import { AdminModule } from './admin/admin.module';
 import { AuditModule } from './audit/audit.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { UploadModule } from './upload/upload.module';
+import { PresenceModule } from './presence/presence.module';
 
 @Module({
   imports: [
@@ -37,7 +38,8 @@ import { UploadModule } from './upload/upload.module';
     AdminModule,
     AuditModule,
     CloudinaryModule,
-    UploadModule
+    UploadModule,
+    PresenceModule
   ],
   controllers: [],
   providers: [],

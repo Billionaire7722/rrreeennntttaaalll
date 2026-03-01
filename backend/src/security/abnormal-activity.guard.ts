@@ -26,7 +26,7 @@ export class AbnormalActivityGuard implements CanActivate {
             return true;
         }
 
-        // We only monitor ADMINs for abnormal activity (SUPER_ADMIN is exempt, USERs don't have access to these endpoints)
+        // We only monitor ADMINs for abnormal activity (SUPER_ADMIN is exempt, VIEWERs don't have access to these endpoints)
         if (!user || user.role !== Role.ADMIN) {
             return true;
         }

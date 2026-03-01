@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (storedToken) {
             try {
                 const decoded: any = jwtDecode(storedToken);
-                if (decoded.exp * 1000 > Date.now()) {
+                if (decoded.exp * 1000 > Date.now() && decoded.role === 'VIEWER') {
                     setToken(storedToken);
                     setUser({
                         id: decoded.sub,
@@ -57,10 +57,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
     }, []);
 
+    useEffect(() => {
+        if (!token) return;
+
+        const sendHeartbeat = () => {
+            api.post('/presence/heartbeat').catch(() => { });
+        };
+
+        sendHeartbeat();
+        const interval = setInterval(sendHeartbeat, 15000);
+
+        const onBeforeUnload = () => {
+            try {
+                fetch(`${api.defaults.baseURL}/presence/offline`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ userId: user?.id }),
+                    keepalive: true,
+                });
+            } catch {
+                // ignore
+            }
+        };
+
+        window.addEventListener('beforeunload', onBeforeUnload);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('beforeunload', onBeforeUnload);
+        };
+    }, [token, user?.id]);
+
     const login = async (loginId: string, password: string) => {
         const res = await api.post('/auth/login', { loginId, password });
         const { access_token } = res.data;
         const decoded: any = jwtDecode(access_token);
+        if (decoded.role !== 'VIEWER') {
+            throw new Error('This account is not allowed on viewer app.');
+        }
 
         localStorage.setItem('token', access_token);
         setToken(access_token);
@@ -79,6 +115,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const res = await api.post('/auth/register', data);
         const { access_token } = res.data;
         const decoded: any = jwtDecode(access_token);
+        if (decoded.role !== 'VIEWER') {
+            throw new Error('Registration is only for viewer accounts.');
+        }
 
         localStorage.setItem('token', access_token);
         setToken(access_token);
@@ -94,6 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const logout = () => {
+        api.post('/presence/offline', { userId: user?.id }).catch(() => { });
         localStorage.removeItem('token');
         setToken(null);
         setUser(null);

@@ -1,12 +1,15 @@
-import { Controller, Get, Query, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Query, Post, Body, Patch, Param, Delete, Request } from '@nestjs/common';
 import { HousesService } from './houses.service';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../security/roles.guard';
 import { Roles } from '../security/roles.decorator';
 import { Role } from '../security/roles.enum';
+import { UseInterceptors } from '@nestjs/common';
+import { AuditInterceptor } from '../audit/audit.interceptor';
 
 @Controller('houses')
+@UseInterceptors(AuditInterceptor)
 export class HousesController {
     constructor(private readonly housesService: HousesService) { }
 
@@ -32,8 +35,8 @@ export class HousesController {
     @Post()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-    async createHouse(@Body() data: any) {
-        return this.housesService.createHouse(data);
+    async createHouse(@Body() data: any, @Request() req) {
+        return this.housesService.createHouse(data, req.user?.userId, req.user?.role);
     }
 
     @Patch(':id')
@@ -41,9 +44,10 @@ export class HousesController {
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
     async updateHouse(
         @Param('id') id: string,
-        @Body() data: any
+        @Body() data: any,
+        @Request() req
     ) {
-        return this.housesService.updateHouse(id, data);
+        return this.housesService.updateHouse(id, data, req.user?.userId, req.user?.role);
     }
 
     @Patch(':id/status')

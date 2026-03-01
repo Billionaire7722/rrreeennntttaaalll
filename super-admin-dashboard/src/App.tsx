@@ -9,6 +9,7 @@ import { Admins } from './pages/Admins';
 import { AuditLogs } from './pages/AuditLogs';
 import { LoginLogs } from './pages/LoginLogs';
 import { Metrics } from './pages/Metrics';
+import { LiveMonitor } from './pages/LiveMonitor';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="audit-logs" element={<AuditLogs />} />
             <Route path="login-logs" element={<LoginLogs />} />
             <Route path="metrics" element={<Metrics />} />
+            <Route path="live-monitor" element={<LiveMonitor />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Post, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
 import { Public } from '../security/public.decorator';
 import { AdminService } from './admin.service';
 import { AuditService } from '../audit/audit.service';
@@ -30,6 +30,29 @@ export class AdminController {
         @Query('take') take?: number
     ) {
         return this.adminService.getAllAdmins(skip, take);
+    }
+
+    @Patch('me/password')
+    async changeMyPassword(
+        @Request() req,
+        @Body() body: { currentPassword: string; newPassword: string }
+    ) {
+        return this.adminService.changeMyPassword(req.user.userId, body.currentPassword, body.newPassword);
+    }
+
+    @Post('admins')
+    async createAdmin(
+        @Body() body: { name: string; username: string; email: string; phone?: string; password: string }
+    ) {
+        return this.adminService.createAdmin(body);
+    }
+
+    @Patch('admins/:id')
+    async updateAdmin(
+        @Param('id') id: string,
+        @Body() body: { name?: string; username?: string; email?: string; phone?: string; password?: string }
+    ) {
+        return this.adminService.updateAdmin(id, body);
     }
 
     @Patch('admins/:id/role')
@@ -87,5 +110,14 @@ export class AdminController {
     @Get('metrics')
     async getSystemMetrics() {
         return this.adminService.getSystemMetrics();
+    }
+
+    @Get('live-sessions')
+    async getLiveSessions(
+        @Query('skip') skip?: number,
+        @Query('take') take?: number,
+        @Query('role') role?: string
+    ) {
+        return this.adminService.getLiveSessions(skip, take, role);
     }
 }

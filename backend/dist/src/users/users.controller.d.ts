@@ -61,11 +61,44 @@ export declare class UsersController {
         created_at: Date;
         userId: string;
         content: string;
+        senderId: string | null;
+        senderRole: import("@prisma/client").$Enums.Role;
     }[]>;
     sendMessage(req: any, sendMessageDto: SendMessageDto): Promise<{
         id: string;
         created_at: Date;
         userId: string;
         content: string;
+        senderId: string | null;
+        senderRole: import("@prisma/client").$Enums.Role;
+    }>;
+    getViewerMessages(skip?: number, take?: number): Promise<{
+        items: ({
+            user: {
+                id: string;
+                name: string;
+                username: string;
+                email: string;
+                phone: string | null;
+                role: import("@prisma/client").$Enums.Role;
+            };
+        } & {
+            id: string;
+            created_at: Date;
+            userId: string;
+            content: string;
+            senderId: string | null;
+            senderRole: import("@prisma/client").$Enums.Role;
+        })[];
+        skip: number;
+        take: number;
+    }>;
+    replyToViewer(req: any, viewerId: string, sendMessageDto: SendMessageDto): Promise<{
+        id: string;
+        created_at: Date;
+        userId: string;
+        content: string;
+        senderId: string | null;
+        senderRole: import("@prisma/client").$Enums.Role;
     }>;
 }

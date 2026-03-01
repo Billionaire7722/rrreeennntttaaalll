@@ -47,6 +47,7 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = __importStar(require("bcrypt"));
+const roles_enum_1 = require("../security/roles.enum");
 let AuthService = class AuthService {
     prisma;
     jwtService;
@@ -77,6 +78,7 @@ let AuthService = class AuthService {
                 email: registerDto.email,
                 phone: registerDto.phone,
                 password: hashedPassword,
+                role: roles_enum_1.Role.VIEWER,
             },
         });
         await this.logLoginAttempt(newUser.id, newUser.role, true, ipAddress, userAgent);
@@ -142,7 +144,8 @@ let AuthService = class AuthService {
                     email,
                     name,
                     username: email.split('@')[0] + Math.floor(Math.random() * 1000),
-                    password: randomPassword
+                    password: randomPassword,
+                    role: roles_enum_1.Role.VIEWER
                 }
             });
         }
@@ -156,7 +159,14 @@ let AuthService = class AuthService {
         return { message: 'Password reset link sent to your email', mock_token: this.jwtService.sign({ sub: user.id, reset: true }, { expiresIn: '10m' }) };
     }
     generateToken(user) {
-        const payload = { username: user.username, sub: user.id, name: user.name, role: user.role };
+        const payload = {
+            username: user.username,
+            sub: user.id,
+            name: user.name,
+            role: user.role,
+            email: user.email,
+            phone: user.phone,
+        };
         return {
             access_token: this.jwtService.sign(payload),
             user: {

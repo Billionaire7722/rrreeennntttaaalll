@@ -6,6 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useRouter } from 'next/navigation';
 import { Bed, Square, MapPin, Locate } from 'lucide-react';
+import { useAuth } from '@/context/useAuth';
 
 // Dynamic SVG Icons for Available (Green) and Rented (Red)
 const getMarkerIcon = (status: string) => {
@@ -92,6 +93,7 @@ function MapEvents({ onBoundsChange, setUserLocation }: { onBoundsChange?: (boun
 
 export default function InteractiveMap({ properties, center = [21.0285, 105.8542], zoom = 12, onBoundsChange }: MapProps) {
     const router = useRouter();
+    const { user } = useAuth();
     const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
@@ -186,6 +188,10 @@ export default function InteractiveMap({ properties, center = [21.0285, 105.8542
                                             className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs py-2 rounded-lg transition-colors border border-blue-200"
                                             onClick={(e) => {
                                                 e.stopPropagation();
+                                                if (!user) {
+                                                    router.push('/login');
+                                                    return;
+                                                }
                                                 router.push(`/properties/${property.id}`);
                                             }}
                                         >

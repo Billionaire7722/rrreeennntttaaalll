@@ -1,8 +1,19 @@
-# Rental Platform Project
+﻿# Rental Platform Project
 
-This project is a comprehensive property rental platform consisting of a high-performance backend API and two frontend applications built with Expo (React Native for Web).
+This project is a comprehensive property rental platform consisting of a high-performance backend API and multiple frontend applications.
 
-## 🚀 Technologies Used
+## Project Goal (Important)
+
+The core goal of this project is to run a single rental ecosystem with strict role-based access control and shared data across all apps:
+
+- **SUPER_ADMIN**: one protected master account, highest authority, can create/manage `ADMIN` accounts and audit the whole system.
+- **ADMIN**: uses `rental-admin` to create/update/soft-delete houses and reply to viewer messages.
+- **VIEWER**: registered user of `web-viewer` / `mobile-viewer`, can favorite houses and message admins.
+- **GUEST**: no login required, can browse map pins and popup summaries only; detail actions require login/register.
+
+All applications (super-admin dashboard, rental-admin, web-viewer, mobile-viewer) connect to the same backend and PostgreSQL database so data and permissions are enforced centrally.
+
+## ðŸš€ Technologies Used
 
 - **Backend**: NestJS, TypeScript, Prisma ORM, PostgreSQL (with PostGIS extension), Redis, BullMQ, Swagger.
 - **Media Storage**: Cloudinary (image/video optimisation, WebP conversion, public URL persistence).
@@ -11,7 +22,7 @@ This project is a comprehensive property rental platform consisting of a high-pe
 
 ---
 
-## 📂 Project Structure & Features
+## ðŸ“‚ Project Structure & Features
 
 ### 1. Backend (`/backend`)
 A scalable, enterprise-grade REST API built with NestJS.
@@ -27,7 +38,7 @@ A scalable, enterprise-grade REST API built with NestJS.
 A management interface for property administrators (`ADMIN` role).
 - **Profile Tab**: Admin-specific profile page with clickable avatar upload (streamed to Cloudinary).
 - **Property Management (CRUD)**:
-  - **Add New Home**: Modal form with city + searchable ward/commune picker, price, bedrooms, area, GPS coordinates, description, and a merged **Ảnh & Video** upload section (up to 8 images + 2 videos). Images and videos upload directly to Cloudinary; public URLs are stored in PostgreSQL. If no images are selected, `assets/images/defaultimage.jpg` is uploaded automatically as the default.
+  - **Add New Home**: Modal form with city + searchable ward/commune picker, price, bedrooms, area, GPS coordinates, description, and a merged **áº¢nh & Video** upload section (up to 8 images + 2 videos). Images and videos upload directly to Cloudinary; public URLs are stored in PostgreSQL. If no images are selected, `assets/images/defaultimage.jpg` is uploaded automatically as the default.
   - **Edit Property**: Pre-filled modal accessible from the property list (pencil icon) and from the property detail screen. Supports updating all fields and replacing media via Cloudinary.
   - **Delete Property**: Soft-delete with confirmation.
   - **Manage Houses list**: Card grid showing all properties the admin has listed, with per-card Edit and Delete controls.
@@ -38,7 +49,7 @@ A management interface for property administrators (`ADMIN` role).
 - **Real-time API Sync**: Connects directly to the backend REST API to manage the unified PostgreSQL database.
 
 ### 3. Mobile Viewer Application (`/viewer/mobile-viewer`)
-A user-facing application for customers searching for rental properties (`USER` role).
+A user-facing application for customers searching for rental properties (`VIEWER` role, with guest browsing support).
 - **Authentication**: JWT validation flow covering user registration, email/password login, and mock Google OAuth.
 - **Personalization**: Dedicated sections for saving 'Favorite' properties and managing inquiries via 'Messages'.
 - **Advanced Filtering**: Filter properties dynamically by price ranges, number of bedrooms, area, and availability status.
@@ -69,8 +80,8 @@ graph TD
     %% Client Applications
     SA["Super Admin Dashboard<br/>(Role: SUPER_ADMIN)"]:::frontend
     A["Admin App Expo<br/>(Role: ADMIN)"]:::frontend
-    V["Viewer Mobile Expo<br/>(Role: USER / PUBLIC)"]:::frontend
-    WV["Web Viewer Next.js<br/>(Role: USER / PUBLIC)"]:::frontend
+    V["Viewer Mobile Expo<br/>(Role: VIEWER / GUEST)"]:::frontend
+    WV["Web Viewer Next.js<br/>(Role: VIEWER / GUEST)"]:::frontend
 
     %% Backend API
     API{{"NestJS REST API"}}:::backend
@@ -97,7 +108,7 @@ graph TD
 ```
 ---
 
-## 🛠️ How to Start the Application
+## ðŸ› ï¸ How to Start the Application
 
 To run the full stack locally, you need to initialize the backend services first, followed by the frontend applications.
 
@@ -201,3 +212,5 @@ cd viewer/web-viewer
    npm run dev
    ```
    *The Next.js viewer web application will compile and launch instantly at `http://localhost:3002` (resolving any port 3000 backend conflicts).*
+
+

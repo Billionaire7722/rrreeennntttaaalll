@@ -19,6 +19,15 @@ function formatPrice(price: number): string {
     return price.toLocaleString('vi-VN');
 }
 
+function getInitials(name: string): string {
+    return (name || '')
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() || '')
+        .join('');
+}
+
 export default function PropertyDetailScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
@@ -148,6 +157,28 @@ export default function PropertyDetailScreen() {
                     <View style={styles.addressRow}>
                         <MapPin size={16} color={Colors.light.textSecondary} />
                         <Text style={styles.address}>{property.address}</Text>
+                    </View>
+
+                    <View style={styles.postedBySection}>
+                        <Text style={styles.postedByTitle}>Đăng bởi</Text>
+                        {!!property.postedByAdmins?.length ? (
+                            <View style={styles.posterRow}>
+                                {property.postedByAdmins.map((admin) => (
+                                    <View key={admin.id} style={styles.posterChip}>
+                                        {admin.avatarUrl ? (
+                                            <Image source={{ uri: admin.avatarUrl }} style={styles.posterAvatar} contentFit="cover" />
+                                        ) : (
+                                            <View style={styles.posterAvatarFallback}>
+                                                <Text style={styles.posterAvatarFallbackText}>{getInitials(admin.name)}</Text>
+                                            </View>
+                                        )}
+                                        <Text style={styles.posterName}>{admin.name}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        ) : (
+                            <Text style={styles.posterEmptyText}>Chưa có thông tin người đăng</Text>
+                        )}
                     </View>
 
                     <View style={styles.divider} />
@@ -280,6 +311,25 @@ const styles = StyleSheet.create({
     title: { fontSize: 22, fontWeight: '700', color: Colors.light.text, marginBottom: 12, lineHeight: 30 },
     addressRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     address: { fontSize: 15, color: Colors.light.textSecondary, flex: 1, lineHeight: 22 },
+    postedBySection: { marginTop: 14 },
+    postedByTitle: { fontSize: 14, fontWeight: '700', color: Colors.light.text, marginBottom: 8 },
+    posterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    posterChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        borderWidth: 1,
+        borderColor: Colors.border,
+        backgroundColor: '#F8FAFC',
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 6
+    },
+    posterAvatar: { width: 24, height: 24, borderRadius: 12 },
+    posterAvatarFallback: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+    posterAvatarFallbackText: { fontSize: 10, fontWeight: '700', color: '#1D4ED8' },
+    posterName: { fontSize: 12, color: Colors.light.text, fontWeight: '600' },
+    posterEmptyText: { fontSize: 13, color: Colors.light.textSecondary },
     divider: { height: 1, backgroundColor: Colors.border, marginVertical: 24 },
     featuresRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 10 },
     featureItem: { alignItems: 'center', gap: 8 },

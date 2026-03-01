@@ -49,9 +49,12 @@ async function main() {
             data: { role: roles_enum_1.Role.ADMIN }
         });
     }
-    const superAdminEmail = 'ceo@rentalapp.com';
-    const superAdminUsername = 'superadmin_ceo';
-    const superAdminPassword = 'StrictPassword2026!';
+    const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'ceo@rentalapp.com';
+    const superAdminUsername = process.env.SUPER_ADMIN_USERNAME || 'superadmin_ceo';
+    const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
+    if (!superAdminPassword) {
+        throw new Error('SUPER_ADMIN_PASSWORD is required for seed-super-admin');
+    }
     console.log(`Creating definitive SUPER_ADMIN: ${superAdminEmail}`);
     const hashedPassword = await bcrypt.hash(superAdminPassword, 10);
     const superAdmin = await prisma.user.upsert({

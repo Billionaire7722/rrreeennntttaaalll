@@ -4,25 +4,45 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
 import Colors from '../../constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_BASE_URL } from '../../constants/api';
 
 export default function LoginScreen() {
-    const [username, setUsername] = useState('');
+    const [loginId, setLoginId] = useState('');
     const [password, setPassword] = useState('');
+    const [submitting, setSubmitting] = useState(false);
     const { login } = useAuth();
     const router = useRouter();
 
     const handleLogin = async () => {
-        if (username.trim().length > 0) {
-            let isAdmin = false;
-            if (username.trim() === 'davik') {
-                if (password !== '070720021234567890qwertyuiopASDFGHJKL') {
-                    Alert.alert('Error', 'Invalid password for admin user.');
-                    return;
-                }
-                isAdmin = true;
+        if (!loginId.trim() || !password) {
+            Alert.alert('Error', 'Please enter login ID and password.');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ loginId: loginId.trim(), password }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.message || 'Login failed');
             }
-            await login(username.trim(), isAdmin);
+
+            const role = data?.user?.role;
+            if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+                throw new Error('This account is not allowed in rental-admin.');
+            }
+
+            await login(data.access_token, data.user);
             router.replace('/(tabs)/(map)');
+        } catch (err: any) {
+            Alert.alert('Error', err?.message || 'Login failed.');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -34,16 +54,16 @@ export default function LoginScreen() {
             >
                 <View style={styles.headerContainer}>
                     <Text style={styles.title}>Welcome to</Text>
-                    <Text style={styles.brandTitle}>rental by davikk</Text>
+                    <Text style={styles.brandTitle}>rental-admin</Text>
                 </View>
 
                 <View style={styles.formContainer}>
-                    <Text style={styles.label}>Log in to continue</Text>
+                    <Text style={styles.label}>Log in as Admin/Super Admin</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="Username"
-                        value={username}
-                        onChangeText={setUsername}
+                        placeholder="Username or email"
+                        value={loginId}
+                        onChangeText={setLoginId}
                         autoCapitalize="none"
                         autoCorrect={false}
                         returnKeyType="next"
@@ -59,11 +79,11 @@ export default function LoginScreen() {
                         onSubmitEditing={handleLogin}
                     />
                     <Pressable
-                        style={[styles.button, !username.trim() && styles.buttonDisabled]}
+                        style={[styles.button, (!loginId.trim() || !password || submitting) && styles.buttonDisabled]}
                         onPress={handleLogin}
-                        disabled={!username.trim()}
+                        disabled={!loginId.trim() || !password || submitting}
                     >
-                        <Text style={styles.buttonText}>Continue</Text>
+                        <Text style={styles.buttonText}>{submitting ? 'Signing in...' : 'Continue'}</Text>
                     </Pressable>
                 </View>
             </KeyboardAvoidingView>

@@ -35,7 +35,7 @@ function CustomHeader() {
         {/* Left: User Greeting */}
         <View style={{ flex: 1, alignItems: 'flex-start' }}>
           <Text style={{ fontSize: 16, fontWeight: '500', color: Colors.light.text }} numberOfLines={1}>
-            hello {user?.isAdmin ? 'davik' : (user?.name?.split(' ')[0] || 'user')}
+            hello {(user?.name?.split(' ')[0] || 'admin')}
           </Text>
         </View>
 

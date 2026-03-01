@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Loader2 } from 'lucide-react';
+import { AxiosError } from 'axios';
 import { useAuth } from '../context/useAuth';
 import api from '../api/axios';
 import css from './Login.module.css';
@@ -22,8 +23,15 @@ export const Login: React.FC = () => {
             const response = await api.post('/auth/login', { loginId, password });
             login(response.data.access_token);
             navigate('/');
-        } catch {
-            setError('Login failed. Please verify credentials.');
+        } catch (err) {
+            const error = err as AxiosError<{ message?: string }>;
+            if (!error.response) {
+                setError('Cannot reach backend API. Please verify deployment/API URL.');
+            } else if (error.response.status === 401) {
+                setError('Login failed. Please verify credentials.');
+            } else {
+                setError(error.response.data?.message || 'Login failed. Please verify credentials.');
+            }
         } finally {
             setLoading(false);
         }

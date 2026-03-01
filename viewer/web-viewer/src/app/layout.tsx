@@ -31,7 +31,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
       >
         <AuthProvider>
-          <div className="flex flex-col h-screen overflow-hidden w-full relative pb-[60px]">
+          <div className="flex flex-col h-screen overflow-y-auto overflow-x-hidden w-full relative pb-[60px]">
             {children}
             <BottomTabBar />
           </div>

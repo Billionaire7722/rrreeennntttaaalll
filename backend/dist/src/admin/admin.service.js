@@ -47,38 +47,134 @@ const common_1 = require("@nestjs/common");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const roles_enum_1 = require("../security/roles.enum");
+const presence_service_1 = require("../presence/presence.service");
 let AdminService = class AdminService {
     prisma;
-    constructor(prisma) {
+    presenceService;
+    constructor(prisma, presenceService) {
         this.prisma = prisma;
+        this.presenceService = presenceService;
     }
     async getAllUsers(skip = 0, take = 50) {
         const [users, total] = await Promise.all([
             this.prisma.user.findMany({
-                where: { role: roles_enum_1.Role.USER },
+                where: { role: roles_enum_1.Role.VIEWER },
                 skip: Number(skip),
                 take: Number(take),
                 select: {
                     id: true, name: true, email: true, phone: true, status: true, created_at: true, deleted_at: true, role: true
                 }
             }),
-            this.prisma.user.count({ where: { role: roles_enum_1.Role.USER } })
+            this.prisma.user.count({ where: { role: roles_enum_1.Role.VIEWER } })
         ]);
         return { users, total, skip: Number(skip), take: Number(take) };
     }
     async getAllAdmins(skip = 0, take = 50) {
+        const where = {
+            role: { in: [roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN] },
+            deleted_at: null
+        };
         const [admins, total] = await Promise.all([
             this.prisma.user.findMany({
-                where: { role: { in: [roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN] } },
+                where,
                 skip: Number(skip),
                 take: Number(take),
                 select: {
-                    id: true, name: true, email: true, phone: true, role: true, status: true, created_at: true, deleted_at: true
+                    id: true,
+                    name: true,
+                    username: true,
+                    email: true,
+                    phone: true,
+                    role: true,
+                    status: true,
+                    created_at: true,
+                    deleted_at: true
                 }
             }),
-            this.prisma.user.count({ where: { role: { in: [roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN] } } })
+            this.prisma.user.count({ where })
         ]);
         return { admins, total, skip: Number(skip), take: Number(take) };
+    }
+    async updateAdmin(adminId, data) {
+        const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
+        if (!admin)
+            throw new common_1.NotFoundException('User not found');
+        if (admin.role === roles_enum_1.Role.SUPER_ADMIN) {
+            throw new common_1.ForbiddenException('Cannot edit SUPER_ADMIN account');
+        }
+        const payload = {};
+        if (data.name !== undefined)
+            payload.name = data.name;
+        if (data.phone !== undefined)
+            payload.phone = data.phone;
+        if (data.username !== undefined && data.username !== admin.username) {
+            const usernameTaken = await this.prisma.user.findFirst({
+                where: {
+                    username: data.username,
+                    id: { not: adminId }
+                }
+            });
+            if (usernameTaken) {
+                throw new common_1.ForbiddenException('Username already exists');
+            }
+            payload.username = data.username;
+        }
+        if (data.email !== undefined && data.email !== admin.email) {
+            const emailTaken = await this.prisma.user.findFirst({
+                where: {
+                    email: data.email,
+                    id: { not: adminId }
+                }
+            });
+            if (emailTaken) {
+                throw new common_1.ForbiddenException('Email already exists');
+            }
+            payload.email = data.email;
+        }
+        if (data.password && data.password.trim().length > 0) {
+            payload.password = await bcrypt.hash(data.password, 10);
+        }
+        return this.prisma.user.update({
+            where: { id: adminId },
+            data: payload,
+            select: {
+                id: true,
+                name: true,
+                username: true,
+                email: true,
+                phone: true,
+                role: true,
+                status: true
+            }
+        });
+    }
+    async changeMyPassword(userId, currentPassword, newPassword) {
+        if (!currentPassword || !newPassword) {
+            throw new common_1.ForbiddenException('Current password and new password are required');
+        }
+        if (newPassword.length < 8) {
+            throw new common_1.ForbiddenException('New password must be at least 8 characters');
+        }
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        if (user.role !== roles_enum_1.Role.SUPER_ADMIN) {
+            throw new common_1.ForbiddenException('Only SUPER_ADMIN can use this action');
+        }
+        const valid = await bcrypt.compare(currentPassword, user.password);
+        if (!valid) {
+            throw new common_1.ForbiddenException('Current password is incorrect');
+        }
+        const sameAsOld = await bcrypt.compare(newPassword, user.password);
+        if (sameAsOld) {
+            throw new common_1.ForbiddenException('New password must be different from current password');
+        }
+        const hashed = await bcrypt.hash(newPassword, 10);
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { password: hashed },
+        });
+        return { message: 'Super-admin password updated successfully' };
     }
     async changeRole(adminId, newRole) {
         const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
@@ -164,7 +260,7 @@ let AdminService = class AdminService {
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
         sevenDaysAgo.setHours(0, 0, 0, 0);
         const [totalUsers, totalAdmins, totalProperties, deletedProperties, loginAttemptsToday] = await Promise.all([
-            this.prisma.user.count({ where: { role: roles_enum_1.Role.USER } }),
+            this.prisma.user.count({ where: { role: roles_enum_1.Role.VIEWER } }),
             this.prisma.user.count({ where: { role: { in: [roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN] } } }),
             this.prisma.house.count({ where: { deleted_at: null } }),
             this.prisma.house.count({ where: { deleted_at: { not: null } } }),
@@ -241,8 +337,11 @@ let AdminService = class AdminService {
             where: { role: roles_enum_1.Role.SUPER_ADMIN },
             data: { role: roles_enum_1.Role.ADMIN }
         });
-        const superAdminEmail = 'ceo@rentalapp.com';
-        const superAdminPassword = 'StrictPassword2026!';
+        const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'ceo@rentalapp.com';
+        const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
+        if (!superAdminPassword) {
+            throw new common_1.ForbiddenException('SUPER_ADMIN_PASSWORD is required');
+        }
         const hashedPassword = await bcrypt.hash(superAdminPassword, 10);
         const superAdmin = await this.prisma.user.upsert({
             where: { email: superAdminEmail },
@@ -268,10 +367,115 @@ let AdminService = class AdminService {
             password_used_in_seed: superAdminPassword
         };
     }
+    async createAdmin(data) {
+        const existing = await this.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { email: data.email },
+                    { username: data.username },
+                ],
+            },
+        });
+        if (existing) {
+            throw new common_1.ForbiddenException('Username or email already exists');
+        }
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const admin = await this.prisma.user.create({
+            data: {
+                name: data.name,
+                username: data.username,
+                email: data.email,
+                phone: data.phone,
+                password: hashedPassword,
+                role: roles_enum_1.Role.ADMIN,
+                status: 'ACTIVE',
+            },
+            select: { id: true, name: true, username: true, email: true, role: true, status: true },
+        });
+        return admin;
+    }
+    async getLiveSessions(skip = 0, take = 50, role) {
+        const where = {
+            role: {
+                in: [roles_enum_1.Role.VIEWER, roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN]
+            }
+        };
+        if (role) {
+            where.role = role;
+        }
+        const [users, total, loginLogs] = await Promise.all([
+            this.prisma.user.findMany({
+                where,
+                skip: Number(skip),
+                take: Number(take),
+                orderBy: { updated_at: 'desc' },
+                select: {
+                    id: true,
+                    name: true,
+                    username: true,
+                    email: true,
+                    role: true,
+                    status: true,
+                    deleted_at: true,
+                }
+            }),
+            this.prisma.user.count({ where }),
+            this.prisma.loginLog.findMany({
+                where: {
+                    success: true,
+                    userId: { not: null }
+                },
+                orderBy: { timestamp: 'desc' },
+                take: 1000,
+                select: {
+                    userId: true,
+                    timestamp: true,
+                    ipAddress: true,
+                    userAgent: true,
+                }
+            })
+        ]);
+        const latestLoginByUser = new Map();
+        for (const log of loginLogs) {
+            if (!log.userId)
+                continue;
+            if (!latestLoginByUser.has(log.userId)) {
+                latestLoginByUser.set(log.userId, {
+                    timestamp: log.timestamp,
+                    ipAddress: log.ipAddress,
+                    userAgent: log.userAgent,
+                });
+            }
+        }
+        const items = users.map((user) => {
+            const presence = this.presenceService.getPresence(user.id);
+            const latestLogin = latestLoginByUser.get(user.id);
+            return {
+                id: user.id,
+                name: user.name,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                accountStatus: user.status,
+                deletedAt: user.deleted_at,
+                onlineStatus: presence ? 'ONLINE' : 'OFFLINE',
+                lastSeenAt: presence?.lastSeenAt || latestLogin?.timestamp?.toISOString() || null,
+                ipAddress: presence?.ipAddress || latestLogin?.ipAddress || null,
+                userAgent: presence?.userAgent || latestLogin?.userAgent || null,
+            };
+        });
+        return {
+            items,
+            total,
+            skip: Number(skip),
+            take: Number(take),
+        };
+    }
 };
 exports.AdminService = AdminService;
 exports.AdminService = AdminService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        presence_service_1.PresenceService])
 ], AdminService);
 //# sourceMappingURL=admin.service.js.map

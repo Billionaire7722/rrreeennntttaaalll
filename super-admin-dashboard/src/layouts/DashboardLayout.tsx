@@ -8,7 +8,8 @@ import {
     Target,
     LogOut,
     Activity,
-    History
+    History,
+    Radar
 } from 'lucide-react';
 import css from './DashboardLayout.module.css';
 
@@ -20,6 +21,7 @@ export const DashboardLayout: React.FC = () => {
         { to: '/users', label: 'User Management', icon: <Users size={20} /> },
         { to: '/admins', label: 'Admin Management', icon: <ShieldCheck size={20} /> },
         { to: '/metrics', label: 'System Metrics', icon: <Activity size={20} /> },
+        { to: '/live-monitor', label: 'Live Monitor', icon: <Radar size={20} /> },
         { to: '/audit-logs', label: 'Audit Logs', icon: <Target size={20} /> },
         { to: '/login-logs', label: 'Login Logs', icon: <History size={20} /> },
     ];

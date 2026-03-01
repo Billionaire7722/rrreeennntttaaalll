@@ -55,6 +55,7 @@ const admin_module_1 = require("./admin/admin.module");
 const audit_module_1 = require("./audit/audit.module");
 const cloudinary_module_1 = require("./cloudinary/cloudinary.module");
 const upload_module_1 = require("./upload/upload.module");
+const presence_module_1 = require("./presence/presence.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logging_middleware_1.LoggingMiddleware).forRoutes('*');
@@ -67,15 +68,15 @@ exports.AppModule = AppModule = __decorate([
             nestjs_prometheus_1.PrometheusModule.register({ defaultMetrics: { enabled: true } }),
             bullmq_1.BullModule.forRoot({
                 connection: {
-                    host: 'localhost',
-                    port: 6379,
+                    host: process.env.REDIS_HOST || 'localhost',
+                    port: parseInt(process.env.REDIS_PORT || '6379'),
                 },
             }),
             cache_manager_1.CacheModule.register({
                 isGlobal: true,
                 store: redisStore,
-                host: 'localhost',
-                port: 6379,
+                host: process.env.REDIS_HOST || 'localhost',
+                port: parseInt(process.env.REDIS_PORT || '6379'),
             }),
             prisma_module_1.PrismaModule,
             health_module_1.HealthModule,
@@ -85,7 +86,8 @@ exports.AppModule = AppModule = __decorate([
             admin_module_1.AdminModule,
             audit_module_1.AuditModule,
             cloudinary_module_1.CloudinaryModule,
-            upload_module_1.UploadModule
+            upload_module_1.UploadModule,
+            presence_module_1.PresenceModule
         ],
         controllers: [],
         providers: [],

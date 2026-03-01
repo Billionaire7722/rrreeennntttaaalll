@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+﻿import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Platform, Dimensions, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
@@ -15,9 +15,18 @@ const IMAGE_HEIGHT = 280;
 function formatPrice(price: number): string {
     if (price >= 1000000) {
         const millions = price / 1000000;
-        return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)} triệu`;
+        return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)} triá»‡u`;
     }
     return price.toLocaleString('vi-VN');
+}
+
+function getInitials(name: string): string {
+    return (name || '')
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() || '')
+        .join('');
 }
 
 export default function PropertyDetailScreen() {
@@ -88,17 +97,26 @@ export default function PropertyDetailScreen() {
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
-                <Text>Đang tải...</Text>
+                <Text>Äang táº£i...</Text>
             </View>
         );
     }
-
+    if (!user) {
+        return (
+            <View style={styles.loadingContainer}>
+                <Text style={{ marginBottom: 14 }}>Please sign in to view property details.</Text>
+                <Pressable onPress={() => router.replace('/login')} style={styles.backButtonFallback}>
+                    <Text style={styles.backButtonText}>Go to login</Text>
+                </Pressable>
+            </View>
+        );
+    }
     if (!property) {
         return (
             <View style={styles.loadingContainer}>
-                <Text>Không tìm thấy thông tin nhà.</Text>
+                <Text>KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin nhÃ .</Text>
                 <Pressable onPress={() => router.back()} style={styles.backButtonFallback}>
-                    <Text style={styles.backButtonText}>Quay lại</Text>
+                    <Text style={styles.backButtonText}>Quay láº¡i</Text>
                 </Pressable>
             </View>
         );
@@ -110,7 +128,7 @@ export default function PropertyDetailScreen() {
     };
 
     const statusColor = property.status === 'available' ? Colors.available : Colors.rented;
-    const statusLabel = property.status === 'available' ? 'Đang cho thuê' : 'Đã thuê';
+    const statusLabel = property.status === 'available' ? 'Äang cho thuÃª' : 'ÄÃ£ thuÃª';
 
     return (
         <View style={styles.container}>
@@ -174,7 +192,7 @@ export default function PropertyDetailScreen() {
                 <View style={styles.detailsContainer}>
                     <View style={styles.priceRow}>
                         <Text style={styles.price}>
-                            {formatPrice(property.price)} VNĐ<Text style={styles.priceUnit}>/tháng</Text>
+                            {formatPrice(property.price)} VNÄ<Text style={styles.priceUnit}>/thÃ¡ng</Text>
                         </Text>
                     </View>
 
@@ -185,6 +203,26 @@ export default function PropertyDetailScreen() {
                         <Text style={styles.address}>{property.address}</Text>
                     </View>
 
+                    {!!property.postedByAdmins?.length && (
+                        <View style={styles.postedBySection}>
+                            <Text style={styles.postedByTitle}>Đăng bởi</Text>
+                            <View style={styles.posterRow}>
+                                {property.postedByAdmins.map((admin) => (
+                                    <View key={admin.id} style={styles.posterChip}>
+                                        {admin.avatarUrl ? (
+                                            <Image source={{ uri: admin.avatarUrl }} style={styles.posterAvatar} contentFit="cover" />
+                                        ) : (
+                                            <View style={styles.posterAvatarFallback}>
+                                                <Text style={styles.posterAvatarFallbackText}>{getInitials(admin.name)}</Text>
+                                            </View>
+                                        )}
+                                        <Text style={styles.posterName}>{admin.name}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+                    )}
+
                     <View style={styles.divider} />
 
                     <View style={styles.featuresRow}>
@@ -193,31 +231,31 @@ export default function PropertyDetailScreen() {
                                 <BedDouble size={20} color={Colors.primary} />
                             </View>
                             <Text style={styles.featureValue}>{property.bedrooms}</Text>
-                            <Text style={styles.featureLabel}>Phòng ngủ</Text>
+                            <Text style={styles.featureLabel}>PhÃ²ng ngá»§</Text>
                         </View>
 
                         <View style={styles.featureItem}>
                             <View style={styles.featureIconContainer}>
                                 <Bath size={20} color={Colors.primary} />
                             </View>
-                            <Text style={styles.featureValue}>{property.hasPrivateBathroom ? 'Khép kín' : 'Chung'}</Text>
-                            <Text style={styles.featureLabel}>Phòng tắm</Text>
+                            <Text style={styles.featureValue}>{property.hasPrivateBathroom ? 'KhÃ©p kÃ­n' : 'Chung'}</Text>
+                            <Text style={styles.featureLabel}>PhÃ²ng táº¯m</Text>
                         </View>
 
                         <View style={styles.featureItem}>
                             <View style={styles.featureIconContainer}>
                                 <Home size={20} color={Colors.primary} />
                             </View>
-                            <Text style={styles.featureValue}>Cập nhật</Text>
-                            <Text style={styles.featureLabel}>Tình trạng</Text>
+                            <Text style={styles.featureValue}>Cáº­p nháº­t</Text>
+                            <Text style={styles.featureLabel}>TÃ¬nh tráº¡ng</Text>
                         </View>
                     </View>
 
                     <View style={styles.divider} />
 
-                    <Text style={styles.sectionTitle}>Mô tả chi tiết</Text>
+                    <Text style={styles.sectionTitle}>MÃ´ táº£ chi tiáº¿t</Text>
                     <Text style={styles.description}>
-                        {property.description || "Chưa có mô tả chi tiết."}
+                        {property.description || "ChÆ°a cÃ³ mÃ´ táº£ chi tiáº¿t."}
                     </Text>
                 </View>
                 <View style={{ height: 100 }} />
@@ -225,7 +263,7 @@ export default function PropertyDetailScreen() {
 
             <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                 <Pressable style={styles.contactButton}>
-                    <Text style={styles.contactButtonText}>Liên hệ ngay</Text>
+                    <Text style={styles.contactButtonText}>LiÃªn há»‡ ngay</Text>
                 </Pressable>
             </View>
 
@@ -298,6 +336,24 @@ const styles = StyleSheet.create({
     title: { fontSize: 22, fontWeight: '700', color: Colors.light.text, marginBottom: 12, lineHeight: 30 },
     addressRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     address: { fontSize: 15, color: Colors.light.textSecondary, flex: 1, lineHeight: 22 },
+    postedBySection: { marginTop: 14 },
+    postedByTitle: { fontSize: 14, fontWeight: '700', color: Colors.light.text, marginBottom: 8 },
+    posterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    posterChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        borderWidth: 1,
+        borderColor: Colors.border,
+        backgroundColor: '#F8FAFC',
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 6
+    },
+    posterAvatar: { width: 24, height: 24, borderRadius: 12 },
+    posterAvatarFallback: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+    posterAvatarFallbackText: { fontSize: 10, fontWeight: '700', color: '#1D4ED8' },
+    posterName: { fontSize: 12, color: Colors.light.text, fontWeight: '600' },
     divider: { height: 1, backgroundColor: Colors.border, marginVertical: 24 },
     featuresRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 10 },
     featureItem: { alignItems: 'center', gap: 8 },
@@ -318,3 +374,4 @@ const styles = StyleSheet.create({
     fullScreenCloseButton: { position: 'absolute', top: 50, right: 20, zIndex: 10, padding: 8, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20 },
     fullScreenDotsContainer: { position: 'absolute', bottom: 50, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 8 },
 });
+

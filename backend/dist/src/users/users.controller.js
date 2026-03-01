@@ -18,6 +18,9 @@ const users_service_1 = require("./users.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const toggle_favorite_dto_1 = require("./dto/toggle-favorite.dto");
 const send_message_dto_1 = require("./dto/send-message.dto");
+const roles_guard_1 = require("../security/roles.guard");
+const roles_decorator_1 = require("../security/roles.decorator");
+const roles_enum_1 = require("../security/roles.enum");
 let UsersController = class UsersController {
     usersService;
     constructor(usersService) {
@@ -38,10 +41,17 @@ let UsersController = class UsersController {
     sendMessage(req, sendMessageDto) {
         return this.usersService.sendMessage(req.user.userId, sendMessageDto);
     }
+    getViewerMessages(skip, take) {
+        return this.usersService.getViewerMessages(skip, take);
+    }
+    replyToViewer(req, viewerId, sendMessageDto) {
+        return this.usersService.replyToViewer(req.user.userId, req.user.role, viewerId, sendMessageDto);
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Get)('profile'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -49,6 +59,7 @@ __decorate([
 ], UsersController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.Get)('favorites'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -56,6 +67,7 @@ __decorate([
 ], UsersController.prototype, "getFavorites", null);
 __decorate([
     (0, common_1.Post)('favorites/toggle'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -64,6 +76,7 @@ __decorate([
 ], UsersController.prototype, "toggleFavorite", null);
 __decorate([
     (0, common_1.Get)('messages'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -71,15 +84,35 @@ __decorate([
 ], UsersController.prototype, "getMessages", null);
 __decorate([
     (0, common_1.Post)('messages'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, send_message_dto_1.SendMessageDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "sendMessage", null);
+__decorate([
+    (0, common_1.Get)('admin/messages'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    __param(0, (0, common_1.Query)('skip')),
+    __param(1, (0, common_1.Query)('take')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "getViewerMessages", null);
+__decorate([
+    (0, common_1.Post)('admin/messages/:viewerId/reply'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('viewerId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, send_message_dto_1.SendMessageDto]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "replyToViewer", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [users_service_1.UsersService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map

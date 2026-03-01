@@ -12,14 +12,44 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HousesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const roles_enum_1 = require("../security/roles.enum");
 let HousesService = class HousesService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
+    isAdminRole(role) {
+        return role === roles_enum_1.Role.ADMIN || role === roles_enum_1.Role.SUPER_ADMIN;
+    }
+    formatPostedByAdmins(houseAdmins) {
+        return houseAdmins.map((item) => ({
+            id: item.admin.id,
+            name: item.admin.name,
+            avatarUrl: null,
+        }));
+    }
+    async attachPoster(houseId, actorId, actorRole) {
+        if (!actorId || !this.isAdminRole(actorRole))
+            return;
+        const prismaAny = this.prisma;
+        await prismaAny.houseAdmin.upsert({
+            where: {
+                houseId_adminId: {
+                    houseId,
+                    adminId: actorId,
+                }
+            },
+            create: {
+                houseId,
+                adminId: actorId,
+            },
+            update: {},
+        });
+    }
     async getHouses(skip = 0, take = 10) {
+        const prismaAny = this.prisma;
         const [data, total] = await Promise.all([
-            this.prisma.house.findMany({
+            prismaAny.house.findMany({
                 where: { deleted_at: null },
                 skip,
                 take,
@@ -39,12 +69,26 @@ let HousesService = class HousesService {
                     is_private_bathroom: true,
                     latitude: true,
                     longitude: true,
+                    houseAdmins: {
+                        select: {
+                            admin: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                }
+                            }
+                        }
+                    }
                 }
             }),
-            this.prisma.house.count({ where: { deleted_at: null } })
+            prismaAny.house.count({ where: { deleted_at: null } })
         ]);
+        const mappedData = data.map((house) => ({
+            ...house,
+            postedByAdmins: this.formatPostedByAdmins(house.houseAdmins),
+        }));
         return {
-            data,
+            data: mappedData,
             meta: {
                 total,
                 skip,
@@ -54,18 +98,35 @@ let HousesService = class HousesService {
         };
     }
     async getHouseById(id) {
-        const house = await this.prisma.house.findFirst({
-            where: { id, deleted_at: null }
+        const prismaAny = this.prisma;
+        const house = await prismaAny.house.findFirst({
+            where: { id, deleted_at: null },
+            include: {
+                houseAdmins: {
+                    select: {
+                        admin: {
+                            select: {
+                                id: true,
+                                name: true,
+                            }
+                        }
+                    }
+                }
+            }
         });
         if (!house)
             throw new Error('House not found');
-        return house;
+        return {
+            ...house,
+            postedByAdmins: this.formatPostedByAdmins(house.houseAdmins || []),
+        };
     }
-    async updateHouse(id, data) {
+    async updateHouse(id, data, actorId, actorRole) {
+        const prismaAny = this.prisma;
         const house = await this.prisma.house.findFirst({ where: { id, deleted_at: null } });
         if (!house)
             throw new Error('House not found');
-        return this.prisma.house.update({
+        await this.prisma.house.update({
             where: { id },
             data: {
                 ...(data.name !== undefined && { name: data.name }),
@@ -81,9 +142,32 @@ let HousesService = class HousesService {
                 ...(data.image_url_3 !== undefined && { image_url_3: data.image_url_3 }),
             },
         });
+        await this.attachPoster(id, actorId, actorRole);
+        const refreshedHouse = await prismaAny.house.findFirst({
+            where: { id, deleted_at: null },
+            include: {
+                houseAdmins: {
+                    select: {
+                        admin: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        if (!refreshedHouse)
+            throw new Error('House not found');
+        return {
+            ...refreshedHouse,
+            postedByAdmins: this.formatPostedByAdmins(refreshedHouse.houseAdmins || []),
+        };
     }
-    async createHouse(data) {
-        return this.prisma.house.create({
+    async createHouse(data, actorId, actorRole) {
+        const prismaAny = this.prisma;
+        const createdHouse = await this.prisma.house.create({
             data: {
                 original_id: data.original_id || Math.random().toString(36).substring(7),
                 name: data.name,
@@ -103,6 +187,28 @@ let HousesService = class HousesService {
                 image_url_3: data.image_url_3,
             }
         });
+        await this.attachPoster(createdHouse.id, actorId, actorRole);
+        const populatedHouse = await prismaAny.house.findFirst({
+            where: { id: createdHouse.id, deleted_at: null },
+            include: {
+                houseAdmins: {
+                    select: {
+                        admin: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        if (!populatedHouse)
+            throw new Error('House not found');
+        return {
+            ...populatedHouse,
+            postedByAdmins: this.formatPostedByAdmins(populatedHouse.houseAdmins || []),
+        };
     }
     async updateStatus(id, status) {
         const house = await this.prisma.house.findUnique({

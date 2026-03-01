@@ -68,7 +68,8 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
                     description: h.description,
                     hasPrivateBathroom: h.is_private_bathroom,
                     status: h.status || 'available',
-                    images: [h.image_url_1, h.image_url_2, h.image_url_3].filter(Boolean)
+                    images: [h.image_url_1, h.image_url_2, h.image_url_3].filter(Boolean),
+                    postedByAdmins: Array.isArray(h.postedByAdmins) ? h.postedByAdmins : [],
                 })) as Property[];
             } catch (err) {
                 console.error("Failed to fetch houses:", err);

@@ -11,7 +11,8 @@ datasource db {
 enum Role {
   SUPER_ADMIN
   ADMIN
-  USER
+  VIEWER
+  GUEST
 }
 
 model House {
@@ -44,6 +45,7 @@ model House {
   deleted_at          DateTime?
 
   favorites           Favorite[]
+  houseAdmins         HouseAdmin[]
 
   @@index([city])
   @@index([district])
@@ -81,7 +83,7 @@ model User {
   email      String     @unique
   phone        String?
   password     String
-  role         Role       @default(USER)
+  role         Role       @default(VIEWER)
   status       String     @default("ACTIVE")
   locked_until DateTime?
   deleted_at   DateTime?
@@ -89,6 +91,20 @@ model User {
   updated_at   DateTime   @updatedAt
   favorites  Favorite[]
   messages   Message[]
+  housePosts HouseAdmin[]
+}
+
+model HouseAdmin {
+  id         String   @id @default(uuid())
+  houseId    String
+  adminId    String
+  created_at DateTime @default(now())
+
+  house      House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
+  admin      User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@unique([houseId, adminId])
+  @@index([adminId])
 }
 
 model Favorite {
@@ -106,6 +122,8 @@ model Favorite {
 model Message {
   id         String   @id @default(uuid())
   userId     String
+  senderId   String?
+  senderRole Role     @default(VIEWER)
   content    String
   created_at DateTime @default(now())
 

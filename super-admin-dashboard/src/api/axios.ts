@@ -1,7 +1,16 @@
 import axios from 'axios';
 
+const runtimeHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+const runtimeProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'https:' : 'http:';
+const fallbackApiBaseUrl = `${runtimeProtocol}//${runtimeHost}:3000`;
+const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const resolvedApiBaseUrl =
+    envApiBaseUrl && !envApiBaseUrl.includes('localhost')
+        ? envApiBaseUrl
+        : fallbackApiBaseUrl;
+
 const api = axios.create({
-    baseURL: 'http://localhost:3000',
+    baseURL: resolvedApiBaseUrl,
     timeout: 10000,
 });
 

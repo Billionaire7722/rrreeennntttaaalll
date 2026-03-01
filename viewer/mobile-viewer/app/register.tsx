@@ -111,6 +111,10 @@ export default function RegisterScreen() {
                 password,
                 confirmPassword
             });
+            if (response.data?.user?.role !== 'VIEWER') {
+                Alert.alert('ÄÄƒng kÃ½ bá»‹ tá»« chá»‘i', 'ÄÄƒng kÃ½ viewer khÃ´ng thÃ nh cÃ´ng.');
+                return;
+            }
             await signIn(response.data.access_token, response.data.user);
             router.replace('/(tabs)');
         } catch (error: any) {

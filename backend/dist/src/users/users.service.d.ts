@@ -47,12 +47,45 @@ export declare class UsersService {
         created_at: Date;
         userId: string;
         content: string;
+        senderId: string | null;
+        senderRole: import("@prisma/client").$Enums.Role;
     }[]>;
     sendMessage(userId: string, sendMessageDto: SendMessageDto): Promise<{
         id: string;
         created_at: Date;
         userId: string;
         content: string;
+        senderId: string | null;
+        senderRole: import("@prisma/client").$Enums.Role;
+    }>;
+    getViewerMessages(skip?: number, take?: number): Promise<{
+        items: ({
+            user: {
+                id: string;
+                name: string;
+                username: string;
+                email: string;
+                phone: string | null;
+                role: import("@prisma/client").$Enums.Role;
+            };
+        } & {
+            id: string;
+            created_at: Date;
+            userId: string;
+            content: string;
+            senderId: string | null;
+            senderRole: import("@prisma/client").$Enums.Role;
+        })[];
+        skip: number;
+        take: number;
+    }>;
+    replyToViewer(adminId: string, adminRole: string, viewerId: string, sendMessageDto: SendMessageDto): Promise<{
+        id: string;
+        created_at: Date;
+        userId: string;
+        content: string;
+        senderId: string | null;
+        senderRole: import("@prisma/client").$Enums.Role;
     }>;
     getProfile(userId: string): Promise<{
         id: string;

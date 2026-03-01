@@ -41,6 +41,10 @@ export default function LoginScreen() {
         setIsLoading(true);
         try {
             const response = await api.post('/auth/login', { loginId, password });
+            if (response.data?.user?.role !== 'VIEWER') {
+                Alert.alert('ÄÄƒng nháº­p bá»‹ tá»« chá»‘i', 'TÃ i khoáº£n nÃ y khÃ´ng thuá»™c á»©ng dá»¥ng viewer.');
+                return;
+            }
             await signIn(response.data.access_token, response.data.user);
             router.replace('/(tabs)');
         } catch (error: any) {

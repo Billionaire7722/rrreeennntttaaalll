@@ -64,7 +64,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
             </div>
 
             {/* Right: Logout / Login */}
-            <div className="flex-1 flex justify-end">
+            <div className="flex-1 flex justify-end items-center gap-1">
                 {user ? (
                     <button onClick={handleLogout} className="p-2 hover:bg-gray-100 rounded-full transition">
                         <LogOut size={18} className="text-gray-500" />

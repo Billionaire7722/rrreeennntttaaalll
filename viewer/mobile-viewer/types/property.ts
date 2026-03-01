@@ -1,5 +1,11 @@
 export type PropertyStatus = "available" | "rented";
 
+export interface PostedByAdmin {
+  id: string;
+  name: string;
+  avatarUrl?: string | null;
+}
+
 export interface Property {
   id: string;
   title: string;
@@ -13,4 +19,5 @@ export interface Property {
   images: string[];
   area?: number;
   description?: string;
+  postedByAdmins?: PostedByAdmin[];
 }

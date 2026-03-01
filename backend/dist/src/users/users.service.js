@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const roles_enum_1 = require("../security/roles.enum");
 let UsersService = class UsersService {
     prisma;
     constructor(prisma) {
@@ -65,8 +66,47 @@ let UsersService = class UsersService {
         return this.prisma.message.create({
             data: {
                 userId,
+                senderId: userId,
+                senderRole: roles_enum_1.Role.VIEWER,
                 content: sendMessageDto.content
             }
+        });
+    }
+    async getViewerMessages(skip = 0, take = 50) {
+        const messages = await this.prisma.message.findMany({
+            skip: Number(skip),
+            take: Number(take),
+            orderBy: { created_at: 'desc' },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        username: true,
+                        email: true,
+                        phone: true,
+                        role: true,
+                    },
+                },
+            },
+        });
+        return { items: messages, skip: Number(skip), take: Number(take) };
+    }
+    async replyToViewer(adminId, adminRole, viewerId, sendMessageDto) {
+        const viewer = await this.prisma.user.findUnique({
+            where: { id: viewerId },
+            select: { id: true, role: true, deleted_at: true },
+        });
+        if (!viewer || viewer.deleted_at || viewer.role !== roles_enum_1.Role.VIEWER) {
+            throw new common_1.NotFoundException('Viewer not found');
+        }
+        return this.prisma.message.create({
+            data: {
+                userId: viewerId,
+                senderId: adminId,
+                senderRole: adminRole,
+                content: sendMessageDto.content,
+            },
         });
     }
     async getProfile(userId) {

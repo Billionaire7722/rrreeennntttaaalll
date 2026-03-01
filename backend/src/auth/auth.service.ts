@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { Role } from '../security/roles.enum';
 
 @Injectable()
 export class AuthService {
@@ -39,6 +40,7 @@ export class AuthService {
                 email: registerDto.email,
                 phone: registerDto.phone,
                 password: hashedPassword,
+                role: Role.VIEWER,
             },
         });
 
@@ -120,7 +122,8 @@ export class AuthService {
                     email,
                     name,
                     username: email.split('@')[0] + Math.floor(Math.random() * 1000),
-                    password: randomPassword
+                    password: randomPassword,
+                    role: Role.VIEWER
                 }
             });
         }
@@ -139,7 +142,14 @@ export class AuthService {
     }
 
     private generateToken(user: any) {
-        const payload = { username: user.username, sub: user.id, name: user.name, role: user.role };
+        const payload = {
+            username: user.username,
+            sub: user.id,
+            name: user.name,
+            role: user.role,
+            email: user.email,
+            phone: user.phone,
+        };
         return {
             access_token: this.jwtService.sign(payload),
             user: {

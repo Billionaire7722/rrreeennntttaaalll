@@ -27,6 +27,7 @@ export declare class AdminController {
             status: string;
             created_at: Date;
             deleted_at: Date | null;
+            username: string;
             email: string;
             phone: string | null;
             role: import("@prisma/client").$Enums.Role;
@@ -34,6 +35,41 @@ export declare class AdminController {
         total: number;
         skip: number;
         take: number;
+    }>;
+    changeMyPassword(req: any, body: {
+        currentPassword: string;
+        newPassword: string;
+    }): Promise<{
+        message: string;
+    }>;
+    createAdmin(body: {
+        name: string;
+        username: string;
+        email: string;
+        phone?: string;
+        password: string;
+    }): Promise<{
+        id: string;
+        name: string;
+        status: string;
+        username: string;
+        email: string;
+        role: import("@prisma/client").$Enums.Role;
+    }>;
+    updateAdmin(id: string, body: {
+        name?: string;
+        username?: string;
+        email?: string;
+        phone?: string;
+        password?: string;
+    }): Promise<{
+        id: string;
+        name: string;
+        status: string;
+        username: string;
+        email: string;
+        phone: string | null;
+        role: import("@prisma/client").$Enums.Role;
     }>;
     changeRole(id: string, role: Role): Promise<{
         id: string;
@@ -136,5 +172,23 @@ export declare class AdminController {
                 deletes: number;
             }[];
         };
+    }>;
+    getLiveSessions(skip?: number, take?: number, role?: string): Promise<{
+        items: {
+            id: string;
+            name: string;
+            username: string;
+            email: string;
+            role: import("@prisma/client").$Enums.Role;
+            accountStatus: string;
+            deletedAt: Date | null;
+            onlineStatus: string;
+            lastSeenAt: string | null;
+            ipAddress: string | null;
+            userAgent: string | null;
+        }[];
+        total: number;
+        skip: number;
+        take: number;
     }>;
 }

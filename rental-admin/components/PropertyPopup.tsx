@@ -5,7 +5,7 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
   Animated,
   Modal,
 } from "react-native";
@@ -14,8 +14,6 @@ import { X, BedDouble, Maximize, MapPin, ChevronRight } from "lucide-react-nativ
 import Colors from "@shared/constants/colors";
 import { Property } from "@shared/types/property";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const POPUP_WIDTH = SCREEN_WIDTH - 48;
 const IMAGE_HEIGHT = 180;
 
 interface PropertyPopupProps {
@@ -33,12 +31,23 @@ function formatPrice(price: number): string {
   return price.toLocaleString("vi-VN");
 }
 
+function getInitials(name: string): string {
+  return (name || "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("");
+}
+
 export default React.memo(function PropertyPopup({
   property,
   visible,
   onClose,
   onViewDetails,
 }: PropertyPopupProps) {
+  const { width: windowWidth } = useWindowDimensions();
+  const popupWidth = Math.min(520, Math.max(280, windowWidth - 24));
   const [activeIndex, setActiveIndex] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(100)).current;
@@ -77,10 +86,10 @@ export default React.memo(function PropertyPopup({
 
   const handleScroll = useCallback(
     (e: { nativeEvent: { contentOffset: { x: number } } }) => {
-      const index = Math.round(e.nativeEvent.contentOffset.x / POPUP_WIDTH);
+      const index = Math.round(e.nativeEvent.contentOffset.x / popupWidth);
       setActiveIndex(index);
     },
-    []
+    [popupWidth]
   );
 
   if (!property) return null;
@@ -96,6 +105,7 @@ export default React.memo(function PropertyPopup({
         <Animated.View
           style={[
             styles.container,
+            { width: popupWidth },
             {
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }],
@@ -109,13 +119,13 @@ export default React.memo(function PropertyPopup({
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 onMomentumScrollEnd={handleScroll}
-                style={styles.imageScroller}
+                style={[styles.imageScroller, { width: popupWidth }]}
               >
                 {property.images.map((uri, idx) => (
                   <Image
                     key={idx}
                     source={{ uri }}
-                    style={styles.image}
+                    style={[styles.image, { width: popupWidth }]}
                     contentFit="cover"
                     transition={200}
                   />
@@ -171,6 +181,28 @@ export default React.memo(function PropertyPopup({
                 </Text>
               </View>
 
+              <View style={styles.postedBySection}>
+                <Text style={styles.postedByTitle}>Dang boi</Text>
+                {property.postedByAdmins?.length ? (
+                  <View style={styles.posterRow}>
+                    {property.postedByAdmins.map((admin) => (
+                      <View key={admin.id} style={styles.posterChip}>
+                        {admin.avatarUrl ? (
+                          <Image source={{ uri: admin.avatarUrl }} style={styles.posterAvatar} contentFit="cover" />
+                        ) : (
+                          <View style={styles.posterAvatarFallback}>
+                            <Text style={styles.posterAvatarFallbackText}>{getInitials(admin.name)}</Text>
+                          </View>
+                        )}
+                        <Text style={styles.posterName}>{admin.name}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.posterEmptyText}>Chua co thong tin nguoi dang</Text>
+                )}
+              </View>
+
               {property.description ? (
                 <Text style={styles.description} numberOfLines={2}>
                   {property.description}
@@ -199,11 +231,10 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "center",
     backgroundColor: Colors.overlay,
+    paddingHorizontal: 12,
     paddingBottom: 40,
   },
-  container: {
-    width: POPUP_WIDTH,
-  },
+  container: {},
   card: {
     backgroundColor: Colors.card,
     borderRadius: 20,
@@ -218,11 +249,9 @@ const styles = StyleSheet.create({
     position: "relative" as const,
   },
   imageScroller: {
-    width: POPUP_WIDTH,
     height: IMAGE_HEIGHT,
   },
   image: {
-    width: POPUP_WIDTH,
     height: IMAGE_HEIGHT,
   },
   statusBadge: {
@@ -315,6 +344,54 @@ const styles = StyleSheet.create({
     color: Colors.light.textSecondary,
     marginTop: 8,
     lineHeight: 18,
+  },
+  postedBySection: {
+    marginTop: 10,
+  },
+  postedByTitle: {
+    fontSize: 12,
+    fontWeight: "700" as const,
+    color: Colors.light.text,
+    marginBottom: 6,
+  },
+  posterRow: {
+    flexDirection: "row" as const,
+    flexWrap: "wrap" as const,
+    gap: 6,
+  },
+  posterChip: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  posterAvatar: { width: 20, height: 20, borderRadius: 10 },
+  posterAvatarFallback: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#DBEAFE",
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  posterAvatarFallbackText: {
+    fontSize: 9,
+    fontWeight: "700" as const,
+    color: "#1D4ED8",
+  },
+  posterName: {
+    fontSize: 11,
+    color: Colors.light.text,
+    fontWeight: "600" as const,
+  },
+  posterEmptyText: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
   },
   detailBtn: {
     flexDirection: "row" as const,

@@ -10,10 +10,16 @@ exports.CloudinaryProvider = {
         if (cloudinaryUrl) {
             return cloudinary_1.v2.config(cloudinaryUrl);
         }
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+        const apiKey = process.env.API_Key || process.env.CLOUDINARY_API_KEY;
+        const apiSecret = process.env.API_Secret || process.env.CLOUDINARY_API_SECRET;
+        if (!cloudName || !apiKey || !apiSecret) {
+            throw new Error('Cloudinary config is missing. Set CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY/API_Key + CLOUDINARY_API_SECRET/API_Secret.');
+        }
         return cloudinary_1.v2.config({
-            cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dit3f8nov',
-            api_key: process.env.API_Key || process.env.CLOUDINARY_API_KEY || '246917557432566',
-            api_secret: process.env.API_Secret || process.env.CLOUDINARY_API_SECRET || 'g48zh9huyNZXfpws3N2oPQakDKQ',
+            cloud_name: cloudName,
+            api_key: apiKey,
+            api_secret: apiSecret,
         });
     },
 };

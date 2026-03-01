@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
 import { SendMessageDto } from './dto/send-message.dto';
+import { Role } from '../security/roles.enum';
 
 @Injectable()
 export class UsersService {
@@ -61,8 +62,52 @@ export class UsersService {
         return this.prisma.message.create({
             data: {
                 userId,
+                senderId: userId,
+                senderRole: Role.VIEWER,
                 content: sendMessageDto.content
             }
+        });
+    }
+
+    async getViewerMessages(skip = 0, take = 50) {
+        const messages = await this.prisma.message.findMany({
+            skip: Number(skip),
+            take: Number(take),
+            orderBy: { created_at: 'desc' },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        username: true,
+                        email: true,
+                        phone: true,
+                        role: true,
+                    },
+                },
+            },
+        });
+
+        return { items: messages, skip: Number(skip), take: Number(take) };
+    }
+
+    async replyToViewer(adminId: string, adminRole: string, viewerId: string, sendMessageDto: SendMessageDto) {
+        const viewer = await this.prisma.user.findUnique({
+            where: { id: viewerId },
+            select: { id: true, role: true, deleted_at: true },
+        });
+
+        if (!viewer || viewer.deleted_at || viewer.role !== Role.VIEWER) {
+            throw new NotFoundException('Viewer not found');
+        }
+
+        return this.prisma.message.create({
+            data: {
+                userId: viewerId,
+                senderId: adminId,
+                senderRole: adminRole as Role,
+                content: sendMessageDto.content,
+            },
         });
     }
 

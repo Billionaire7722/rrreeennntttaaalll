@@ -1,5 +1,90 @@
 # Changelog
 
+## [0.0.8] - 2026-02-28
+### Changed
+
+#### Security & Production Ops
+- **Secret rotation completed on VPS**:
+  - Rotated `SUPER_ADMIN_PASSWORD`, `JWT_SECRET`, PostgreSQL `postgres` password, and VPS `root` password.
+  - Synchronized `backend/.env.production` and `docker-compose.yml` with rotated values.
+  - Recreated/restarted services to force fresh env loading and validated health + login afterward.
+- **Deployment resilience**:
+  - Worked around `docker-compose` v1 recreate issues by using explicit remove/recreate flow for selected services.
+  - Patched server-side pull blockers caused by local dirty files by deploying targeted file updates safely.
+
+#### Data Consistency & Viewer UX
+- **Database sync fix**: Synced `House` data from local environment to VPS production database (resolved mismatch where local added houses were missing and old deleted houses still appeared in production).
+- **Web viewer bottom tab visibility**: Updated `BottomTabBar` layering/styling to remain visible above map/content after deployment (`z-index`, blur, shadow adjustments).
+- **Guest detail gating**:
+  - Web viewer map popup `Xem chi tiáº¿t` now redirects guests to login.
+  - Property detail page now enforces authenticated viewer access.
+  - Mobile viewer property detail now prompts login when unauthenticated.
+
+#### House Attribution
+- **House poster attribution (viewer/admin details)**:
+  - Added backend `HouseAdmin` linkage so one house can have multiple posting admins.
+  - `GET /houses` and `GET /houses/:id` now include `postedByAdmins` (`id`, `name`, `avatarUrl`).
+  - Property detail screens now show poster chips (avatar + admin name) for web-viewer, mobile-viewer, and rental-admin.
+
+#### Super Admin Console
+- **Super-admin login reliability fixed**:
+  - Corrected API endpoint resolution for deployed environment (eliminated localhost-bound failures).
+  - Added clearer login error states for network vs credential failures.
+- **Live monitoring page added** (`/live-monitor`):
+  - Real-time session board (viewer/admin presence with relative time: minutes ago).
+  - Real-time admin house actions stream (add/update/delete with timestamps and payload context).
+- **Live monitor usability + realtime status improved**:
+  - `Live Session Monitor` and `Admin House Actions` now support vertical scrolling (`overflow-y`) and can keep loading more rows without page jump.
+  - Added backend presence heartbeat pipeline (`/presence/heartbeat`, `/presence/offline`) and consolidated API (`/admin/live-sessions`) for realtime online/offline status.
+  - Online/offline semantics updated:
+    - `ONLINE`: account is actively using app and still sending heartbeat.
+    - `OFFLINE`: account logged out, closed tab/app, or heartbeat expired.
+- **Admin account management completed** (`/admins`):
+  - Added full admin edit capability (name, username, email, phone, optional password reset) via `PATCH /admin/admins/:id`.
+  - Admin list now includes `username` and excludes soft-deleted accounts by default.
+  - Super-admin account remains protected from edit/role/status/delete operations.
+- **Super-admin self password change added**:
+  - Added secure endpoint `PATCH /admin/me/password` requiring current password verification.
+  - Added dashboard form in Admin Management so SUPER_ADMIN can change own password directly from UI.
+
+#### RBAC v2 (Core Authorization Model)
+- **Role model upgraded to 4 tiers**: `SUPER_ADMIN > ADMIN > VIEWER > GUEST`.
+- **Backend enum + schema updated**:
+  - Replaced `USER` with `VIEWER` and added `GUEST` in role definitions.
+  - Registration now always creates `VIEWER` accounts.
+- **Manual production migration added and applied**:
+  - Added SQL migration to remap existing DB role values (`USER -> VIEWER`) and preserve data.
+  - Added message metadata (`senderId`, `senderRole`) to support admin replies to viewer threads.
+- **Authorization tightening**:
+  - Viewer-only endpoints (`/users/profile`, `/users/favorites`, `/users/messages`) now require `VIEWER` role.
+  - House mutation endpoints remain restricted to `ADMIN` / `SUPER_ADMIN`.
+  - Added `POST /admin/admins` for SUPER_ADMIN-driven admin account creation.
+
+#### Messaging Workflow
+- **Viewer â†” Admin messaging upgraded**:
+  - Viewer-originated messages are tagged with sender role metadata.
+  - New admin endpoints added for moderation/reply flows:
+    - `GET /users/admin/messages`
+    - `POST /users/admin/messages/:viewerId/reply`
+
+#### rental-admin App
+- **Auth model replaced**:
+  - Removed hardcoded/demo local auth and switched to backend JWT login.
+  - Enforced `ADMIN`/`SUPER_ADMIN` only access for rental-admin.
+- **Property API calls secured**:
+  - All create/edit/status/delete house actions now send bearer token headers to match backend RBAC.
+
+#### Documentation
+- **README objective refresh**:
+  - Added a dedicated project-goal section describing the 4-role model and centralized permission boundaries.
+  - Updated role terminology in architecture description (`USER/PUBLIC` -> `VIEWER/GUEST`) for alignment.
+- **Web-viewer About Us section added**:
+  - Added dedicated `/about` page introducing founder profile (Vương Trung Kiên), hiring message, project capabilities, mission, and contact email.
+  - Added direct access from Navbar (`About Us`) and a homepage CTA card for visibility.
+  - Added multilingual switcher on `/about`: Vietnamese, English, Chinese, and Spanish.
+  - Updated homepage About CTA behavior: auto-display for 7 seconds, round `X` close button, and floating round reopen icon.
+  - Enabled vertical scroll on `/about` so long content remains readable on small screens.
+
 ## [0.0.7] - 2026-02-28
 ### Changed
 

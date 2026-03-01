@@ -9,9 +9,18 @@ import { useAuth } from '@/context/useAuth';
 function formatPrice(price: number): string {
     if (price >= 1000000) {
         const millions = price / 1000000;
-        return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)} triệu`;
+        return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)} triá»‡u`;
     }
     return price.toLocaleString('vi-VN');
+}
+
+function getInitials(name: string): string {
+    return (name || '')
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() || '')
+        .join('');
 }
 
 export default function PropertyDetailsPage() {
@@ -35,6 +44,11 @@ export default function PropertyDetailsPage() {
     const fullscreenCarouselRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        if (!user) {
+            router.replace('/login');
+            return;
+        }
+
         const fetchDetails = async () => {
             try {
                 const res = await api.get(`/houses/${propertyId}`);
@@ -61,7 +75,7 @@ export default function PropertyDetailsPage() {
             }
         };
         fetchDetails();
-    }, [propertyId, user]);
+    }, [propertyId, user, router]);
 
     const handleToggleFavorite = async () => {
         if (!user) {
@@ -113,7 +127,7 @@ export default function PropertyDetailsPage() {
     if (loading) {
         return (
             <div className="flex h-screen items-center justify-center bg-white">
-                <span className="text-gray-500 font-medium">Đang tải...</span>
+                <span className="text-gray-500 font-medium">Äang táº£i...</span>
             </div>
         );
     }
@@ -121,12 +135,12 @@ export default function PropertyDetailsPage() {
     if (!property) {
         return (
             <div className="flex flex-col h-screen items-center justify-center bg-white">
-                <span className="text-gray-500 font-medium mb-4">Không tìm thấy thông tin nhà.</span>
+                <span className="text-gray-500 font-medium mb-4">KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin nhÃ .</span>
                 <button
                     onClick={() => router.back()}
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold"
                 >
-                    Quay lại
+                    Quay láº¡i
                 </button>
             </div>
         );
@@ -134,10 +148,11 @@ export default function PropertyDetailsPage() {
 
     const isAvailable = property.status?.toLowerCase() === 'available';
     const statusColor = isAvailable ? 'bg-emerald-500' : 'bg-red-500';
-    const statusLabel = isAvailable ? 'Đang cho thuê' : 'Đã thuê';
+    const statusLabel = isAvailable ? 'Äang cho thuÃª' : 'ÄÃ£ thuÃª';
 
     // Compute robust localized address
     const address = property.address || `${property.district ? property.district + ', ' : ''}${property.city}`;
+    const postedByAdmins = Array.isArray(property.postedByAdmins) ? property.postedByAdmins : [];
 
     return (
         <div className="flex flex-col min-h-screen bg-white pb-[140px]">
@@ -189,8 +204,8 @@ export default function PropertyDetailsPage() {
             <div className="p-5">
                 {/* Price Row */}
                 <div className="flex flex-row items-baseline mb-2 text-blue-600">
-                    <span className="text-[26px] font-[800]">{formatPrice(property.price)} VNĐ</span>
-                    <span className="text-sm font-medium text-gray-500 ml-1">/tháng</span>
+                    <span className="text-[26px] font-[800]">{formatPrice(property.price)} VNÄ</span>
+                    <span className="text-sm font-medium text-gray-500 ml-1">/thÃ¡ng</span>
                 </div>
 
                 {/* Title */}
@@ -202,6 +217,27 @@ export default function PropertyDetailsPage() {
                     <span className="text-[15px] leading-relaxed flex-1">{address}</span>
                 </div>
 
+                <div className="mb-6">
+                    <h3 className="text-sm font-semibold text-gray-800 mb-2">Đăng bởi</h3>
+                    {postedByAdmins.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                            {postedByAdmins.map((admin: any) => (
+                                <div key={admin.id} className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1.5">
+                                    {admin.avatarUrl ? (
+                                        <img src={admin.avatarUrl} alt={admin.name} className="w-7 h-7 rounded-full object-cover" />
+                                    ) : (
+                                        <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[11px] font-bold">
+                                            {getInitials(admin.name)}
+                                        </div>
+                                    )}
+                                    <span className="text-xs font-medium text-gray-700">{admin.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-gray-500">Chưa có thông tin người đăng</p>
+                    )}
+                </div>
                 {/* Divider */}
                 <div className="h-px bg-gray-200 w-full mb-6"></div>
 
@@ -212,23 +248,23 @@ export default function PropertyDetailsPage() {
                             <BedDouble size={20} className="text-blue-600" />
                         </div>
                         <span className="text-[15px] font-bold text-gray-900">{property.bedrooms}</span>
-                        <span className="text-[13px] text-gray-500">Phòng ngủ</span>
+                        <span className="text-[13px] text-gray-500">PhÃ²ng ngá»§</span>
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
                         <div className="w-[50px] h-[50px] rounded-full bg-[#EEF2F7] flex justify-center items-center">
                             <Bath size={20} className="text-blue-600" />
                         </div>
-                        <span className="text-[15px] font-bold text-gray-900">{property.is_private_bathroom || property.hasPrivateBathroom ? 'Khép kín' : 'Chung'}</span>
-                        <span className="text-[13px] text-gray-500">Phòng tắm</span>
+                        <span className="text-[15px] font-bold text-gray-900">{property.is_private_bathroom || property.hasPrivateBathroom ? 'KhÃ©p kÃ­n' : 'Chung'}</span>
+                        <span className="text-[13px] text-gray-500">PhÃ²ng táº¯m</span>
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
                         <div className="w-[50px] h-[50px] rounded-full bg-[#EEF2F7] flex justify-center items-center">
                             <Square size={20} className="text-blue-600" />
                         </div>
-                        <span className="text-[15px] font-bold text-gray-900">{property.area || 0} m²</span>
-                        <span className="text-[13px] text-gray-500">Diện tích</span>
+                        <span className="text-[15px] font-bold text-gray-900">{property.area || 0} mÂ²</span>
+                        <span className="text-[13px] text-gray-500">Diá»‡n tÃ­ch</span>
                     </div>
                 </div>
 
@@ -237,9 +273,9 @@ export default function PropertyDetailsPage() {
 
                 {/* Description */}
                 <div className="mb-20">
-                    <h2 className="text-lg font-bold text-gray-900 mb-3">Mô tả chi tiết</h2>
+                    <h2 className="text-lg font-bold text-gray-900 mb-3">MÃ´ táº£ chi tiáº¿t</h2>
                     <p className="text-[15px] leading-[24px] text-gray-600 whitespace-pre-wrap">
-                        {property.description || "Chưa có mô tả chi tiết."}
+                        {property.description || "ChÆ°a cÃ³ mÃ´ táº£ chi tiáº¿t."}
                     </p>
                 </div>
             </div>
@@ -247,7 +283,7 @@ export default function PropertyDetailsPage() {
             {/* Static Bottom Contact Action Bar */}
             <div className="fixed bottom-[60px] left-0 right-0 bg-white px-5 pt-3 pb-3 border-t border-gray-200 shadow-[0_-3px_5px_rgba(0,0,0,0.05)] z-40 w-full">
                 <button className="w-full bg-blue-600 text-white py-3.5 rounded-xl text-base font-bold flex justify-center items-center hover:bg-blue-700 active:scale-[0.98] transition-all">
-                    Liên hệ ngay
+                    LiÃªn há»‡ ngay
                 </button>
             </div>
 
@@ -282,3 +318,4 @@ export default function PropertyDetailsPage() {
         </div>
     );
 }
+

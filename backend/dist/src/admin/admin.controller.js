@@ -33,6 +33,15 @@ let AdminController = class AdminController {
     async getAdmins(skip, take) {
         return this.adminService.getAllAdmins(skip, take);
     }
+    async changeMyPassword(req, body) {
+        return this.adminService.changeMyPassword(req.user.userId, body.currentPassword, body.newPassword);
+    }
+    async createAdmin(body) {
+        return this.adminService.createAdmin(body);
+    }
+    async updateAdmin(id, body) {
+        return this.adminService.updateAdmin(id, body);
+    }
     async changeRole(id, role) {
         return this.adminService.changeRole(id, role);
     }
@@ -57,6 +66,9 @@ let AdminController = class AdminController {
     async getSystemMetrics() {
         return this.adminService.getSystemMetrics();
     }
+    async getLiveSessions(skip, take, role) {
+        return this.adminService.getLiveSessions(skip, take, role);
+    }
 };
 exports.AdminController = AdminController;
 __decorate([
@@ -75,6 +87,29 @@ __decorate([
     __metadata("design:paramtypes", [Number, Number]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "getAdmins", null);
+__decorate([
+    (0, common_1.Patch)('me/password'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "changeMyPassword", null);
+__decorate([
+    (0, common_1.Post)('admins'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "createAdmin", null);
+__decorate([
+    (0, common_1.Patch)('admins/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateAdmin", null);
 __decorate([
     (0, common_1.Patch)('admins/:id/role'),
     __param(0, (0, common_1.Param)('id')),
@@ -139,6 +174,15 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "getSystemMetrics", null);
+__decorate([
+    (0, common_1.Get)('live-sessions'),
+    __param(0, (0, common_1.Query)('skip')),
+    __param(1, (0, common_1.Query)('take')),
+    __param(2, (0, common_1.Query)('role')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getLiveSessions", null);
 exports.AdminController = AdminController = __decorate([
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
