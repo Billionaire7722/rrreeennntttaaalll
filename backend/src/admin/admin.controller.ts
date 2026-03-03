@@ -47,6 +47,13 @@ export class AdminController {
         return this.adminService.createAdmin(body);
     }
 
+    @Post('users')
+    async createUser(
+        @Body() body: { name: string; username: string; email: string; phone?: string; password: string }
+    ) {
+        return this.adminService.createUser(body);
+    }
+
     @Patch('admins/:id')
     async updateAdmin(
         @Param('id') id: string,

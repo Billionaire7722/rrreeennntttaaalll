@@ -34,9 +34,14 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
+const adapter_pg_1 = require("@prisma/adapter-pg");
+const pg_1 = require("pg");
 const bcrypt = __importStar(require("bcrypt"));
 const roles_enum_1 = require("../security/roles.enum");
-const prisma = new client_1.PrismaClient();
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5433/rental?schema=public';
+const pool = new pg_1.Pool({ connectionString });
+const adapter = new adapter_pg_1.PrismaPg(pool);
+const prisma = new client_1.PrismaClient({ adapter });
 async function main() {
     console.log('Seed: Start isolating SUPER_ADMIN account...');
     const existingSuperAdmins = await prisma.user.findMany({

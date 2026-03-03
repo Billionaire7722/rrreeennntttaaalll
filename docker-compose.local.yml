@@ -1,0 +1,80 @@
+# docker-compose.local.yml
+# This file overrides docker-compose.yml for local development
+version: '3.8'
+
+services:
+  postgres:
+    ports:
+      - "5432:5432" # Expose DB for direct localhost connection (DBeaver, DataGrip)
+    volumes:
+      - rental_pg_data_local:/var/lib/postgresql/data # Separate dev data from prod
+
+  redis:
+    ports:
+      - "6379:6379" # Expose Redis for local debugging
+    volumes:
+      - rental_redis_data_local:/data
+
+  prisma-migrate:
+    # Disable the init container entirely since the backend container now orchestrates migrations/seeds
+    entrypoint: [ "echo", "Init container disabled for local dev; backend will migrate and seed." ]
+    command: []
+
+  backend:
+    build:
+      target: builder # Target the builder stage to retain devDependencies (Prisma CLI, ts-node, etc)
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm run start:dev" # Auto-seed logic exclusively for development mode
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=development # Safely assert that this is development and seed logic is authorized
+    volumes:
+      - ./backend:/app
+      - /app/node_modules # Anonymous volume to avoid host node_modules conflict
+    ports:
+      - "9229:9229" # Node debugger port
+
+  super-admin:
+    build:
+      target: builder # Retain Node.js and Vite instead of Nginx
+    command: npm run dev -- --host 0.0.0.0 # Expose Vite to Docker network
+    volumes:
+      - ./super-admin-dashboard:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173" # Native vite port
+    environment:
+      - VITE_API_BASE_URL=http://localhost:3000
+
+  web-viewer:
+    build:
+      target: builder # Retain devDependencies for NextJS
+    command: npm run dev # Next.js dev server
+    volumes:
+      - ./viewer/web-viewer:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+
+  rental-admin:
+    build:
+      target: builder # Retain Expo CLI
+    command: npx expo start --web --port 8081 # Expo local server
+    volumes:
+      - ./rental-admin:/app
+      - /app/node_modules
+    ports:
+      - "8082:8081" # Map dev server port instead of production nginx port 80
+    environment:
+      - EXPO_PUBLIC_API_BASE_URL=http://localhost:3000
+      - REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
+
+volumes:
+  # Explicitly isolate local volumes so they never collide with prod volumes
+  rental_pg_data: null
+  rental_redis_data: null
+  rental_pg_data_local:
+    name: rental_pg_data_local
+  rental_redis_data_local:
+    name: rental_redis_data_local

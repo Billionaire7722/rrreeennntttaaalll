@@ -5,11 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import api from '@/api/axios';
 import { ChevronLeft, MapPin, BedDouble, Bath, Home, Share2, Heart, X, Square } from 'lucide-react';
 import { useAuth } from '@/context/useAuth';
+import { useLanguage } from '@/context/LanguageContext';
 
-function formatPrice(price: number): string {
+function formatPrice(price: number, t: (key: string) => string): string {
     if (price >= 1000000) {
         const millions = price / 1000000;
-        return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)} triá»‡u`;
+        return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)} ${t('million')}`;
     }
     return price.toLocaleString('vi-VN');
 }
@@ -27,6 +28,7 @@ export default function PropertyDetailsPage() {
     const params = useParams();
     const router = useRouter();
     const { user } = useAuth();
+    const { t } = useLanguage();
     const propertyId = params.id as string;
 
     const [property, setProperty] = useState<any>(null);
@@ -127,7 +129,7 @@ export default function PropertyDetailsPage() {
     if (loading) {
         return (
             <div className="flex h-screen items-center justify-center bg-white">
-                <span className="text-gray-500 font-medium">Äang táº£i...</span>
+                <span className="text-gray-500 font-medium">{t("loading")}</span>
             </div>
         );
     }
@@ -135,12 +137,12 @@ export default function PropertyDetailsPage() {
     if (!property) {
         return (
             <div className="flex flex-col h-screen items-center justify-center bg-white">
-                <span className="text-gray-500 font-medium mb-4">KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin nhÃ .</span>
+                <span className="text-gray-500 font-medium mb-4">{t("no_info")}</span>
                 <button
                     onClick={() => router.back()}
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold"
                 >
-                    Quay láº¡i
+                    {t("go_back")}
                 </button>
             </div>
         );
@@ -148,7 +150,7 @@ export default function PropertyDetailsPage() {
 
     const isAvailable = property.status?.toLowerCase() === 'available';
     const statusColor = isAvailable ? 'bg-emerald-500' : 'bg-red-500';
-    const statusLabel = isAvailable ? 'Äang cho thuÃª' : 'ÄÃ£ thuÃª';
+    const statusLabel = isAvailable ? t("available") : t("rented");
 
     // Compute robust localized address
     const address = property.address || `${property.district ? property.district + ', ' : ''}${property.city}`;
@@ -204,8 +206,8 @@ export default function PropertyDetailsPage() {
             <div className="p-5">
                 {/* Price Row */}
                 <div className="flex flex-row items-baseline mb-2 text-blue-600">
-                    <span className="text-[26px] font-[800]">{formatPrice(property.price)} VNÄ</span>
-                    <span className="text-sm font-medium text-gray-500 ml-1">/thÃ¡ng</span>
+                    <span className="text-[26px] font-[800]">{formatPrice(property.price, t as any)} </span>
+                    <span className="text-sm font-medium text-gray-500 ml-1">/ {t('vnd_per_month').split('/')[1]?.trim() || 'tháng'}</span>
                 </div>
 
                 {/* Title */}
@@ -218,7 +220,7 @@ export default function PropertyDetailsPage() {
                 </div>
 
                 <div className="mb-6">
-                    <h3 className="text-sm font-semibold text-gray-800 mb-2">Đăng bởi</h3>
+                    <h3 className="text-sm font-semibold text-gray-800 mb-2">{t('posted_by')}</h3>
                     {postedByAdmins.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                             {postedByAdmins.map((admin: any) => (
@@ -235,7 +237,7 @@ export default function PropertyDetailsPage() {
                             ))}
                         </div>
                     ) : (
-                        <p className="text-sm text-gray-500">Chưa có thông tin người đăng</p>
+                        <p className="text-sm text-gray-500">{t('no_poster_info')}</p>
                     )}
                 </div>
                 {/* Divider */}
@@ -248,23 +250,23 @@ export default function PropertyDetailsPage() {
                             <BedDouble size={20} className="text-blue-600" />
                         </div>
                         <span className="text-[15px] font-bold text-gray-900">{property.bedrooms}</span>
-                        <span className="text-[13px] text-gray-500">PhÃ²ng ngá»§</span>
+                        <span className="text-[13px] text-gray-500">{t("bedrooms")}</span>
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
                         <div className="w-[50px] h-[50px] rounded-full bg-[#EEF2F7] flex justify-center items-center">
                             <Bath size={20} className="text-blue-600" />
                         </div>
-                        <span className="text-[15px] font-bold text-gray-900">{property.is_private_bathroom || property.hasPrivateBathroom ? 'KhÃ©p kÃ­n' : 'Chung'}</span>
-                        <span className="text-[13px] text-gray-500">PhÃ²ng táº¯m</span>
+                        <span className="text-[15px] font-bold text-gray-900">{property.is_private_bathroom || property.hasPrivateBathroom ? t("private_bath") : t("shared_bath")}</span>
+                        <span className="text-[13px] text-gray-500">{t("bathrooms")}</span>
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
                         <div className="w-[50px] h-[50px] rounded-full bg-[#EEF2F7] flex justify-center items-center">
                             <Square size={20} className="text-blue-600" />
                         </div>
-                        <span className="text-[15px] font-bold text-gray-900">{property.area || 0} mÂ²</span>
-                        <span className="text-[13px] text-gray-500">Diá»‡n tÃ­ch</span>
+                        <span className="text-[15px] font-bold text-gray-900">{property.area || 0} m²</span>
+                        <span className="text-[13px] text-gray-500">{t("area")}</span>
                     </div>
                 </div>
 
@@ -273,9 +275,9 @@ export default function PropertyDetailsPage() {
 
                 {/* Description */}
                 <div className="mb-20">
-                    <h2 className="text-lg font-bold text-gray-900 mb-3">MÃ´ táº£ chi tiáº¿t</h2>
+                    <h2 className="text-lg font-bold text-gray-900 mb-3">{t("description")}</h2>
                     <p className="text-[15px] leading-[24px] text-gray-600 whitespace-pre-wrap">
-                        {property.description || "ChÆ°a cÃ³ mÃ´ táº£ chi tiáº¿t."}
+                        {property.description || t("no_description")}
                     </p>
                 </div>
             </div>
@@ -283,7 +285,7 @@ export default function PropertyDetailsPage() {
             {/* Static Bottom Contact Action Bar */}
             <div className="fixed bottom-[60px] left-0 right-0 bg-white px-5 pt-3 pb-3 border-t border-gray-200 shadow-[0_-3px_5px_rgba(0,0,0,0.05)] z-40 w-full">
                 <button className="w-full bg-blue-600 text-white py-3.5 rounded-xl text-base font-bold flex justify-center items-center hover:bg-blue-700 active:scale-[0.98] transition-all">
-                    LiÃªn há»‡ ngay
+                    {t("contact_now")}
                 </button>
             </div>
 

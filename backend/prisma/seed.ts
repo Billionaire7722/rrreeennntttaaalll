@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
+import * as bcrypt from 'bcrypt';
 
 dotenv.config();
 
@@ -10,7 +11,55 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+async function seedUsers() {
+    const saltRounds = 10;
+    const defaultPassword = '123456';
+    const hashedPassword = await bcrypt.hash(defaultPassword, saltRounds);
+
+    const usersToSeed = [
+        {
+            email: 'superadmin@test.com',
+            username: 'superadmin',
+            name: 'Super Admin',
+            role: 'SUPER_ADMIN' as any,
+            password: hashedPassword,
+        },
+        {
+            email: 'admin@test.com',
+            username: 'admin',
+            name: 'Admin',
+            role: 'ADMIN' as any,
+            password: hashedPassword,
+        },
+        {
+            email: 'viewer@test.com',
+            username: 'viewer',
+            name: 'Viewer',
+            role: 'VIEWER' as any,
+            password: hashedPassword,
+        }
+    ];
+
+    for (const user of usersToSeed) {
+        const existingUser = await prisma.user.findUnique({ where: { email: user.email } });
+        if (!existingUser) {
+            await prisma.user.create({ data: user });
+            console.log(`Seeded user: ${user.email} (${user.role})`);
+        } else {
+            console.log(`User already exists: ${user.email}`);
+        }
+    }
+}
+
 async function main() {
+    if (process.env.NODE_ENV !== 'development') {
+        console.log('Skipping seed. Auto-seeding is only allowed in development environment (NODE_ENV=development).');
+        return;
+    }
+
+    console.log('Seeding Users...');
+    await seedUsers();
+
     console.log('Clearing existing houses...');
     await prisma.house.deleteMany({});
 
@@ -56,7 +105,7 @@ async function main() {
             image_url_6: house.image_url_6 || null,
             image_url_7: house.image_url_7 || null,
             image_url_8: house.image_url_8 || null,
-            description: house.decription || null, // Notice typo mapped from JSON
+            description: house.decription || null,
             status: house.status || null,
             is_private_bathroom: house.is_private_bathroom === true || house.is_private_bathroom === 'true'
         });
@@ -73,7 +122,6 @@ async function main() {
         houseCount++;
     }
     console.log(`Seeded ${houseCount} houses from JSON.`);
-
 }
 
 main()

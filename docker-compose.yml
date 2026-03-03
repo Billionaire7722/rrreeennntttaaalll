@@ -1,5 +1,12 @@
 version: '3.8'
 
+# ── Reusable Logging Extension ────────────────────────────────────
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   # ── Infrastructure ──────────────────────────────────────────────
   postgres:
@@ -7,20 +14,36 @@ services:
     container_name: rental_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: rental
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-rental}
     volumes:
       - rental_pg_data:/var/lib/postgresql/data
     networks:
       - rental_net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-rental}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging: *default-logging
 
   redis:
     image: redis:7-alpine
     container_name: rental_redis
     restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - rental_redis_data:/data
     networks:
       - rental_net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
 
   # ── Backend (NestJS) ─────────────────────────────────────────────
   backend:
@@ -31,61 +54,104 @@ services:
     restart: unless-stopped
     env_file:
       - ./backend/.env.production
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-rental}?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
       - "3000:3000"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      prisma-migrate:
+        condition: service_completed_successfully
     networks:
       - rental_net
+    logging: *default-logging
 
-  # ── Super-Admin Dashboard (Vite + React → nginx) ─────────────────
+  # ── Prisma Migration (Init Container) ────────────────────────────
+  prisma-migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rental_prisma_migrate
+    restart: "no"
+    command: npx prisma migrate deploy
+    env_file:
+      - ./backend/.env.production
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-rental}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - rental_net
+    logging: *default-logging
+
+  # ── Frontends ────────────────────────────────────────────────────
   super-admin:
     build:
       context: ./super-admin-dashboard
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: http://103.200.22.111:3000
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://api.yourdomain.com}
     container_name: rental_super_admin
     restart: unless-stopped
     ports:
       - "5174:80"
+    depends_on:
+      backend:
+        condition: service_started
     networks:
       - rental_net
+    logging: *default-logging
 
-  # ── Web-Viewer (Next.js) ─────────────────────────────────────────
   web-viewer:
     build:
       context: ./viewer/web-viewer
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: http://103.200.22.111:3000
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://api.yourdomain.com}
     container_name: rental_web_viewer
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://103.200.22.111:3000
+      # Internal routing for server-side NextJS processes
+      API_BASE_URL: http://backend:3000
     ports:
       - "3002:3002"
+    depends_on:
+      backend:
+        condition: service_started
     networks:
       - rental_net
+    logging: *default-logging
 
   rental-admin:
     build:
       context: ./rental-admin
       dockerfile: Dockerfile
       args:
-        EXPO_PUBLIC_API_BASE_URL: http://103.200.22.111:3000
+        EXPO_PUBLIC_API_BASE_URL: ${EXPO_PUBLIC_API_BASE_URL:-https://api.yourdomain.com}
     container_name: rental_admin
     restart: unless-stopped
     ports:
       - "8081:80"
+    depends_on:
+      backend:
+        condition: service_started
     networks:
       - rental_net
+    logging: *default-logging
 
 volumes:
   rental_pg_data:
-
+    name: rental_pg_data_prod
+  rental_redis_data:
+    name: rental_redis_data_prod
 
 networks:
   rental_net:
     driver: bridge
+    name: rental_network

@@ -394,6 +394,33 @@ let AdminService = class AdminService {
         });
         return admin;
     }
+    async createUser(data) {
+        const existing = await this.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { email: data.email },
+                    { username: data.username },
+                ],
+            },
+        });
+        if (existing) {
+            throw new common_1.ForbiddenException('Username or email already exists');
+        }
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const user = await this.prisma.user.create({
+            data: {
+                name: data.name,
+                username: data.username,
+                email: data.email,
+                phone: data.phone,
+                password: hashedPassword,
+                role: roles_enum_1.Role.VIEWER,
+                status: 'ACTIVE',
+            },
+            select: { id: true, name: true, username: true, email: true, role: true, status: true },
+        });
+        return user;
+    }
     async getLiveSessions(skip = 0, take = 50, role) {
         const where = {
             role: {

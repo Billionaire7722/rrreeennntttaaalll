@@ -215,20 +215,22 @@ export default function ProfilePage() {
                 {/* Messages Tab */}
                 {activeTab === 'messages' && (
                     <div className="space-y-3">
-                        {/* Mocked UI for Messaging History, matching user constraints purely frontend */}
-                        <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition">
-                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                <UserIcon className="text-blue-600 w-6 h-6" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-baseline mb-0.5">
-                                    <h3 className="font-semibold text-gray-900 truncate">Hỗ trợ kỹ thuật (Quản trị viên)</h3>
-                                    <span className="text-xs text-gray-500 ml-2 whitespace-nowrap"><Clock size={12} className="inline mr-1" />12:45</span>
+                        {/* Chat with Admin - Link to real chat page */}
+                        <Link href="/chat" className="block">
+                            <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition">
+                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                    <UserIcon className="text-blue-600 w-6 h-6" />
                                 </div>
-                                <p className="text-sm text-gray-500 truncate">Xin chào, tôi có thể giúp gì cho bạn về căn hộ tại Đống Đa?</p>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-baseline mb-0.5">
+                                        <h3 className="font-semibold text-gray-900 truncate">Hỗ trợ kỹ thuật (Quản trị viên)</h3>
+                                        <span className="text-xs text-gray-500 ml-2 whitespace-nowrap"><Clock size={12} className="inline mr-1" />12:45</span>
+                                    </div>
+                                    <p className="text-sm text-gray-500 truncate">Xin chào, tôi có thể giúp gì cho bạn về căn hộ tại Đống Đa?</p>
+                                </div>
+                                <ChevronRight className="text-gray-400" size={20} />
                             </div>
-                            <ChevronRight className="text-gray-400" size={20} />
-                        </div>
+                        </Link>
 
                         <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition">
                             <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">

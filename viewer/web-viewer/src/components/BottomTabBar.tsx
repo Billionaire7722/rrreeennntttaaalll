@@ -3,13 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Map, User } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function BottomTabBar() {
     const pathname = usePathname();
+    const { t } = useLanguage();
 
     const tabs = [
-        { name: 'Bản đồ', href: '/', icon: Map },
-        { name: 'Hồ sơ', href: '/profile', icon: User },
+        { name: t("map"), href: '/', icon: Map },
+        { name: t("profile"), href: '/profile', icon: User },
     ];
 
     return (

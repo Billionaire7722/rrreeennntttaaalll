@@ -5,7 +5,11 @@ import { LoginDto } from './dto/login.dto';
 export declare class AuthService {
     private prisma;
     private jwtService;
+    private readonly MAX_LOGIN_ATTEMPTS;
+    private readonly LOCK_DURATION_MINUTES;
     constructor(prisma: PrismaService, jwtService: JwtService);
+    private validatePassword;
+    private checkDuplicateUser;
     register(registerDto: RegisterDto, ipAddress?: string, userAgent?: string): Promise<{
         access_token: string;
         user: {
@@ -17,6 +21,7 @@ export declare class AuthService {
             role: any;
         };
     }>;
+    private countRecentFailedAttempts;
     login(loginDto: LoginDto, ipAddress?: string, userAgent?: string): Promise<{
         access_token: string;
         user: {

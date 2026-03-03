@@ -7,8 +7,12 @@ export declare class UsersService {
     getFavorites(userId: string): Promise<({
         house: {
             id: string;
-            original_id: string;
             name: string;
+            status: string | null;
+            deleted_at: Date | null;
+            created_at: Date;
+            updated_at: Date;
+            original_id: string;
             address: string;
             district: string;
             city: string;
@@ -27,11 +31,7 @@ export declare class UsersService {
             image_url_7: string | null;
             image_url_8: string | null;
             description: string | null;
-            status: string | null;
             is_private_bathroom: boolean;
-            created_at: Date;
-            updated_at: Date;
-            deleted_at: Date | null;
         };
     } & {
         id: string;
@@ -62,9 +62,9 @@ export declare class UsersService {
         items: ({
             user: {
                 id: string;
-                name: string;
                 username: string;
                 email: string;
+                name: string;
                 phone: string | null;
                 role: import("@prisma/client").$Enums.Role;
             };
@@ -89,16 +89,16 @@ export declare class UsersService {
     }>;
     getProfile(userId: string): Promise<{
         id: string;
-        name: string;
-        status: string;
-        created_at: Date;
-        updated_at: Date;
-        deleted_at: Date | null;
         username: string;
         email: string;
+        name: string;
         phone: string | null;
         password: string;
         role: import("@prisma/client").$Enums.Role;
+        status: string;
         locked_until: Date | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
     }>;
 }

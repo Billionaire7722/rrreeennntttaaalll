@@ -37,12 +37,57 @@ const client_1 = require("@prisma/client");
 const adapter_pg_1 = require("@prisma/adapter-pg");
 const pg_1 = require("pg");
 const dotenv = __importStar(require("dotenv"));
+const bcrypt = __importStar(require("bcrypt"));
 dotenv.config();
 const connectionString = process.env.DATABASE_URL;
 const pool = new pg_1.Pool({ connectionString });
 const adapter = new adapter_pg_1.PrismaPg(pool);
 const prisma = new client_1.PrismaClient({ adapter });
+async function seedUsers() {
+    const saltRounds = 10;
+    const defaultPassword = '123456';
+    const hashedPassword = await bcrypt.hash(defaultPassword, saltRounds);
+    const usersToSeed = [
+        {
+            email: 'superadmin@test.com',
+            username: 'superadmin',
+            name: 'Super Admin',
+            role: 'SUPER_ADMIN',
+            password: hashedPassword,
+        },
+        {
+            email: 'admin@test.com',
+            username: 'admin',
+            name: 'Admin',
+            role: 'ADMIN',
+            password: hashedPassword,
+        },
+        {
+            email: 'viewer@test.com',
+            username: 'viewer',
+            name: 'Viewer',
+            role: 'VIEWER',
+            password: hashedPassword,
+        }
+    ];
+    for (const user of usersToSeed) {
+        const existingUser = await prisma.user.findUnique({ where: { email: user.email } });
+        if (!existingUser) {
+            await prisma.user.create({ data: user });
+            console.log(`Seeded user: ${user.email} (${user.role})`);
+        }
+        else {
+            console.log(`User already exists: ${user.email}`);
+        }
+    }
+}
 async function main() {
+    if (process.env.NODE_ENV !== 'development') {
+        console.log('Skipping seed. Auto-seeding is only allowed in development environment (NODE_ENV=development).');
+        return;
+    }
+    console.log('Seeding Users...');
+    await seedUsers();
     console.log('Clearing existing houses...');
     await prisma.house.deleteMany({});
     console.log('Seeding Houses from JSON...');

@@ -19,8 +19,12 @@ export declare class HousesService {
     createHouse(data: any, actorId?: string, actorRole?: string): Promise<any>;
     updateStatus(id: string, status: string): Promise<{
         id: string;
-        original_id: string;
         name: string;
+        status: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+        original_id: string;
         address: string;
         district: string;
         city: string;
@@ -39,16 +43,16 @@ export declare class HousesService {
         image_url_7: string | null;
         image_url_8: string | null;
         description: string | null;
-        status: string | null;
         is_private_bathroom: boolean;
-        created_at: Date;
-        updated_at: Date;
-        deleted_at: Date | null;
     }>;
     removeHouse(id: string): Promise<{
         id: string;
-        original_id: string;
         name: string;
+        status: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+        original_id: string;
         address: string;
         district: string;
         city: string;
@@ -67,10 +71,6 @@ export declare class HousesService {
         image_url_7: string | null;
         image_url_8: string | null;
         description: string | null;
-        status: string | null;
         is_private_bathroom: boolean;
-        created_at: Date;
-        updated_at: Date;
-        deleted_at: Date | null;
     }>;
 }

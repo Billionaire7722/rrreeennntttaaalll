@@ -48,34 +48,80 @@ const jwt_1 = require("@nestjs/jwt");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = __importStar(require("bcrypt"));
 const roles_enum_1 = require("../security/roles.enum");
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_MAX_LENGTH = 12;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,12}$/;
 let AuthService = class AuthService {
     prisma;
     jwtService;
+    MAX_LOGIN_ATTEMPTS = 5;
+    LOCK_DURATION_MINUTES = 15;
     constructor(prisma, jwtService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
     }
-    async register(registerDto, ipAddress, userAgent) {
-        if (registerDto.password !== registerDto.confirmPassword) {
-            throw new common_1.ConflictException('Passwords do not match');
+    validatePassword(password) {
+        const errors = [];
+        if (password.length < PASSWORD_MIN_LENGTH) {
+            errors.push(`Mật khẩu phải có ít nhất ${PASSWORD_MIN_LENGTH} ký tự`);
         }
+        if (password.length > PASSWORD_MAX_LENGTH) {
+            errors.push(`Mật khẩu không được quá ${PASSWORD_MAX_LENGTH} ký tự`);
+        }
+        if (!/[A-Z]/.test(password)) {
+            errors.push('Mật khẩu phải có ít nhất một chữ hoa');
+        }
+        if (!/[a-z]/.test(password)) {
+            errors.push('Mật khẩu phải có ít nhất một chữ thường');
+        }
+        if (!/\d/.test(password)) {
+            errors.push('Mật khẩu phải có ít nhất một số');
+        }
+        if (!/[@$!%*?&]/.test(password)) {
+            errors.push('Mật khẩu phải có ít nhất một ký tự đặc biệt (@$!%*?&)');
+        }
+        return errors;
+    }
+    async checkDuplicateUser(email, username) {
         const existingUser = await this.prisma.user.findFirst({
             where: {
                 OR: [
-                    { email: registerDto.email },
-                    { username: registerDto.username }
+                    { email: email.toLowerCase() },
+                    { username: username.toLowerCase() }
                 ]
             }
         });
         if (existingUser) {
-            throw new common_1.ConflictException('Username or email already exists');
+            if (existingUser.email === email.toLowerCase()) {
+                return { field: 'email', message: 'Email này đã được đăng ký' };
+            }
+            if (existingUser.username === username.toLowerCase()) {
+                return { field: 'username', message: 'Tên đăng nhập này đã được sử dụng' };
+            }
+        }
+        return null;
+    }
+    async register(registerDto, ipAddress, userAgent) {
+        const passwordErrors = this.validatePassword(registerDto.password);
+        if (passwordErrors.length > 0) {
+            throw new common_1.BadRequestException({
+                message: passwordErrors.join('. '),
+                errors: passwordErrors
+            });
+        }
+        if (registerDto.password !== registerDto.confirmPassword) {
+            throw new common_1.ConflictException('Mật khẩu xác nhận không khớp');
+        }
+        const duplicateError = await this.checkDuplicateUser(registerDto.email, registerDto.username);
+        if (duplicateError) {
+            throw new common_1.ConflictException(duplicateError.message);
         }
         const hashedPassword = await bcrypt.hash(registerDto.password, 10);
         const newUser = await this.prisma.user.create({
             data: {
                 name: registerDto.name,
-                username: registerDto.username,
-                email: registerDto.email,
+                username: registerDto.username.toLowerCase(),
+                email: registerDto.email.toLowerCase(),
                 phone: registerDto.phone,
                 password: hashedPassword,
                 role: roles_enum_1.Role.VIEWER,
@@ -84,37 +130,41 @@ let AuthService = class AuthService {
         await this.logLoginAttempt(newUser.id, newUser.role, true, ipAddress, userAgent);
         return this.generateToken(newUser);
     }
+    async countRecentFailedAttempts(userId) {
+        const fifteenMinutesAgo = new Date();
+        fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - this.LOCK_DURATION_MINUTES);
+        const failedAttempts = await this.prisma.loginLog.count({
+            where: {
+                userId,
+                success: false,
+                timestamp: {
+                    gte: fifteenMinutesAgo
+                }
+            }
+        });
+        return failedAttempts;
+    }
     async login(loginDto, ipAddress, userAgent) {
         const user = await this.prisma.user.findFirst({
             where: {
                 OR: [
-                    { email: loginDto.loginId },
-                    { username: loginDto.loginId }
+                    { email: loginDto.loginId.toLowerCase() },
+                    { username: loginDto.loginId.toLowerCase() }
                 ]
             }
         });
         if (!user) {
             await this.logLoginAttempt(null, null, false, ipAddress, userAgent);
-            throw new common_1.UnauthorizedException('Invalid credentials');
+            throw new common_1.UnauthorizedException('Email hoặc mật khẩu không đúng');
         }
         if (user.status !== 'ACTIVE') {
             await this.logLoginAttempt(user.id, user.role, false, ipAddress, userAgent);
-            throw new common_1.UnauthorizedException('Account is suspended');
-        }
-        if (user.locked_until && new Date() < user.locked_until) {
-            await this.logLoginAttempt(user.id, user.role, false, ipAddress, userAgent);
-            throw new common_1.UnauthorizedException(`Account is locked until ${user.locked_until.toISOString()}`);
+            throw new common_1.UnauthorizedException('Tài khoản đã bị vô hiệu hóa');
         }
         const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
         if (!isPasswordValid) {
             await this.logLoginAttempt(user.id, user.role, false, ipAddress, userAgent);
-            throw new common_1.UnauthorizedException('Invalid credentials');
-        }
-        if (user.locked_until && new Date() >= user.locked_until) {
-            await this.prisma.user.update({
-                where: { id: user.id },
-                data: { locked_until: null }
-            });
+            throw new common_1.UnauthorizedException('Email hoặc mật khẩu không đúng');
         }
         await this.logLoginAttempt(user.id, user.role, true, ipAddress, userAgent);
         return this.generateToken(user);
