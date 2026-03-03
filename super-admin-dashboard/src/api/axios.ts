@@ -4,9 +4,10 @@ const runtimeHost = typeof window !== 'undefined' ? window.location.hostname : '
 const runtimeProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'https:' : 'http:';
 const fallbackApiBaseUrl = `${runtimeProtocol}//${runtimeHost}:3000`;
 const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const normalizedEnvApiBaseUrl = envApiBaseUrl?.trim().replace(/\/+$/, '');
 const resolvedApiBaseUrl =
-    envApiBaseUrl && !envApiBaseUrl.includes('localhost')
-        ? envApiBaseUrl
+    normalizedEnvApiBaseUrl && !normalizedEnvApiBaseUrl.includes('yourdomain.com')
+        ? normalizedEnvApiBaseUrl
         : fallbackApiBaseUrl;
 
 const api = axios.create({

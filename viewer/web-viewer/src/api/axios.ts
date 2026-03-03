@@ -1,7 +1,15 @@
 import axios from 'axios';
 
+const normalizeApiBaseUrl = (value?: string) => {
+    if (!value) return '';
+    const normalized = value.trim().replace(/\/+$/, '');
+    if (!normalized) return '';
+    if (normalized.includes('yourdomain.com')) return '';
+    return normalized;
+};
+
 const resolveApiBaseUrl = () => {
-    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const envUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
     if (envUrl) return envUrl.replace(/\/+$/, '');
 
     if (typeof window !== 'undefined' && window.location?.hostname) {

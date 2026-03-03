@@ -1,4 +1,4 @@
-# Rental Platform Project
+﻿# Rental Platform Project
 
 This project is a comprehensive property rental platform consisting of a high-performance backend API and multiple frontend applications.
 
@@ -15,7 +15,7 @@ All applications (super-admin dashboard, rental-admin, web-viewer, mobile-viewer
 
 ---
 
-## 🚀 Quick Start (Local Development)
+## ðŸš€ Quick Start (Local Development)
 
 ### Prerequisites
 - Node.js 20+
@@ -57,7 +57,7 @@ See `LOCAL_DEV.md` for more details.
 
 ---
 
-## 🚀 Technologies Used
+## ðŸš€ Technologies Used
 
 - **Backend**: NestJS, TypeScript, Prisma ORM, PostgreSQL (with PostGIS extension), Redis, BullMQ, Swagger.
 - **Media Storage**: Cloudinary (image/video optimisation, WebP conversion, public URL persistence).
@@ -66,7 +66,7 @@ See `LOCAL_DEV.md` for more details.
 
 ---
 
-## 📂 Project Structure & Features
+## ðŸ“‚ Project Structure & Features
 
 ### 1. Backend (`/backend`)
 A scalable, enterprise-grade REST API built with NestJS.
@@ -82,7 +82,7 @@ A scalable, enterprise-grade REST API built with NestJS.
 A management interface for property administrators (`ADMIN` role).
 - **Profile Tab**: Admin-specific profile page with clickable avatar upload (streamed to Cloudinary).
 - **Property Management (CRUD)**:
-  - **Add New Home**: Modal form with city + searchable ward/commune picker, price, bedrooms, area, GPS coordinates, description, and a merged **Ảnh & Video** upload section (up to 8 images + 2 videos). Images and videos upload directly to Cloudinary; public URLs are stored in PostgreSQL. If no images are selected, `assets/images/defaultimage.jpg` is uploaded automatically as the default.
+  - **Add New Home**: Modal form with city + searchable ward/commune picker, price, bedrooms, area, GPS coordinates, description, and a merged **áº¢nh & Video** upload section (up to 8 images + 2 videos). Images and videos upload directly to Cloudinary; public URLs are stored in PostgreSQL. If no images are selected, `assets/images/defaultimage.jpg` is uploaded automatically as the default.
   - **Edit Property**: Pre-filled modal accessible from the property list (pencil icon) and from the property detail screen. Supports updating all fields and replacing media via Cloudinary.
   - **Delete Property**: Soft-delete with confirmation.
   - **Manage Houses list**: Card grid showing all properties the admin has listed, with per-card Edit and Delete controls.
@@ -116,7 +116,7 @@ A Next.js 15 App-Router React application delivering a superior browser experien
   - Message history persists in database
   - Admin can reply via rental-admin interface
   - Connection status indicator shows online/offline status
-  - Accessible from Profile page -> Tin nhắn tab -> "Hỗ trợ kỹ thuật"
+  - Accessible from Profile page -> Tin nháº¯n tab -> "Há»— trá»£ ká»¹ thuáº­t"
 
 ### 6. Permissions & Data Structure Architecture
 The following Mermaid diagram illustrates the data structure and permission boundaries between the unified frontend ecosystem and PostgreSQL database.
@@ -160,7 +160,7 @@ graph TD
 
 ---
 
-## 🛠️ How to Start the Application
+## ðŸ› ï¸ How to Start the Application
 
 To run the full stack locally, you need to initialize the backend services first, followed by the frontend applications.
 
@@ -311,22 +311,26 @@ bash
 
 ---
 
-## ☁️ Deploy to VPS
+## Deploy to VPS
+
+Use tracked template files so local fixes and deploy config stay in sync:
+1. Copy `.env.production.example` -> `.env.production` (repo root on VPS).
+2. Copy `backend/.env.production.example` -> `backend/.env.production`.
+3. Fill real secrets only in those two `.env.production` files (never commit them).
 
 When ready to deploy:
-```
-bash
-# Push code to GitHub
+```bash
+# Local machine
 git add .
 git commit -m "your changes"
 git push origin main
 
-# On VPS:
+# VPS
 ssh root@103.200.22.111
 cd /root/rrreeennntttaaalll
 git pull origin main
-docker-compose build backend web-viewer rental-admin super-admin
-docker-compose up -d
+docker compose --env-file .env.production up -d --build
+docker compose ps
 ```
 
-See `deploy.md` for detailed deployment instructions.
+Frontend API fallback is now safe by default: if `NEXT_PUBLIC_API_BASE_URL` / `EXPO_PUBLIC_API_BASE_URL` / `VITE_API_BASE_URL` is blank or placeholder, clients auto-resolve to `<current-host>:3000`.

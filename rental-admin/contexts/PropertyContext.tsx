@@ -106,7 +106,12 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to add housing");
+          const message = await response.text().catch(() => "");
+          throw new Error(
+            message
+              ? `Failed to add housing (${response.status}): ${message}`
+              : `Failed to add housing (${response.status})`
+          );
         }
 
         const newBackendHouse = await response.json();
@@ -128,8 +133,10 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
 
         setProperties((prev) => [mappedProperty, ...prev]);
         query.refetch();
+        return mappedProperty;
       } catch (err) {
         console.error("Could not save to backend API:", err);
+        throw err;
       }
     },
     [authHeaders, query]

@@ -1,7 +1,15 @@
 import { Platform } from "react-native";
 
+const normalizeApiBaseUrl = (value?: string) => {
+  if (!value) return "";
+  const normalized = value.trim().replace(/\/+$/, "");
+  if (!normalized) return "";
+  if (normalized.includes("yourdomain.com")) return "";
+  return normalized;
+};
+
 const resolveWebApiBaseUrl = () => {
-  const explicit = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const explicit = normalizeApiBaseUrl(process.env.EXPO_PUBLIC_API_BASE_URL);
   if (explicit) return explicit.replace(/\/+$/, "");
 
   if (typeof window !== "undefined" && window.location?.hostname) {
@@ -12,7 +20,7 @@ const resolveWebApiBaseUrl = () => {
 };
 
 const resolveNativeApiBaseUrl = () => {
-  const explicit = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const explicit = normalizeApiBaseUrl(process.env.EXPO_PUBLIC_API_BASE_URL);
   if (explicit) return explicit.replace(/\/+$/, "");
   return "http://192.168.100.129:3000";
 };

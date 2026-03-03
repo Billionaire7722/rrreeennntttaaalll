@@ -28,7 +28,7 @@ import wardData from "@shared/data/ward.json";
 interface AddPropertyModalProps {
   visible: boolean;
   onClose: () => void;
-  onAdd: (property: Omit<Property, "id">) => void;
+  onAdd: (property: Omit<Property, "id">) => void | Promise<unknown>;
 }
 
 const MAX_IMAGES = 8;
@@ -69,12 +69,13 @@ export default React.memo(function AddPropertyModal({
   const [bedrooms, setBedrooms] = useState("1");
   const [area, setArea] = useState("");
   const [description, setDescription] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
+  const [latitude, setLatitude] = useState("21.0285");
+  const [longitude, setLongitude] = useState("105.8542");
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = useCallback(() => {
     setTitle("");
@@ -150,21 +151,30 @@ export default React.memo(function AddPropertyModal({
       }
     }
 
-    onAdd({
-      title: title.trim(),
-      address: addressString,
-      price: parsedPrice,
-      bedrooms: parsedBedrooms,
-      area: isNaN(parsedArea) ? undefined : parsedArea,
-      description: description.trim(),
-      hasPrivateBathroom: true,
-      status: "available" as PropertyStatus,
-      latitude: lat,
-      longitude: lng,
-      images: finalImages,
-    } as any);
-    resetForm();
-    onClose();
+    try {
+      setIsSubmitting(true);
+      await onAdd({
+        title: title.trim(),
+        address: addressString,
+        price: parsedPrice,
+        bedrooms: parsedBedrooms,
+        area: isNaN(parsedArea) ? undefined : parsedArea,
+        description: description.trim(),
+        hasPrivateBathroom: true,
+        status: "available" as PropertyStatus,
+        latitude: lat,
+        longitude: lng,
+        images: finalImages,
+      } as any);
+      Alert.alert("Thành công", "Đã thêm nhà mới.");
+      resetForm();
+      onClose();
+    } catch (error: any) {
+      Alert.alert("Không thể thêm nhà", error?.message || "Vui lòng kiểm tra đăng nhập/API rồi thử lại.");
+      console.error("Add house error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [title, price, bedrooms, area, description, latitude, longitude, images, selectedCityCode, selectedDistrictName, provinces, onAdd, onClose, resetForm]);
 
   /**
@@ -484,8 +494,20 @@ export default React.memo(function AddPropertyModal({
               <View style={{ height: 20 }} />
             </ScrollView>
 
-            <Pressable style={styles.submitBtn} onPress={handleAdd} testID="btn-submit-add">
-              <Text style={styles.submitText}>Thêm nhà</Text>
+            <Pressable
+              style={[
+                styles.submitBtn,
+                (isSubmitting || isUploading || isUploadingVideo) && styles.submitBtnDisabled,
+              ]}
+              onPress={handleAdd}
+              disabled={isSubmitting || isUploading || isUploadingVideo}
+              testID="btn-submit-add"
+            >
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <Text style={styles.submitText}>Thêm nhà</Text>
+              )}
             </Pressable>
           </View>
         </View>
@@ -589,6 +611,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 20, marginTop: 12,
     backgroundColor: Colors.accent, paddingVertical: 14,
     borderRadius: 14, alignItems: "center",
+  },
+  submitBtnDisabled: {
+    opacity: 0.7,
   },
   submitText: { color: Colors.white, fontSize: 16, fontWeight: "700" },
 });
