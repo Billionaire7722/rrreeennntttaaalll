@@ -120,6 +120,7 @@ services:
     environment:
       # Internal routing for server-side NextJS processes
       API_BASE_URL: http://backend:3000
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://103.200.22.111:3000}
     ports:
       - "3002:3002"
     depends_on:

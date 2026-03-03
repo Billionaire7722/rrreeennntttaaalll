@@ -47,7 +47,7 @@ export default function ProfilePage() {
                     area: h.square,
                     description: h.description,
                     status: h.status || 'AVAILABLE',
-                    image_url: h.image_url_1 || h.image_url_2 || h.image_url_3
+                    image_url: h.image_url_1 || h.image_url_2 || h.image_url_3 || '/images/defaultimage.jpg'
                 };
             });
             setFavorites(formatted);
@@ -128,7 +128,7 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="w-full bg-gray-50 min-h-full pb-10">
+        <div className="w-full bg-white min-h-[calc(100vh-60px)] pb-28">
             {/* Header / Profile Info */}
             <div className="bg-white px-4 pt-8 pb-6 border-b border-gray-200">
                 <div className="max-w-3xl mx-auto flex items-center gap-5">
@@ -215,35 +215,10 @@ export default function ProfilePage() {
                 {/* Messages Tab */}
                 {activeTab === 'messages' && (
                     <div className="space-y-3">
-                        {/* Chat with Admin - Link to real chat page */}
-                        <Link href="/chat" className="block">
-                            <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition">
-                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                    <UserIcon className="text-blue-600 w-6 h-6" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-baseline mb-0.5">
-                                        <h3 className="font-semibold text-gray-900 truncate">Hỗ trợ kỹ thuật (Quản trị viên)</h3>
-                                        <span className="text-xs text-gray-500 ml-2 whitespace-nowrap"><Clock size={12} className="inline mr-1" />12:45</span>
-                                    </div>
-                                    <p className="text-sm text-gray-500 truncate">Xin chào, tôi có thể giúp gì cho bạn về căn hộ tại Đống Đa?</p>
-                                </div>
-                                <ChevronRight className="text-gray-400" size={20} />
-                            </div>
-                        </Link>
-
-                        <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition">
-                            <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                <UserIcon className="text-emerald-600 w-6 h-6" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-baseline mb-0.5">
-                                    <h3 className="font-semibold text-gray-900 truncate">Nguyễn Viết An (Chủ nhà)</h3>
-                                    <span className="text-xs text-gray-500 ml-2 whitespace-nowrap"><Clock size={12} className="inline mr-1" />Hôm qua</span>
-                                </div>
-                                <p className="text-sm text-gray-500 truncate">Căn đó hiện đang trống, anh chị có thể đến xem nhé.</p>
-                            </div>
-                            <ChevronRight className="text-gray-400" size={20} />
+                        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 mx-2">
+                            <MessageCircle className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">Chưa có tin nhắn</h3>
+                            <p className="text-gray-500 text-sm">Trao đổi với Quản trị viên hoặc Chủ nhà sẽ xuất hiện ở đây.</p>
                         </div>
                     </div>
                 )}

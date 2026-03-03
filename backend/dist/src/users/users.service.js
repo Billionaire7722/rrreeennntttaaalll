@@ -13,10 +13,13 @@ exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const roles_enum_1 = require("../security/roles.enum");
+const messages_gateway_1 = require("../messages/messages.gateway");
 let UsersService = class UsersService {
     prisma;
-    constructor(prisma) {
+    messagesGateway;
+    constructor(prisma, messagesGateway) {
         this.prisma = prisma;
+        this.messagesGateway = messagesGateway;
     }
     async getFavorites(userId) {
         return this.prisma.favorite.findMany({
@@ -63,7 +66,7 @@ let UsersService = class UsersService {
         });
     }
     async sendMessage(userId, sendMessageDto) {
-        return this.prisma.message.create({
+        const message = await this.prisma.message.create({
             data: {
                 userId,
                 senderId: userId,
@@ -71,6 +74,19 @@ let UsersService = class UsersService {
                 content: sendMessageDto.content
             }
         });
+        const realtimePayload = {
+            ...message,
+            recipientId: sendMessageDto.recipientId || null,
+            houseId: sendMessageDto.houseId || null,
+            houseTitle: sendMessageDto.houseTitle || null,
+        };
+        if (sendMessageDto.recipientId) {
+            await this.messagesGateway.notifyAdmins(realtimePayload, sendMessageDto.recipientId);
+        }
+        else {
+            await this.messagesGateway.notifyAdmins(realtimePayload);
+        }
+        return message;
     }
     async getViewerMessages(skip = 0, take = 50) {
         const messages = await this.prisma.message.findMany({
@@ -100,7 +116,7 @@ let UsersService = class UsersService {
         if (!viewer || viewer.deleted_at || viewer.role !== roles_enum_1.Role.VIEWER) {
             throw new common_1.NotFoundException('Viewer not found');
         }
-        return this.prisma.message.create({
+        const message = await this.prisma.message.create({
             data: {
                 userId: viewerId,
                 senderId: adminId,
@@ -108,6 +124,8 @@ let UsersService = class UsersService {
                 content: sendMessageDto.content,
             },
         });
+        await this.messagesGateway.sendMessageToUser(viewerId, message);
+        return message;
     }
     async getProfile(userId) {
         const user = await this.prisma.user.findUnique({
@@ -123,6 +141,7 @@ let UsersService = class UsersService {
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        messages_gateway_1.MessagesGateway])
 ], UsersService);
 //# sourceMappingURL=users.service.js.map

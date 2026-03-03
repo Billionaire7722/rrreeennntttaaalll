@@ -7,7 +7,7 @@ import { AuthContext } from '../context/AuthContext';
 interface SocketContextType {
     socket: Socket | null;
     isConnected: boolean;
-    sendMessage: (content: string, receiverId: string) => void;
+    sendMessage: (content: string, recipientId?: string) => void;
 }
 
 const SocketContext = createContext<SocketContextType>({
@@ -64,9 +64,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         };
     }, [token]);
 
-    const sendMessage = (content: string, receiverId: string) => {
+    const sendMessage = (content: string, recipientId?: string) => {
         if (socket && isConnected) {
-            socket.emit('send_message', { content, receiverId });
+            socket.emit('send_message', { content, recipientId });
         }
     };
 

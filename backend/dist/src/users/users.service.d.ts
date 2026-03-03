@@ -1,9 +1,11 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
 import { SendMessageDto } from './dto/send-message.dto';
+import { MessagesGateway } from '../messages/messages.gateway';
 export declare class UsersService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private messagesGateway;
+    constructor(prisma: PrismaService, messagesGateway: MessagesGateway);
     getFavorites(userId: string): Promise<({
         house: {
             id: string;

@@ -44,7 +44,7 @@ export declare class MessagesGateway implements OnGatewayInit, OnGatewayConnecti
         recipientId?: string;
         isTyping: boolean;
     }): void;
-    private notifyAdmins;
+    notifyAdmins(message: any, onlyAdminId?: string): Promise<void>;
     sendMessageToUser(userId: string, message: any): Promise<void>;
 }
 export {};

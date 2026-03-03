@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from "expo-router";
-import { Map, Shield, LogOut, Search, MapPin, Filter, User } from "lucide-react-native";
+import { Map, LogOut, Search, MapPin, Filter, User } from "lucide-react-native";
 import React, { useState } from "react";
 import Colors from "@shared/constants/colors";
 import { View, Text, Pressable, Platform, TextInput, FlatList, Image } from "react-native";
@@ -53,7 +53,7 @@ function CustomHeader() {
             <Search size={16} color={Colors.light.textSecondary} />
             <TextInput
               style={{ flex: 1, marginLeft: 8, fontSize: 14, color: Colors.light.text, height: '100%', outlineStyle: 'none' } as any}
-              placeholder="Tìm kiếm..."
+              placeholder={"t\u00ecm ki\u1ebfm ..."}
               placeholderTextColor={Colors.light.textSecondary}
               value={searchQuery}
               onChangeText={(text) => {
@@ -175,14 +175,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(map)"
         options={{
-          title: "Bản đồ",
+          title: "B\u1ea3n \u0111\u1ed3",
           tabBarIcon: ({ color, size }) => <Map size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Hồ sơ",
+          title: "H\u1ed3 s\u01a1",
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />

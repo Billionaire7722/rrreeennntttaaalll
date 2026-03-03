@@ -132,7 +132,7 @@ export default function InteractiveMap({ properties, center = [21.0285, 105.8542
                         property.image_url
                     ]).filter(Boolean) as string[];
 
-                    const displayImages: string[] = images.length > 0 ? images : ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=400&q=80'];
+                    const displayImages: string[] = images.length > 0 ? images : ['/images/defaultimage.jpg'];
 
                     // Compute address
                     const rawAddress = property.address || `${property.district ? property.district + ', ' : ''}${property.city}`;

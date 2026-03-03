@@ -23,9 +23,10 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
+ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs

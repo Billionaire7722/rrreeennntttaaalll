@@ -109,7 +109,12 @@ let MessagesGateway = class MessagesGateway {
             }
         }
         else {
-            this.notifyAdmins(message);
+            if (recipientId) {
+                this.notifyAdmins(message, recipientId);
+            }
+            else {
+                this.notifyAdmins(message);
+            }
         }
         return message;
     }
@@ -140,11 +145,14 @@ let MessagesGateway = class MessagesGateway {
             });
         }
     }
-    async notifyAdmins(message) {
+    async notifyAdmins(message, onlyAdminId) {
         this.connectedClients.forEach((socket) => {
-            if (socket.user?.role === roles_enum_1.Role.ADMIN || socket.user?.role === roles_enum_1.Role.SUPER_ADMIN) {
-                socket.emit('new_message', message);
-            }
+            const isAdmin = socket.user?.role === roles_enum_1.Role.ADMIN || socket.user?.role === roles_enum_1.Role.SUPER_ADMIN;
+            if (!isAdmin)
+                return;
+            if (onlyAdminId && socket.user?.userId !== onlyAdminId)
+                return;
+            socket.emit('new_message', message);
         });
     }
     async sendMessageToUser(userId, message) {

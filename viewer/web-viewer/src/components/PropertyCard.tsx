@@ -26,11 +26,13 @@ interface PropertyCardProps {
 }
 
 export default function PropertyCard({ property, isFavorite, onToggleFavorite }: PropertyCardProps) {
+    const defaultImage = '/images/defaultimage.jpg';
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group relative">
             <Link href={`/properties/${property.id}`} className="block relative h-48 w-full overflow-hidden">
                 <img
-                    src={property.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1073&q=80'}
+                    src={property.image_url || defaultImage}
                     alt={property.title}
                     className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                 />

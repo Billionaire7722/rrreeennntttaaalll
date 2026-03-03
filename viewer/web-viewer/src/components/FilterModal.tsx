@@ -13,7 +13,6 @@ export type FilterOptions = {
     minArea: number | null;
     maxArea: number | null;
     bathroomType: "khép kín" | "chung" | null;
-    status: string | null;
 };
 
 export const DEFAULT_FILTERS: FilterOptions = {
@@ -26,7 +25,6 @@ export const DEFAULT_FILTERS: FilterOptions = {
     minArea: null,
     maxArea: null,
     bathroomType: null,
-    status: null,
 };
 
 interface Props {
@@ -39,12 +37,34 @@ interface Props {
 export default function FilterModal({ visible, onClose, filters, applyFilters }: Props) {
     const [localFilters, setLocalFilters] = useState<FilterOptions>(filters);
 
-    // Simulate static JSON data loading like the mobile array for demo/simplicity
-    const provincesList = [{ code: "01", name: "Thành phố Hà Nội" }, { code: "79", name: "Thành phố Hồ Chí Minh" }];
-    const wardsList = [{ parent_code: "01", code: "001", name: "Quận Ba Đình" }, { parent_code: "01", code: "002", name: "Quận Hoàn Kiếm" }, { parent_code: "79", code: "760", name: "Quận 1" }, { parent_code: "79", code: "762", name: "Quận 3" }];
+    // Use JSON data or state as requested instead of mock data
+    const [provincesList, setProvincesList] = useState<any[]>([]);
+    const [wardsData, setWardsData] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Corrected: provinces should be from province.json, wards from ward.json
+        fetch('/data/province.json')
+            .then(res => res.json())
+            .then(data => {
+                const list = Array.isArray(data) ? data : Object.values(data);
+                setProvincesList(list);
+            })
+            .catch(() => { });
+
+        fetch('/data/ward.json')
+            .then(res => res.json())
+            .then(data => {
+                const list = Array.isArray(data) ? data : Object.values(data);
+                setWardsData(list);
+            })
+            .catch(() => { });
+    }, []);
 
     const selectedProvinceCode = provincesList.find(p => p.name === localFilters.province)?.code;
-    const availableWards = wardsList.filter(w => w.parent_code === selectedProvinceCode);
+    const availableWards = wardsData
+        .filter(w => w.parent_code === selectedProvinceCode)
+        .sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
+
 
     useEffect(() => {
         if (visible) setLocalFilters(filters);
@@ -64,7 +84,7 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
     return (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm transition-all duration-300">
             {/* Modal Container */}
-            <div className="bg-white w-full sm:w-[600px] h-[85vh] sm:h-[80vh] sm:rounded-2xl rounded-t-2xl flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom-5">
+            <div className="bg-white w-full sm:w-[500px] h-auto max-h-[90vh] sm:rounded-2xl rounded-t-2xl flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom-5">
 
                 {/* Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-white sticky top-0 z-10">
@@ -75,27 +95,27 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
                 </div>
 
                 {/* Body (Scrollable) */}
-                <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+                <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
 
                     {/* Price Range */}
                     <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-900 text-[15px]">Mức giá (VNĐ)</h3>
+                        <h3 className="font-semibold text-gray-800 text-sm">Mức giá (VNĐ)</h3>
                         <div className="flex items-center gap-3">
                             <input
                                 type="number"
                                 placeholder="Từ..."
-                                className="flex-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
                                 value={localFilters.minPrice || ""}
                                 onChange={(e) => {
                                     const val = parseInt(e.target.value);
                                     setLocalFilters(p => ({ ...p, minPrice: isNaN(val) ? null : val }));
                                 }}
                             />
-                            <span className="text-gray-500 font-medium">-</span>
+                            <span className="text-gray-400">-</span>
                             <input
                                 type="number"
                                 placeholder="Đến..."
-                                className="flex-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
                                 value={localFilters.maxPrice || ""}
                                 onChange={(e) => {
                                     const val = parseInt(e.target.value);
@@ -107,10 +127,10 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
 
                     {/* Area Dropdowns */}
                     <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-900 text-[15px]">Khu vực</h3>
-                        <div className="flex flex-col gap-3">
+                        <h3 className="font-semibold text-gray-800 text-sm">Khu vực</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <select
-                                className="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                className="w-full border border-gray-300 bg-gray-50 text-gray-900 text-sm rounded-lg px-3 py-2 focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none"
                                 value={localFilters.province || ""}
                                 onChange={(e) => setLocalFilters(p => ({ ...p, province: e.target.value || null, ward: null }))}
                             >
@@ -121,12 +141,12 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
                             </select>
 
                             <select
-                                className="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white disabled:bg-gray-100 disabled:text-gray-400"
+                                className="w-full border border-gray-300 bg-gray-50 text-gray-900 text-sm rounded-lg px-3 py-2 focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
                                 value={localFilters.ward || ""}
                                 onChange={(e) => setLocalFilters(p => ({ ...p, ward: e.target.value || null }))}
                                 disabled={!localFilters.province}
                             >
-                                <option value="">Quận / Huyện</option>
+                                <option value="">Phường / Xã</option>
                                 {availableWards.map(w => (
                                     <option key={w.code} value={w.name}>{w.name}</option>
                                 ))}
@@ -136,15 +156,15 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
 
                     {/* Bedrooms Minimum */}
                     <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-900 text-[15px]">Số phòng ngủ tối thiểu</h3>
-                        <div className="flex gap-3">
+                        <h3 className="font-semibold text-gray-800 text-sm">Số phòng ngủ tối thiểu</h3>
+                        <div className="flex gap-2">
                             {[1, 2, 3, 4].map(n => (
                                 <button
                                     key={n}
                                     onClick={() => setLocalFilters(p => ({ ...p, minBedrooms: p.minBedrooms === n ? null : n }))}
-                                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${localFilters.minBedrooms === n
-                                            ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition border ${localFilters.minBedrooms === n
+                                        ? 'bg-blue-600 border-blue-600 text-white'
+                                        : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
                                         }`}
                                 >
                                     {n}+
@@ -155,73 +175,29 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
 
                     {/* Room Area */}
                     <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-900 text-[15px]">Diện tích phòng (m2)</h3>
-                        <div className="flex items-center gap-3">
+                        <h3 className="font-semibold text-gray-800 text-sm">Diện tích (m2)</h3>
+                        <div className="flex items-center gap-3 max-w-[220px]">
                             <input
                                 type="number"
                                 placeholder="Từ..."
-                                className="flex-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
                                 value={localFilters.minArea || ""}
                                 onChange={(e) => {
                                     const val = parseInt(e.target.value);
                                     setLocalFilters(p => ({ ...p, minArea: isNaN(val) ? null : val }));
                                 }}
                             />
-                            <span className="text-gray-500 font-medium">-</span>
+                            <span className="text-gray-400">-</span>
                             <input
                                 type="number"
                                 placeholder="Đến..."
-                                className="flex-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
                                 value={localFilters.maxArea || ""}
                                 onChange={(e) => {
                                     const val = parseInt(e.target.value);
                                     setLocalFilters(p => ({ ...p, maxArea: isNaN(val) ? null : val }));
                                 }}
                             />
-                        </div>
-                    </div>
-
-                    {/* Bathroom Type */}
-                    <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-900 text-[15px]">Loại phòng</h3>
-                        <div className="flex gap-3">
-                            {["khép kín", "chung"].map(type => (
-                                <button
-                                    key={type}
-                                    onClick={() => setLocalFilters(p => ({ ...p, bathroomType: p.bathroomType === type ? null : type as any }))}
-                                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition capitalize ${localFilters.bathroomType === type
-                                            ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                                        }`}
-                                >
-                                    {type}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Status */}
-                    <div className="space-y-3 pb-6">
-                        <h3 className="font-semibold text-gray-900 text-[15px]">Trạng thái</h3>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setLocalFilters(p => ({ ...p, status: p.status === "available" ? null : "available" }))}
-                                className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${localFilters.status === "available"
-                                        ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                                    }`}
-                            >
-                                Cho thuê
-                            </button>
-                            <button
-                                onClick={() => setLocalFilters(p => ({ ...p, status: p.status === "rented" ? null : "rented" }))}
-                                className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${localFilters.status === "rented"
-                                        ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                                    }`}
-                            >
-                                Đã thuê
-                            </button>
                         </div>
                     </div>
 

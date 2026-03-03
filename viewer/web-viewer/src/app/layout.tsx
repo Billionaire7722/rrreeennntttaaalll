@@ -39,7 +39,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} antialiased bg-gray-50`}>
         <AuthAndSocketProvider>
-          <div className="flex flex-col h-screen overflow-y-auto overflow-x-hidden w-full relative pb-[60px]">
+          <div className="flex flex-col min-h-screen w-full relative pb-[60px] bg-white">
             {children}
             <BottomTabBar />
           </div>

@@ -64,11 +64,11 @@ export default function PropertyDetailsPage() {
                     data.image_url_3,
                     data.image_url
                 ]).filter(Boolean) as string[];
-                setImages(rawImgs.length > 0 ? rawImgs : ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200']);
+                setImages(rawImgs.length > 0 ? rawImgs : ['/images/defaultimage.jpg']);
 
                 if (user) {
                     const favs = await api.get('/users/favorites');
-                    setIsFavorite(favs.data.some((f: any) => f.house_id === propertyId));
+                    setIsFavorite(favs.data.some((f: any) => f.houseId == propertyId));
                 }
             } catch (err) {
                 console.error("Failed to fetch details", err);
@@ -155,9 +155,17 @@ export default function PropertyDetailsPage() {
     // Compute robust localized address
     const address = property.address || `${property.district ? property.district + ', ' : ''}${property.city}`;
     const postedByAdmins = Array.isArray(property.postedByAdmins) ? property.postedByAdmins : [];
+    const primaryAdmin = postedByAdmins[0];
+    const handleContactNow = () => {
+        const params = new URLSearchParams();
+        if (primaryAdmin?.id) params.set('adminId', primaryAdmin.id);
+        params.set('houseId', propertyId);
+        params.set('houseTitle', property.name || property.title || '');
+        router.push(`/chat?${params.toString()}`);
+    };
 
     return (
-        <div className="flex flex-col min-h-screen bg-white pb-[140px]">
+        <div className="flex flex-col min-h-[calc(100vh-60px)] bg-white pb-[90px]">
             {/* Base Image Container perfectly matching React Native layout */}
             <div className="relative w-full h-[280px]">
                 <div
@@ -257,7 +265,7 @@ export default function PropertyDetailsPage() {
                         <div className="w-[50px] h-[50px] rounded-full bg-[#EEF2F7] flex justify-center items-center">
                             <Bath size={20} className="text-blue-600" />
                         </div>
-                        <span className="text-[15px] font-bold text-gray-900">{property.is_private_bathroom || property.hasPrivateBathroom ? t("private_bath") : t("shared_bath")}</span>
+                        <span className="text-[15px] font-bold text-gray-900">{property.is_private_bathroom || property.hasPrivateBathroom ? t("private_bath") : (property.bathrooms || 1)}</span>
                         <span className="text-[13px] text-gray-500">{t("bathrooms")}</span>
                     </div>
 
@@ -274,19 +282,21 @@ export default function PropertyDetailsPage() {
                 <div className="h-px bg-gray-200 w-full mb-6"></div>
 
                 {/* Description */}
-                <div className="mb-20">
+                <div className="mb-3">
                     <h2 className="text-lg font-bold text-gray-900 mb-3">{t("description")}</h2>
                     <p className="text-[15px] leading-[24px] text-gray-600 whitespace-pre-wrap">
                         {property.description || t("no_description")}
                     </p>
                 </div>
-            </div>
 
-            {/* Static Bottom Contact Action Bar */}
-            <div className="fixed bottom-[60px] left-0 right-0 bg-white px-5 pt-3 pb-3 border-t border-gray-200 shadow-[0_-3px_5px_rgba(0,0,0,0.05)] z-40 w-full">
-                <button className="w-full bg-blue-600 text-white py-3.5 rounded-xl text-base font-bold flex justify-center items-center hover:bg-blue-700 active:scale-[0.98] transition-all">
-                    {t("contact_now")}
-                </button>
+                <div className="mt-3 border-t border-gray-200 pt-4">
+                    <button
+                        onClick={handleContactNow}
+                        className="w-full max-w-[220px] mx-auto bg-blue-600 text-white py-2.5 rounded-xl text-sm font-bold flex justify-center items-center hover:bg-blue-700 active:scale-[0.98] transition-all"
+                    >
+                        {t("contact_now")}
+                    </button>
+                </div>
             </div>
 
             {/* Full Screen Lightbox Modal Overlay */}

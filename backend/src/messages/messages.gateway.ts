@@ -140,8 +140,12 @@ export class MessagesGateway
                 this.server.emit('new_message', message);
             }
         } else {
-            // Viewer sent message - notify all admins
-            this.notifyAdmins(message);
+            // Viewer sent message - notify selected admin or fallback to all admins
+            if (recipientId) {
+                this.notifyAdmins(message, recipientId);
+            } else {
+                this.notifyAdmins(message);
+            }
         }
 
         return message;
@@ -181,12 +185,12 @@ export class MessagesGateway
         }
     }
 
-    private async notifyAdmins(message: any) {
-        // Notify all connected admins
+    async notifyAdmins(message: any, onlyAdminId?: string) {
         this.connectedClients.forEach((socket) => {
-            if (socket.user?.role === Role.ADMIN || socket.user?.role === Role.SUPER_ADMIN) {
-                socket.emit('new_message', message);
-            }
+            const isAdmin = socket.user?.role === Role.ADMIN || socket.user?.role === Role.SUPER_ADMIN;
+            if (!isAdmin) return;
+            if (onlyAdminId && socket.user?.userId !== onlyAdminId) return;
+            socket.emit('new_message', message);
         });
     }
 

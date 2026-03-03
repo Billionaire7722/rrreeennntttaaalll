@@ -3,10 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { Role } from '../security/roles.enum';
+import { MessagesGateway } from '../messages/messages.gateway';
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private messagesGateway: MessagesGateway,
+    ) { }
 
     async getFavorites(userId: string) {
         return this.prisma.favorite.findMany({
@@ -59,7 +63,7 @@ export class UsersService {
     }
 
     async sendMessage(userId: string, sendMessageDto: SendMessageDto) {
-        return this.prisma.message.create({
+        const message = await this.prisma.message.create({
             data: {
                 userId,
                 senderId: userId,
@@ -67,6 +71,21 @@ export class UsersService {
                 content: sendMessageDto.content
             }
         });
+
+        const realtimePayload = {
+            ...message,
+            recipientId: sendMessageDto.recipientId || null,
+            houseId: sendMessageDto.houseId || null,
+            houseTitle: sendMessageDto.houseTitle || null,
+        };
+
+        if (sendMessageDto.recipientId) {
+            await this.messagesGateway.notifyAdmins(realtimePayload, sendMessageDto.recipientId);
+        } else {
+            await this.messagesGateway.notifyAdmins(realtimePayload);
+        }
+
+        return message;
     }
 
     async getViewerMessages(skip = 0, take = 50) {
@@ -101,7 +120,7 @@ export class UsersService {
             throw new NotFoundException('Viewer not found');
         }
 
-        return this.prisma.message.create({
+        const message = await this.prisma.message.create({
             data: {
                 userId: viewerId,
                 senderId: adminId,
@@ -109,6 +128,10 @@ export class UsersService {
                 content: sendMessageDto.content,
             },
         });
+
+        await this.messagesGateway.sendMessageToUser(viewerId, message);
+
+        return message;
     }
 
     async getProfile(userId: string) {

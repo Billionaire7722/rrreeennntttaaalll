@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
 import { useAuth } from '@/context/useAuth';
 import { Send, User, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/api/axios';
+import { useSearchParams } from 'next/navigation';
 
 interface Message {
     id: string;
@@ -20,13 +21,19 @@ interface Message {
     };
 }
 
-export default function ChatPage() {
+function ChatPageContent() {
     const { user } = useAuth();
-    const { socket, isConnected, sendMessage } = useSocket();
+    const { socket, isConnected } = useSocket();
+    const searchParams = useSearchParams();
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const hasSentInitialRef = useRef(false);
+
+    const targetAdminId = searchParams.get('adminId') || undefined;
+    const targetHouseId = searchParams.get('houseId') || undefined;
+    const targetHouseTitle = searchParams.get('houseTitle') || undefined;
 
     // Fetch existing messages
     const fetchMessages = async () => {
@@ -69,16 +76,43 @@ export default function ChatPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    useEffect(() => {
+        if (!user || hasSentInitialRef.current || !targetAdminId || !targetHouseId) return;
+
+        hasSentInitialRef.current = true;
+        const initialMessage = `Xin chao, toi muon lien he ve tin dang "${targetHouseTitle || targetHouseId}" (ID: ${targetHouseId}).`;
+
+        api.post('/users/messages', {
+            content: initialMessage,
+            recipientId: targetAdminId,
+            houseId: targetHouseId,
+            houseTitle: targetHouseTitle,
+        }).catch((err) => {
+            console.error('Failed to send initial contact message', err);
+        });
+    }, [user, targetAdminId, targetHouseId, targetHouseTitle]);
+
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !socket || !isConnected) return;
+        if (!newMessage.trim()) return;
 
-        // Send via WebSocket
-        sendMessage(newMessage.trim(), '');
-        
-        // Also save to database via REST API (for persistence)
         try {
-            await api.post('/users/messages', { content: newMessage.trim() });
+            await api.post('/users/messages', {
+                content: newMessage.trim(),
+                recipientId: targetAdminId,
+                houseId: targetHouseId,
+                houseTitle: targetHouseTitle,
+            });
+            setMessages((prev) => [
+                {
+                    id: `tmp-${Date.now()}`,
+                    content: newMessage.trim(),
+                    senderId: user?.id || '',
+                    senderRole: 'VIEWER',
+                    created_at: new Date().toISOString(),
+                },
+                ...prev,
+            ]);
         } catch (err) {
             console.error('Failed to save message', err);
         }
@@ -181,7 +215,7 @@ export default function ChatPage() {
                     />
                     <button
                         type="submit"
-                        disabled={!newMessage.trim() || !isConnected}
+                        disabled={!newMessage.trim()}
                         className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                     >
                         <Send className="w-5 h-5" />
@@ -189,5 +223,13 @@ export default function ChatPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function ChatPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-500">Loading chat...</div>}>
+            <ChatPageContent />
+        </Suspense>
     );
 }
