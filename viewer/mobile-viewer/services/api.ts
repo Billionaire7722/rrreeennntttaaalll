@@ -2,10 +2,19 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 
 const getApiUrl = () => {
-    if (Platform.OS === 'web') {
-        return "http://127.0.0.1:3000";
+    const explicit = process.env.EXPO_PUBLIC_API_BASE_URL?.trim().replace(/\/+$/, '');
+    if (explicit && !explicit.includes('yourdomain.com')) {
+        return explicit;
     }
-    // Change this to your local IP address for physical devices
+
+    if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined' && window.location?.hostname) {
+            return `${window.location.protocol}//${window.location.hostname}:3000`;
+        }
+        return "http://localhost:3000";
+    }
+
+    // Native dev fallback (update for your LAN if needed)
     return "http://192.168.100.129:3000";
 };
 

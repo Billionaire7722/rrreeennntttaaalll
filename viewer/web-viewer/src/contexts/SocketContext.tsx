@@ -18,6 +18,17 @@ const SocketContext = createContext<SocketContextType>({
 
 export const useSocket = () => useContext(SocketContext);
 
+const resolveSocketBaseUrl = () => {
+    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim().replace(/\/+$/, '');
+    if (envUrl && !envUrl.includes('yourdomain.com')) return envUrl;
+
+    if (typeof window !== 'undefined' && window.location?.hostname) {
+        return `${window.location.protocol}//${window.location.hostname}:3000`;
+    }
+
+    return 'http://localhost:3000';
+};
+
 export function SocketProvider({ children }: { children: ReactNode }) {
     const authContext = useContext(AuthContext);
     const token = authContext?.token;
@@ -34,7 +45,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        const socketInstance = io(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/messages`, {
+        const socketInstance = io(`${resolveSocketBaseUrl()}/messages`, {
             auth: { token },
             transports: ['websocket', 'polling'],
             reconnection: true,
