@@ -19,13 +19,26 @@ export class HousesService {
     }
 
     private async fetchCoordinatesFromAddress(address: string): Promise<{ lat: number, lon: number } | null> {
+        const normalized = String(address || '').trim();
+        if (!normalized) return null;
+        const candidateQueries = [normalized];
+        if (!/viet\s*nam/i.test(normalized)) {
+            candidateQueries.push(`${normalized}, Vietnam`);
+        }
+
         try {
-            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
-            const response = await fetch(url, { headers: { 'User-Agent': 'RentalAdminApp/1.0' } });
-            if (!response.ok) return null;
-            const data = await response.json();
-            if (data && data.length > 0) {
-                return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+            for (const query of candidateQueries) {
+                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+                const response = await fetch(url, { headers: { 'User-Agent': 'RentalAdminApp/1.0' } });
+                if (!response.ok) continue;
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+                        return { lat, lon };
+                    }
+                }
             }
         } catch (e) {
             console.error('Failed to fetch coords from Nominatim:', e);
