@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const messages_gateway_1 = require("./messages.gateway");
 const jwt_1 = require("@nestjs/jwt");
 const prisma_module_1 = require("../prisma/prisma.module");
+const security_config_1 = require("../config/security.config");
 let MessagesModule = class MessagesModule {
 };
 exports.MessagesModule = MessagesModule;
@@ -19,7 +20,7 @@ exports.MessagesModule = MessagesModule = __decorate([
         imports: [
             prisma_module_1.PrismaModule,
             jwt_1.JwtModule.register({
-                secret: process.env.JWT_SECRET || 'default-secret',
+                secret: (0, security_config_1.getJwtSecretOrThrow)(),
             }),
         ],
         providers: [messages_gateway_1.MessagesGateway],

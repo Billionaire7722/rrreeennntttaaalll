@@ -50,8 +50,8 @@ npm run dev
 ### Default Accounts
 | Role | Email | Password |
 |------|-------|----------|
-| Super Admin | ceo@rentalapp.com | Admin@123 |
-| Admin | admin@rental.com | Admin@123 |
+| Super Admin | set in your private env/seeding flow | set in your private env/seeding flow |
+| Admin | created by super-admin | set during admin creation |
 
 See `LOCAL_DEV.md` for more details.
 
@@ -326,7 +326,7 @@ git commit -m "your changes"
 git push origin main
 
 # VPS
-ssh root@103.200.22.111
+ssh root@<your-vps-ip>
 cd /root/rrreeennntttaaalll
 git pull origin main
 docker compose --env-file .env.production up -d --build

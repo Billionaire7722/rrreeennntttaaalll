@@ -57,8 +57,8 @@ npx prisma db seed
 
 | Role | Email | Password |
 |------|-------|----------|
-| Super Admin | ceo@rentalapp.com | Admin@123 |
-| Admin | admin@rental.com | Admin@123 |
+| Super Admin | seed via private env/script | set privately during seed |
+| Admin | create via super-admin flow | set privately during creation |
 
 ## 🐳 Docker Services
 
@@ -84,7 +84,7 @@ git commit -m "update"
 git push origin main
 
 # 2. On VPS:
-ssh root@103.200.22.111
+ssh root@<your-vps-ip>
 cd /root/rrreeennntttaaalll
 git pull origin main
 
