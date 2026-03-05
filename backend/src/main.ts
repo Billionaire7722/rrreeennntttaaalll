@@ -4,7 +4,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { getAllowedCorsOrigins, isProduction } from './config/security.config';
+import { getAllowedCorsOrigins } from './config/security.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -38,8 +38,8 @@ async function bootstrap() {
   // 3. Global Exception Filter
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // 4. Swagger API Documentation Setup (disabled by default in production)
-  if (!isProduction || process.env.ENABLE_SWAGGER === 'true') {
+  // 4. Swagger API Documentation Setup (explicit opt-in only)
+  if (process.env.ENABLE_SWAGGER === 'true') {
     const config = new DocumentBuilder()
       .setTitle('Rental Application API')
       .setDescription('The core backend API for the Rental platform. Provides property management and user data functionality.')
