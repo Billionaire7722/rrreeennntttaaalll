@@ -46,7 +46,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         <AuthAndSocketProvider>
-          <div className="flex flex-col min-h-screen w-full relative pb-[60px] bg-white">
+          <div className="flex flex-col min-h-screen w-full relative bg-white">
             {children}
             <BottomTabBar />
           </div>
