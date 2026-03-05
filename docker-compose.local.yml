@@ -49,6 +49,8 @@ services:
   web-viewer:
     build:
       target: builder # Retain devDependencies for NextJS
+      args:
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
     command: npm run dev # Next.js dev server
     volumes:
       - ./viewer/web-viewer:/app
@@ -56,6 +58,7 @@ services:
       - /app/.next
     environment:
       - NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+      - NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
 
   rental-admin:
     build:
