@@ -94,6 +94,21 @@ model User {
   favorites  Favorite[]
   messages   Message[]
   housePosts HouseAdmin[]
+  viewerAssignment ViewerAdminAssignment? @relation("ViewerAssignmentViewer")
+  assignedViewers  ViewerAdminAssignment[] @relation("ViewerAssignmentAdmin")
+}
+
+model ViewerAdminAssignment {
+  id         String   @id @default(uuid())
+  viewerId   String   @unique
+  adminId    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  viewer     User @relation("ViewerAssignmentViewer", fields: [viewerId], references: [id], onDelete: Cascade)
+  admin      User @relation("ViewerAssignmentAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
 }
 
 model HouseAdmin {

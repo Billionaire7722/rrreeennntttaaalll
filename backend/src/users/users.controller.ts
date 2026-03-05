@@ -44,8 +44,8 @@ export class UsersController {
 
     @Get('admin/messages')
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-    getViewerMessages(@Query('skip') skip?: number, @Query('take') take?: number) {
-        return this.usersService.getViewerMessages(skip, take);
+    getViewerMessages(@Request() req, @Query('skip') skip?: number, @Query('take') take?: number) {
+        return this.usersService.getViewerMessages(req.user.userId, req.user.role, skip, take);
     }
 
     @Post('admin/messages/:viewerId/reply')

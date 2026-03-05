@@ -194,6 +194,13 @@ export class MessagesGateway
         });
     }
 
+    async notifySuperAdmins(message: any) {
+        this.connectedClients.forEach((socket) => {
+            if (socket.user?.role !== Role.SUPER_ADMIN) return;
+            socket.emit('new_message', message);
+        });
+    }
+
     // Helper method to send message from REST API
     async sendMessageToUser(userId: string, message: any) {
         const userSocketSet = this.userSockets.get(userId);

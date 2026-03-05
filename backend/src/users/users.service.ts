@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -11,6 +11,30 @@ export class UsersService {
         private prisma: PrismaService,
         private messagesGateway: MessagesGateway,
     ) { }
+
+    private isAdminRole(role?: string) {
+        return role === Role.ADMIN || role === Role.SUPER_ADMIN;
+    }
+
+    private async getViewerAssignment(viewerId: string) {
+        return (this.prisma as any).viewerAdminAssignment.findUnique({
+            where: { viewerId },
+        });
+    }
+
+    private async assignViewerToAdmin(viewerId: string, adminId: string) {
+        const prismaAny = this.prisma as any;
+        const existing = await prismaAny.viewerAdminAssignment.findUnique({
+            where: { viewerId },
+        });
+        if (existing) return existing;
+        return prismaAny.viewerAdminAssignment.create({
+            data: {
+                viewerId,
+                adminId,
+            },
+        });
+    }
 
     async getFavorites(userId: string) {
         return this.prisma.favorite.findMany({
@@ -63,6 +87,30 @@ export class UsersService {
     }
 
     async sendMessage(userId: string, sendMessageDto: SendMessageDto) {
+        let targetAdminId: string | null = null;
+
+        if (sendMessageDto.recipientId) {
+            const recipient = await this.prisma.user.findUnique({
+                where: { id: sendMessageDto.recipientId },
+                select: { id: true, role: true, deleted_at: true },
+            });
+
+            if (!recipient || recipient.deleted_at || !this.isAdminRole(recipient.role as string)) {
+                throw new NotFoundException('Recipient admin not found');
+            }
+
+            const assignment = await this.getViewerAssignment(userId);
+            if (!assignment) {
+                await this.assignViewerToAdmin(userId, recipient.id);
+                targetAdminId = recipient.id;
+            } else {
+                targetAdminId = assignment.adminId;
+            }
+        } else {
+            const assignment = await this.getViewerAssignment(userId);
+            targetAdminId = assignment?.adminId || null;
+        }
+
         const message = await this.prisma.message.create({
             data: {
                 userId,
@@ -74,22 +122,32 @@ export class UsersService {
 
         const realtimePayload = {
             ...message,
-            recipientId: sendMessageDto.recipientId || null,
+            recipientId: targetAdminId,
             houseId: sendMessageDto.houseId || null,
             houseTitle: sendMessageDto.houseTitle || null,
         };
 
-        if (sendMessageDto.recipientId) {
-            await this.messagesGateway.notifyAdmins(realtimePayload, sendMessageDto.recipientId);
+        if (targetAdminId) {
+            await this.messagesGateway.notifyAdmins(realtimePayload, targetAdminId);
         } else {
-            await this.messagesGateway.notifyAdmins(realtimePayload);
+            await this.messagesGateway.notifySuperAdmins(realtimePayload);
         }
 
         return message;
     }
 
-    async getViewerMessages(skip = 0, take = 50) {
+    async getViewerMessages(adminId: string, adminRole: string, skip = 0, take = 50) {
+        const where: any = {};
+        if (adminRole === Role.ADMIN) {
+            where.user = {
+                viewerAssignment: {
+                    adminId,
+                },
+            };
+        }
+
         const messages = await this.prisma.message.findMany({
+            where,
             skip: Number(skip),
             take: Number(take),
             orderBy: { created_at: 'desc' },
@@ -111,6 +169,10 @@ export class UsersService {
     }
 
     async replyToViewer(adminId: string, adminRole: string, viewerId: string, sendMessageDto: SendMessageDto) {
+        if (!this.isAdminRole(adminRole)) {
+            throw new ForbiddenException('Only admins can reply to viewers');
+        }
+
         const viewer = await this.prisma.user.findUnique({
             where: { id: viewerId },
             select: { id: true, role: true, deleted_at: true },
@@ -118,6 +180,16 @@ export class UsersService {
 
         if (!viewer || viewer.deleted_at || viewer.role !== Role.VIEWER) {
             throw new NotFoundException('Viewer not found');
+        }
+
+        const assignment = await this.getViewerAssignment(viewerId);
+        if (adminRole === Role.ADMIN) {
+            if (assignment && assignment.adminId !== adminId) {
+                throw new ForbiddenException('This viewer is handled by another admin');
+            }
+            if (!assignment) {
+                await this.assignViewerToAdmin(viewerId, adminId);
+            }
         }
 
         const message = await this.prisma.message.create({
