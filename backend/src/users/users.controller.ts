@@ -36,6 +36,12 @@ export class UsersController {
         return this.usersService.getMessages(req.user.userId);
     }
 
+    @Post('messages/:adminId/seen')
+    @Roles(Role.VIEWER)
+    markViewerConversationSeen(@Request() req, @Param('adminId') adminId: string) {
+        return this.usersService.markViewerConversationSeen(req.user.userId, adminId);
+    }
+
     @Post('messages')
     @Roles(Role.VIEWER)
     sendMessage(@Request() req, @Body() sendMessageDto: SendMessageDto) {
@@ -56,6 +62,12 @@ export class UsersController {
         @Body() sendMessageDto: SendMessageDto
     ) {
         return this.usersService.replyToViewer(req.user.userId, req.user.role, viewerId, sendMessageDto);
+    }
+
+    @Post('admin/messages/:viewerId/seen')
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    markAdminConversationSeen(@Request() req, @Param('viewerId') viewerId: string) {
+        return this.usersService.markAdminConversationSeen(req.user.userId, req.user.role, viewerId);
     }
 
     @Post('avatar')

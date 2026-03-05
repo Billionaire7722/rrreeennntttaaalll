@@ -147,6 +147,16 @@ export default function MessagesScreen() {
     }
   };
 
+  useEffect(() => {
+    if (!token || !selectedViewerId) return;
+    fetch(`${API_BASE_URL}/users/admin/messages/${selectedViewerId}/seen`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).catch(() => { });
+  }, [selectedViewerId, token]);
+
   if (!user) {
     return (
       <View style={styles.center}>

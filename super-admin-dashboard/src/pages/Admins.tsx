@@ -198,8 +198,9 @@ export const Admins: React.FC = () => {
                             onChange={(e) => setMyPasswordForm((p) => ({ ...p, currentPassword: e.target.value }))}
                             style={{ paddingRight: '40px' }}
                         />
-                        <button type="button" onClick={() => setShowSuperAdminPwd(!showSuperAdminPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                        <button type="button" onClick={() => setShowSuperAdminPwd(!showSuperAdminPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             {showSuperAdminPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                            <span style={{ fontSize: '11px', fontWeight: 600 }}>{showSuperAdminPwd ? 'Hide' : 'Show'}</span>
                         </button>
                     </div>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -211,8 +212,9 @@ export const Admins: React.FC = () => {
                             onChange={(e) => setMyPasswordForm((p) => ({ ...p, newPassword: e.target.value }))}
                             style={{ paddingRight: '40px' }}
                         />
-                        <button type="button" onClick={() => setShowSuperAdminNewPwd(!showSuperAdminNewPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                        <button type="button" onClick={() => setShowSuperAdminNewPwd(!showSuperAdminNewPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             {showSuperAdminNewPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                            <span style={{ fontSize: '11px', fontWeight: 600 }}>{showSuperAdminNewPwd ? 'Hide' : 'Show'}</span>
                         </button>
                     </div>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -224,8 +226,9 @@ export const Admins: React.FC = () => {
                             onChange={(e) => setMyPasswordForm((p) => ({ ...p, confirmPassword: e.target.value }))}
                             style={{ paddingRight: '40px' }}
                         />
-                        <button type="button" onClick={() => setShowSuperAdminConfirmPwd(!showSuperAdminConfirmPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                        <button type="button" onClick={() => setShowSuperAdminConfirmPwd(!showSuperAdminConfirmPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             {showSuperAdminConfirmPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                            <span style={{ fontSize: '11px', fontWeight: 600 }}>{showSuperAdminConfirmPwd ? 'Hide' : 'Show'}</span>
                         </button>
                     </div>
                     <button className="btn btn-primary" type="submit" disabled={changingMyPassword}>
@@ -245,8 +248,9 @@ export const Admins: React.FC = () => {
                     <input className="input-field" placeholder="Phone (optional)" value={newAdmin.phone} onChange={(e) => setNewAdmin((p) => ({ ...p, phone: e.target.value }))} />
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                         <input className="input-field" type={showCreateAdminPwd ? "text" : "password"} placeholder="Password" value={newAdmin.password} onChange={(e) => setNewAdmin((p) => ({ ...p, password: e.target.value }))} style={{ paddingRight: '40px' }} />
-                        <button type="button" onClick={() => setShowCreateAdminPwd(!showCreateAdminPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                        <button type="button" onClick={() => setShowCreateAdminPwd(!showCreateAdminPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             {showCreateAdminPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                            <span style={{ fontSize: '11px', fontWeight: 600 }}>{showCreateAdminPwd ? 'Hide' : 'Show'}</span>
                         </button>
                     </div>
                     <button className="btn btn-primary" type="submit" disabled={creating}>
@@ -268,8 +272,9 @@ export const Admins: React.FC = () => {
                         <input className="input-field" placeholder="Phone (optional)" value={editAdmin.phone} onChange={(e) => setEditAdmin((p) => ({ ...p, phone: e.target.value }))} />
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                             <input className="input-field" type={showEditAdminPwd ? "text" : "password"} placeholder="New password (optional)" value={editAdmin.password} onChange={(e) => setEditAdmin((p) => ({ ...p, password: e.target.value }))} style={{ paddingRight: '40px' }} />
-                            <button type="button" onClick={() => setShowEditAdminPwd(!showEditAdminPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                            <button type="button" onClick={() => setShowEditAdminPwd(!showEditAdminPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 {showEditAdminPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                                <span style={{ fontSize: '11px', fontWeight: 600 }}>{showEditAdminPwd ? 'Hide' : 'Show'}</span>
                             </button>
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>

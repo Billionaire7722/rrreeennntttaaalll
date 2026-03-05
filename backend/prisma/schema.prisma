@@ -96,6 +96,7 @@ model User {
   housePosts HouseAdmin[]
   viewerAssignment ViewerAdminAssignment? @relation("ViewerAssignmentViewer")
   assignedViewers  ViewerAdminAssignment[] @relation("ViewerAssignmentAdmin")
+  adminConversations Message[] @relation("MessageAdmin")
 }
 
 model ViewerAdminAssignment {
@@ -139,10 +140,16 @@ model Favorite {
 model Message {
   id         String   @id @default(uuid())
   userId     String
+  adminId    String?
   senderId   String?
   senderRole Role     @default(VIEWER)
   content    String
   created_at DateTime @default(now())
+  seen_at    DateTime?
+  seen_by_role Role?
 
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin      User?    @relation("MessageAdmin", fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([adminId])
 }

@@ -26,6 +26,8 @@ export const Users: React.FC = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     // Form states
     const [formData, setFormData] = useState({
@@ -66,13 +68,17 @@ export const Users: React.FC = () => {
         }
     };
 
-    const handleDelete = async (userId: string) => {
-        if (!window.confirm('Are you absolutely sure you want to delete this user?')) return;
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
         try {
-            await api.delete(`/admin/admins/${userId}`);
+            await api.delete(`/admin/admins/${deleteTarget.id}`);
             fetchUsers();
+            setDeleteTarget(null);
         } catch (err: any) {
             alert(err.response?.data?.message || 'Action failed.');
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -196,7 +202,7 @@ export const Users: React.FC = () => {
                                                 {u.status === 'ACTIVE' ? <UserX size={16} /> : <UserCheck size={16} />}
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(u.id)}
+                                                onClick={() => setDeleteTarget(u)}
                                                 className="btn btn-danger"
                                                 title="Delete Viewer"
                                             >
@@ -262,8 +268,9 @@ export const Users: React.FC = () => {
                                 <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Password</label>
                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                     <input required type={showPassword ? "text" : "password"} placeholder="Minimum 8 chars" className="input-field" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} style={{ paddingRight: '40px' }} />
-                                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        <span style={{ fontSize: '11px', fontWeight: 600 }}>{showPassword ? 'Hide' : 'Show'}</span>
                                     </button>
                                 </div>
                             </div>
@@ -307,8 +314,9 @@ export const Users: React.FC = () => {
                                 <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>New Password (leave blank to keep current)</label>
                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                     <input type={showPassword ? "text" : "password"} placeholder="Enter new password" className="input-field" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} style={{ paddingRight: '40px' }} />
-                                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        <span style={{ fontSize: '11px', fontWeight: 600 }}>{showPassword ? 'Hide' : 'Show'}</span>
                                     </button>
                                 </div>
                             </div>
@@ -317,6 +325,40 @@ export const Users: React.FC = () => {
                                 <button type="submit" className="btn btn-primary">Save Changes</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {deleteTarget && (
+                <div className="modal-overlay" onClick={() => !deleting && setDeleteTarget(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Confirm Viewer Deletion</h3>
+                            <button className="modal-close" onClick={() => !deleting && setDeleteTarget(null)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <p style={{ margin: 0, color: '#334155' }}>
+                                You are about to soft-delete this viewer:
+                            </p>
+                            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 12px' }}>
+                                <div style={{ fontWeight: 700, color: '#0f172a' }}>{deleteTarget.name}</div>
+                                <div style={{ fontSize: '0.85rem', color: '#475569' }}>@{deleteTarget.username}</div>
+                                <div style={{ fontSize: '0.85rem', color: '#475569' }}>{deleteTarget.email}</div>
+                            </div>
+                            <p style={{ margin: 0, color: '#991b1b', fontSize: '0.9rem', fontWeight: 600 }}>
+                                This action can hide the account from normal operations.
+                            </p>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                <button type="button" className="btn btn-outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+                                    Cancel
+                                </button>
+                                <button type="button" className="btn btn-danger" onClick={confirmDelete} disabled={deleting}>
+                                    {deleting ? 'Deleting...' : 'Delete Viewer'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

@@ -82,7 +82,17 @@ export class UsersService {
     async getMessages(userId: string) {
         return this.prisma.message.findMany({
             where: { userId },
-            orderBy: { created_at: 'desc' }
+            orderBy: { created_at: 'desc' },
+            include: {
+                admin: {
+                    select: {
+                        id: true,
+                        name: true,
+                        username: true,
+                        avatarUrl: true,
+                    },
+                },
+            },
         });
     }
 
@@ -114,6 +124,7 @@ export class UsersService {
         const message = await this.prisma.message.create({
             data: {
                 userId,
+                adminId: targetAdminId,
                 senderId: userId,
                 senderRole: Role.VIEWER,
                 content: sendMessageDto.content
@@ -162,6 +173,14 @@ export class UsersService {
                         role: true,
                     },
                 },
+                admin: {
+                    select: {
+                        id: true,
+                        name: true,
+                        username: true,
+                        avatarUrl: true,
+                    },
+                },
             },
         });
 
@@ -195,6 +214,7 @@ export class UsersService {
         const message = await this.prisma.message.create({
             data: {
                 userId: viewerId,
+                adminId: adminId,
                 senderId: adminId,
                 senderRole: adminRole as Role,
                 content: sendMessageDto.content,
@@ -204,6 +224,61 @@ export class UsersService {
         await this.messagesGateway.sendMessageToUser(viewerId, message);
 
         return message;
+    }
+
+    async markViewerConversationSeen(viewerId: string, adminId: string) {
+        const assignment = await this.getViewerAssignment(viewerId);
+        if (!assignment || assignment.adminId !== adminId) {
+            throw new ForbiddenException('This conversation is not available for this viewer');
+        }
+
+        const result = await this.prisma.message.updateMany({
+            where: {
+                userId: viewerId,
+                adminId,
+                senderRole: { in: [Role.ADMIN, Role.SUPER_ADMIN] },
+                seen_at: null,
+            },
+            data: {
+                seen_at: new Date(),
+                seen_by_role: Role.VIEWER,
+            },
+        });
+
+        return { updated: result.count };
+    }
+
+    async markAdminConversationSeen(adminId: string, adminRole: string, viewerId: string) {
+        if (!this.isAdminRole(adminRole)) {
+            throw new ForbiddenException('Only admins can mark messages as seen');
+        }
+
+        const assignment = await this.getViewerAssignment(viewerId);
+        if (adminRole === Role.ADMIN) {
+            if (!assignment || assignment.adminId !== adminId) {
+                throw new ForbiddenException('This viewer is handled by another admin');
+            }
+        }
+
+        const where: any = {
+            userId: viewerId,
+            senderRole: Role.VIEWER,
+            seen_at: null,
+        };
+
+        if (adminRole === Role.ADMIN) {
+            where.adminId = adminId;
+        }
+
+        const result = await this.prisma.message.updateMany({
+            where,
+            data: {
+                seen_at: new Date(),
+                seen_by_role: adminRole as Role,
+            },
+        });
+
+        return { updated: result.count };
     }
 
     async getProfile(userId: string) {

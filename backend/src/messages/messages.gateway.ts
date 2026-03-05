@@ -105,6 +105,10 @@ export class MessagesGateway
         const message = await this.prisma.message.create({
             data: {
                 userId: client.user.role === Role.VIEWER ? client.user.userId : (recipientId || client.user.userId),
+                adminId:
+                    client.user.role === Role.VIEWER
+                        ? (recipientId || null)
+                        : client.user.userId,
                 senderId: client.user.userId,
                 senderRole: client.user.role as Role,
                 content,
