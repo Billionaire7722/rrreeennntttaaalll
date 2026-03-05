@@ -150,6 +150,8 @@ export default React.memo(function AddPropertyModal({
       await onAdd({
         title: title.trim(),
         address: addressString,
+        district: selectedDistrictName || undefined,
+        city: cityName || undefined,
         price: parsedPrice,
         bedrooms: parsedBedrooms,
         area: isNaN(parsedArea) ? undefined : parsedArea,
@@ -157,8 +159,8 @@ export default React.memo(function AddPropertyModal({
         contact_phone: contactPhone || undefined,
         hasPrivateBathroom: true,
         status: "available" as PropertyStatus,
-        latitude: 0,
-        longitude: 0,
+        latitude: undefined,
+        longitude: undefined,
         images: finalImages,
       } as any);
       Alert.alert("Thành công", "Đã thêm nhà mới.");

@@ -204,6 +204,8 @@ export default React.memo(function EditPropertyModal({
         const updated: Partial<Property> = {
             title: title.trim(),
             address: addressString || property.address,
+            district: selectedDistrictName || property.district,
+            city: cityName || property.city,
             price: parsedPrice,
             bedrooms: isNaN(parsedBedrooms) ? property.bedrooms : parsedBedrooms,
             images: images.length > 0 ? images : property.images,

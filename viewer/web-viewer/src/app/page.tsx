@@ -62,8 +62,9 @@ export default function HomePage() {
       const formatted = rawData.map((h: any) => ({
         id: h.id,
         title: h.name,
-        address: `${h.district ? `${h.district}, ` : ''}${h.city || ''}`,
+        address: h.address || `${h.district ? `${h.district}, ` : ''}${h.city || ''}`,
         city: h.city,
+        district: h.district,
         latitude: h.latitude,
         longitude: h.longitude,
         price: h.price,

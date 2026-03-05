@@ -180,8 +180,6 @@ export class AuthService {
     }
 
     async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string) {
-        await this.verifyCaptchaToken(loginDto.captchaToken);
-
         const user = await this.prisma.user.findFirst({
             where: {
                 OR: [
@@ -194,6 +192,11 @@ export class AuthService {
         if (!user) {
             await this.logLoginAttempt(null, null, false, ipAddress, userAgent);
             throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+        }
+
+        // Keep captcha for public viewer auth; skip it for admin/super-admin panels.
+        if (user.role === Role.VIEWER) {
+            await this.verifyCaptchaToken(loginDto.captchaToken);
         }
 
         // Check if account is suspended
@@ -281,3 +284,4 @@ export class AuthService {
         };
     }
 }
+

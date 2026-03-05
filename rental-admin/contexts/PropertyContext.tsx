@@ -57,6 +57,8 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
           id: h.id,
           title: h.name,
           address: `${h.district && h.city && !h.address.includes(h.city) ? h.district + ', ' : ''}${h.address}`,
+          city: h.city || '',
+          district: h.district || '',
           latitude: h.latitude,
           longitude: h.longitude,
           price: h.price,
@@ -92,6 +94,8 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
           body: JSON.stringify({
             name: property.title,
             address: property.address,
+            city: (property as any).city ?? null,
+            district: (property as any).district ?? null,
             latitude: property.latitude,
             longitude: property.longitude,
             price: property.price,
@@ -121,6 +125,8 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
           id: newBackendHouse.id,
           title: newBackendHouse.name,
           address: `${newBackendHouse.district && newBackendHouse.city && !newBackendHouse.address.includes(newBackendHouse.city) ? newBackendHouse.district + ', ' : ''}${newBackendHouse.address}`,
+          city: newBackendHouse.city || '',
+          district: newBackendHouse.district || '',
           latitude: newBackendHouse.latitude,
           longitude: newBackendHouse.longitude,
           price: newBackendHouse.price,
@@ -185,6 +191,8 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
         const body: Record<string, any> = {};
         if (updated.title !== undefined) body.name = updated.title;
         if (updated.address !== undefined) body.address = updated.address;
+        if ((updated as any).city !== undefined) body.city = (updated as any).city;
+        if ((updated as any).district !== undefined) body.district = (updated as any).district;
         if (updated.price !== undefined) body.price = updated.price;
         if (updated.bedrooms !== undefined) body.bedrooms = updated.bedrooms;
         if ((updated as any).area !== undefined) body.square = (updated as any).area;

@@ -119,6 +119,7 @@ export default function InteractiveMap({ properties, center = [21.0285, 105.8542
                     const lng = Number(property.longitude);
 
                     if (isNaN(lat) || isNaN(lng)) return null;
+                    if (lat === 0 && lng === 0) return null;
 
                     const isAvailable = property.status?.toLowerCase() === 'available';
                     const statusColor = isAvailable ? 'bg-emerald-500' : 'bg-red-500';
