@@ -14,6 +14,7 @@ export interface Property {
   bedrooms: number;
   hasPrivateBathroom: boolean;
   status: PropertyStatus;
+  contact_phone?: string;
   latitude: number;
   longitude: number;
   images: string[];

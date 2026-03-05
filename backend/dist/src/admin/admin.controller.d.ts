@@ -132,6 +132,7 @@ export declare class AdminController {
         image_url_8: string | null;
         description: string | null;
         is_private_bathroom: boolean;
+        contact_phone: string | null;
     }>;
     getAuditLogs(skip?: number, take?: number, adminId?: string, actionType?: string, startDate?: string, endDate?: string): Promise<{
         items: {

@@ -22,18 +22,48 @@ const roles_decorator_1 = require("../security/roles.decorator");
 const roles_enum_1 = require("../security/roles.enum");
 const common_3 = require("@nestjs/common");
 const audit_interceptor_1 = require("../audit/audit.interceptor");
+const jwt_1 = require("@nestjs/jwt");
 let HousesController = class HousesController {
     housesService;
-    constructor(housesService) {
+    jwtService;
+    constructor(housesService, jwtService) {
         this.housesService = housesService;
+        this.jwtService = jwtService;
     }
-    async getHouses(skip, take) {
+    getUserRoleFromRequest(req) {
+        try {
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                const token = authHeader.split(' ')[1];
+                const decoded = this.jwtService.decode(token);
+                return decoded?.role || null;
+            }
+        }
+        catch (e) {
+        }
+        return null;
+    }
+    async getHouses(skip, take, req) {
         const skipNum = skip ? parseInt(skip, 10) : 0;
         const takeNum = take ? parseInt(take, 10) : 10;
-        return this.housesService.getHouses(Number.isNaN(skipNum) ? 0 : skipNum, Number.isNaN(takeNum) ? 10 : takeNum);
+        const role = this.getUserRoleFromRequest(req);
+        const isAdmin = role === roles_enum_1.Role.ADMIN || role === roles_enum_1.Role.SUPER_ADMIN;
+        const result = await this.housesService.getHouses(Number.isNaN(skipNum) ? 0 : skipNum, Number.isNaN(takeNum) ? 10 : takeNum);
+        if (!isAdmin && result && result.data) {
+            result.data.forEach((h) => delete h.contact_phone);
+        }
+        return result;
     }
-    async getHouseById(id) {
-        return this.housesService.getHouseById(id);
+    async getHouseById(id, req) {
+        const house = await this.housesService.getHouseById(id);
+        if (house) {
+            const role = this.getUserRoleFromRequest(req);
+            const isAdmin = role === roles_enum_1.Role.ADMIN || role === roles_enum_1.Role.SUPER_ADMIN;
+            if (!isAdmin) {
+                delete house.contact_phone;
+            }
+        }
+        return house;
     }
     async createHouse(data, req) {
         return this.housesService.createHouse(data, req.user?.userId, req.user?.role);
@@ -53,15 +83,17 @@ __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)('skip')),
     __param(1, (0, common_1.Query)('take')),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], HousesController.prototype, "getHouses", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], HousesController.prototype, "getHouseById", null);
 __decorate([
@@ -107,6 +139,7 @@ __decorate([
 exports.HousesController = HousesController = __decorate([
     (0, common_1.Controller)('houses'),
     (0, common_3.UseInterceptors)(audit_interceptor_1.AuditInterceptor),
-    __metadata("design:paramtypes", [houses_service_1.HousesService])
+    __metadata("design:paramtypes", [houses_service_1.HousesService,
+        jwt_1.JwtService])
 ], HousesController);
 //# sourceMappingURL=houses.controller.js.map

@@ -42,3 +42,20 @@ body {
   display: none;
   /* Hide the little triangle pointer for a cleaner look */
 }
+
+/* Cloudflare Turnstile responsive container */
+.turnstile-widget {
+  display: flex;
+  justify-content: center;
+}
+
+.turnstile-widget > div {
+  max-width: 100%;
+}
+
+@media (max-width: 380px) {
+  .turnstile-widget {
+    transform: scale(0.92);
+    transform-origin: center;
+  }
+}

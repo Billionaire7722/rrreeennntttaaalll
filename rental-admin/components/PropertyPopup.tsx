@@ -209,6 +209,12 @@ export default React.memo(function PropertyPopup({
                 </Text>
               ) : null}
 
+              {property.contact_phone ? (
+                <Text style={styles.contactPhone} numberOfLines={1}>
+                  Liên hệ: {property.contact_phone}
+                </Text>
+              ) : null}
+
               <Pressable
                 style={styles.detailBtn}
                 onPress={() => onViewDetails?.(property)}
@@ -342,6 +348,13 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 13,
     color: Colors.light.textSecondary,
+    marginTop: 8,
+    lineHeight: 18,
+  },
+  contactPhone: {
+    fontSize: 13,
+    fontWeight: "600" as const,
+    color: Colors.primary,
     marginTop: 8,
     lineHeight: 18,
   },

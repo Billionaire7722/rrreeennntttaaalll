@@ -14,7 +14,7 @@ export type FilterOptions = {
   minBedrooms: number | null;
   minArea: number | null;
   maxArea: number | null;
-  bathroomType: "khÃ©p kÃ­n" | "chung" | null;
+  bathroomType: "khép kín" | "chung" | null;
   status: PropertyStatus | null;
 };
 
@@ -63,6 +63,7 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
           bedrooms: h.bedrooms,
           area: h.square,
           description: h.description,
+          contact_phone: h.contact_phone,
           hasPrivateBathroom: h.is_private_bathroom,
           status: h.status || "available",
           images: [h.image_url_1, h.image_url_2, h.image_url_3].filter(Boolean),
@@ -97,6 +98,7 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
             bedrooms: property.bedrooms,
             square: property.area,
             description: property.description,
+            contact_phone: property.contact_phone,
             is_private_bathroom: property.hasPrivateBathroom,
             status: property.status,
             image_url_1: property.images && property.images.length > 0 ? property.images[0] : null,
@@ -189,6 +191,7 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
         if ((updated as any).description !== undefined) body.description = (updated as any).description;
         if (updated.latitude !== undefined) body.latitude = updated.latitude;
         if (updated.longitude !== undefined) body.longitude = updated.longitude;
+        if (updated.contact_phone !== undefined) body.contact_phone = updated.contact_phone;
         if (updated.images) {
           body.image_url_1 = updated.images[0] || null;
           body.image_url_2 = updated.images[1] || null;
@@ -236,7 +239,7 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
     if (filters.maxArea !== null) result = result.filter((p) => (p.area || 0) <= filters.maxArea!);
 
     if (filters.bathroomType !== null) {
-      const wantsPrivate = filters.bathroomType === "khÃ©p kÃ­n";
+      const wantsPrivate = filters.bathroomType === "khép kín";
       result = result.filter((p) => p.hasPrivateBathroom === wantsPrivate);
     }
     if (filters.status !== null) result = result.filter((p) => p.status === filters.status);

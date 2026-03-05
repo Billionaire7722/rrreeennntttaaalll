@@ -57,4 +57,10 @@ export class UsersController {
     ) {
         return this.usersService.replyToViewer(req.user.userId, req.user.role, viewerId, sendMessageDto);
     }
+
+    @Post('avatar')
+    @Roles(Role.VIEWER)
+    updateAvatar(@Request() req, @Body() body: { url: string }) {
+        return this.usersService.updateAvatar(req.user.userId, body.url);
+    }
 }

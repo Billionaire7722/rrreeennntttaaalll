@@ -69,8 +69,8 @@ export default React.memo(function AddPropertyModal({
   const [bedrooms, setBedrooms] = useState("1");
   const [area, setArea] = useState("");
   const [description, setDescription] = useState("");
-  const [latitude, setLatitude] = useState("21.0285");
-  const [longitude, setLongitude] = useState("105.8542");
+  const [specificAddress, setSpecificAddress] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -84,8 +84,8 @@ export default React.memo(function AddPropertyModal({
     setBedrooms("1");
     setArea("");
     setDescription("");
-    setLatitude("21.0285");
-    setLongitude("105.8542");
+    setSpecificAddress("");
+    setContactPhone("");
     setImages([]);
     setVideos([]);
   }, [provinces]);
@@ -93,12 +93,6 @@ export default React.memo(function AddPropertyModal({
   const handleAdd = useCallback(async () => {
     if (!title.trim() || !price.trim()) {
       Alert.alert("Thiếu thông tin", "Vui lòng điền đầy đủ tiêu đề và giá.");
-      return;
-    }
-    const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
-    if (isNaN(lat) || isNaN(lng)) {
-      Alert.alert("Lỗi tọa độ", "Vui lòng nhập tọa độ hợp lệ.");
       return;
     }
     const parsedPrice = parseInt(price, 10);
@@ -119,7 +113,7 @@ export default React.memo(function AddPropertyModal({
     }
 
     const cityName = provinces.find((p) => p.value === selectedCityCode)?.label || "";
-    const addressString = [selectedDistrictName, cityName].filter(Boolean).join(", ");
+    const addressString = [specificAddress.trim(), selectedDistrictName, cityName].filter(Boolean).join(", ");
 
     // If no images were uploaded, use defaultimage.jpg from assets
     let finalImages = images;
@@ -160,10 +154,11 @@ export default React.memo(function AddPropertyModal({
         bedrooms: parsedBedrooms,
         area: isNaN(parsedArea) ? undefined : parsedArea,
         description: description.trim(),
+        contact_phone: contactPhone || undefined,
         hasPrivateBathroom: true,
         status: "available" as PropertyStatus,
-        latitude: lat,
-        longitude: lng,
+        latitude: 0,
+        longitude: 0,
         images: finalImages,
       } as any);
       Alert.alert("Thành công", "Đã thêm nhà mới.");
@@ -175,7 +170,7 @@ export default React.memo(function AddPropertyModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [title, price, bedrooms, area, description, latitude, longitude, images, selectedCityCode, selectedDistrictName, provinces, onAdd, onClose, resetForm]);
+  }, [title, price, bedrooms, area, description, specificAddress, contactPhone, images, selectedCityCode, selectedDistrictName, provinces, onAdd, onClose, resetForm]);
 
   /**
    * Platform-aware FormData builder.
@@ -348,6 +343,15 @@ export default React.memo(function AddPropertyModal({
                 </View>
               </View>
 
+              <Text style={styles.label}>Địa chỉ cụ thể (Số nhà, đường...)</Text>
+              <TextInput
+                style={styles.input}
+                value={specificAddress}
+                onChangeText={setSpecificAddress}
+                placeholder="VD: Số 1 ngõ 2 Nguyễn Trãi"
+                placeholderTextColor="#9CA3AF"
+              />
+
               <View style={styles.row}>
                 <View style={styles.halfField}>
                   <Text style={styles.label}>Giá (VNĐ) *</Text>
@@ -383,28 +387,6 @@ export default React.memo(function AddPropertyModal({
                     placeholder="VD: 45"
                     placeholderTextColor="#9CA3AF"
                     keyboardType="numeric"
-                  />
-                </View>
-                <View style={styles.halfField}>
-                  <Text style={styles.label}>Vĩ độ</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={latitude}
-                    onChangeText={setLatitude}
-                    placeholder="VD: 21.0285"
-                    placeholderTextColor="#9CA3AF"
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-                <View style={styles.halfField}>
-                  <Text style={styles.label}>Kinh độ</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={longitude}
-                    onChangeText={setLongitude}
-                    placeholder="VD: 105.8542"
-                    placeholderTextColor="#9CA3AF"
-                    keyboardType="decimal-pad"
                   />
                 </View>
               </View>

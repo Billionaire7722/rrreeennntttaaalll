@@ -101,6 +101,7 @@ export declare class AdminService {
         image_url_8: string | null;
         description: string | null;
         is_private_bathroom: boolean;
+        contact_phone: string | null;
     }>;
     getLoginLogs(skip?: number, take?: number, status?: string): Promise<{
         items: {

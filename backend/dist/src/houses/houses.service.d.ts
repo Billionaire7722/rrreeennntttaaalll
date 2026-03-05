@@ -4,6 +4,7 @@ export declare class HousesService {
     constructor(prisma: PrismaService);
     private isAdminRole;
     private formatPostedByAdmins;
+    private fetchCoordinatesFromAddress;
     private attachPoster;
     getHouses(skip?: number, take?: number): Promise<{
         data: any;
@@ -44,6 +45,7 @@ export declare class HousesService {
         image_url_8: string | null;
         description: string | null;
         is_private_bathroom: boolean;
+        contact_phone: string | null;
     }>;
     removeHouse(id: string): Promise<{
         id: string;
@@ -72,5 +74,6 @@ export declare class HousesService {
         image_url_8: string | null;
         description: string | null;
         is_private_bathroom: boolean;
+        contact_phone: string | null;
     }>;
 }

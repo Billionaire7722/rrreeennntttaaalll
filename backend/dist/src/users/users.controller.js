@@ -47,6 +47,9 @@ let UsersController = class UsersController {
     replyToViewer(req, viewerId, sendMessageDto) {
         return this.usersService.replyToViewer(req.user.userId, req.user.role, viewerId, sendMessageDto);
     }
+    updateAvatar(req, body) {
+        return this.usersService.updateAvatar(req.user.userId, body.url);
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -110,6 +113,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, send_message_dto_1.SendMessageDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "replyToViewer", null);
+__decorate([
+    (0, common_1.Post)('avatar'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "updateAvatar", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

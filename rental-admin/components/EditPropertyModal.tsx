@@ -49,8 +49,8 @@ export default React.memo(function EditPropertyModal({
     const [bedrooms, setBedrooms] = useState("1");
     const [area, setArea] = useState("");
     const [description, setDescription] = useState("");
-    const [latitude, setLatitude] = useState("21.0285");
-    const [longitude, setLongitude] = useState("105.8542");
+    const [contactPhone, setContactPhone] = useState("");
+    const [specificAddress, setSpecificAddress] = useState("");
     const [images, setImages] = useState<string[]>([]);
     const [selectedCityCode, setSelectedCityCode] = useState(provinces[0]?.value || "");
     const [selectedDistrictName, setSelectedDistrictName] = useState("");
@@ -71,10 +71,23 @@ export default React.memo(function EditPropertyModal({
             setTitle(property.title || "");
             setPrice(String(property.price || ""));
             setBedrooms(String(property.bedrooms || 1));
-            setArea(String((property as any).area || ""));
-            setDescription((property as any).description || "");
-            setLatitude(String(property.latitude || "21.0285"));
-            setLongitude(String(property.longitude || "105.8542"));
+            setArea(property.area?.toString() || "");
+            setDescription(property.description || "");
+            setContactPhone((property as Record<string, any>).contact_phone || "");
+
+            // Attempt to determine city and district based on address stringmat
+            // Assumes backend address is "specific, district, city" or similar
+            const parts = (property.address || "").split(",").map(s => s.trim());
+            if (parts.length > 2) {
+                setSpecificAddress(parts.slice(0, parts.length - 2).join(", "));
+            } else if (parts.length === 2 && !provinces.some(p => p.label === parts[1])) {
+                setSpecificAddress(parts[0]);
+            } else if (parts.length === 1 && !provinces.some(p => p.label === parts[0])) {
+                setSpecificAddress(parts[0]);
+            } else {
+                setSpecificAddress("");
+            }
+
             setImages(property.images || []);
         }
     }, [property]);
@@ -184,7 +197,7 @@ export default React.memo(function EditPropertyModal({
 
         const cityName =
             provinces.find((p) => p.value === selectedCityCode)?.label || "";
-        const addressString = [selectedDistrictName, cityName]
+        const addressString = [specificAddress.trim(), selectedDistrictName, cityName]
             .filter(Boolean)
             .join(", ");
 
@@ -195,13 +208,14 @@ export default React.memo(function EditPropertyModal({
             bedrooms: isNaN(parsedBedrooms) ? property.bedrooms : parsedBedrooms,
             images: images.length > 0 ? images : property.images,
             ...(description && { description } as any),
+            ...(contactPhone && { contact_phone: contactPhone } as any),
             ...(area && { area: parseInt(area, 10) } as any),
             ...(videoUrl && { videoUrl } as any),
         };
 
         onSave(property.id, updated);
         onClose();
-    }, [property, title, price, bedrooms, area, description, images, videoUrl, selectedCityCode, selectedDistrictName, provinces]);
+    }, [property, title, price, bedrooms, area, description, contactPhone, specificAddress, images, videoUrl, selectedCityCode, selectedDistrictName, provinces]);
 
     if (!property) return null;
 
@@ -290,25 +304,26 @@ export default React.memo(function EditPropertyModal({
                                         placeholder="Tìm phường/xã..."
                                     />
                                 </View>
-                                <View style={styles.halfField}>
-                                    <Text style={styles.label}>Vĩ độ</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        value={latitude}
-                                        onChangeText={setLatitude}
-                                        keyboardType="decimal-pad"
-                                    />
-                                </View>
-                                <View style={styles.halfField}>
-                                    <Text style={styles.label}>Kinh độ</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        value={longitude}
-                                        onChangeText={setLongitude}
-                                        keyboardType="decimal-pad"
-                                    />
-                                </View>
                             </View>
+
+                            <Text style={styles.label}>Địa chỉ cụ thể (Số nhà, đường...)</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={specificAddress}
+                                onChangeText={setSpecificAddress}
+                                placeholder="VD: Số 1 ngõ 2 Nguyễn Trãi"
+                                placeholderTextColor="#9CA3AF"
+                            />
+
+                            <Text style={styles.label}>Số điện thoại liên hệ</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={contactPhone}
+                                onChangeText={setContactPhone}
+                                placeholder="Nhập số điện thoại"
+                                keyboardType="numeric"
+                                placeholderTextColor="#9CA3AF"
+                            />
 
                             <Text style={styles.label}>Mô tả</Text>
                             <TextInput

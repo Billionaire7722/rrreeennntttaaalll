@@ -56,9 +56,43 @@ let AuthService = class AuthService {
     jwtService;
     MAX_LOGIN_ATTEMPTS = 5;
     LOCK_DURATION_MINUTES = 15;
+    TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
     constructor(prisma, jwtService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
+    }
+    async verifyCaptchaToken(captchaToken) {
+        if (process.env.NODE_ENV === 'development') {
+            return;
+        }
+        const secretKey = process.env.TURNSTILE_SECRET_KEY;
+        if (!secretKey || !captchaToken) {
+            throw new common_1.BadRequestException('Captcha verification failed');
+        }
+        const formBody = new URLSearchParams({
+            secret: secretKey,
+            response: captchaToken,
+        });
+        let verificationResponse;
+        try {
+            verificationResponse = await fetch(this.TURNSTILE_VERIFY_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formBody,
+            });
+        }
+        catch {
+            throw new common_1.BadRequestException('Captcha verification failed');
+        }
+        if (!verificationResponse.ok) {
+            throw new common_1.BadRequestException('Captcha verification failed');
+        }
+        const verificationResult = await verificationResponse.json();
+        if (!verificationResult.success) {
+            throw new common_1.BadRequestException('Captcha verification failed');
+        }
     }
     validatePassword(password) {
         const errors = [];
@@ -102,6 +136,7 @@ let AuthService = class AuthService {
         return null;
     }
     async register(registerDto, ipAddress, userAgent) {
+        await this.verifyCaptchaToken(registerDto.captchaToken);
         const passwordErrors = this.validatePassword(registerDto.password);
         if (passwordErrors.length > 0) {
             throw new common_1.BadRequestException({
@@ -145,6 +180,7 @@ let AuthService = class AuthService {
         return failedAttempts;
     }
     async login(loginDto, ipAddress, userAgent) {
+        await this.verifyCaptchaToken(loginDto.captchaToken);
         const user = await this.prisma.user.findFirst({
             where: {
                 OR: [

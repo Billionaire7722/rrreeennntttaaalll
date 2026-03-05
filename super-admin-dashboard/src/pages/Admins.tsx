@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ShieldX, ShieldCheck, Trash2, ArrowDownCircle, UserPlus, Pencil } from 'lucide-react';
+import { ShieldX, ShieldCheck, Trash2, ArrowDownCircle, UserPlus, Pencil, Eye, EyeOff } from 'lucide-react';
 import api from '../api/axios';
 import css from './Table.module.css';
 
@@ -43,6 +43,13 @@ export const Admins: React.FC = () => {
         phone: '',
         password: '',
     });
+
+    // Password visibility states
+    const [showSuperAdminPwd, setShowSuperAdminPwd] = useState(false);
+    const [showSuperAdminNewPwd, setShowSuperAdminNewPwd] = useState(false);
+    const [showSuperAdminConfirmPwd, setShowSuperAdminConfirmPwd] = useState(false);
+    const [showCreateAdminPwd, setShowCreateAdminPwd] = useState(false);
+    const [showEditAdminPwd, setShowEditAdminPwd] = useState(false);
 
     const fetchAdmins = async () => {
         setLoading(true);
@@ -116,9 +123,9 @@ export const Admins: React.FC = () => {
     const openEdit = (admin: Admin) => {
         setEditingAdminId(admin.id);
         setEditAdmin({
-            name: admin.name || '',
-            username: admin.username || '',
-            email: admin.email || '',
+            name: admin.name,
+            username: admin.username,
+            email: admin.email,
             phone: admin.phone || '',
             password: '',
         });
@@ -182,27 +189,45 @@ export const Admins: React.FC = () => {
                     <h2>Super Admin Password</h2>
                 </div>
                 <form onSubmit={handleChangeMyPassword} style={{ padding: '16px 24px', display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-                    <input
-                        className="input-field"
-                        type="password"
-                        placeholder="Current password"
-                        value={myPasswordForm.currentPassword}
-                        onChange={(e) => setMyPasswordForm((p) => ({ ...p, currentPassword: e.target.value }))}
-                    />
-                    <input
-                        className="input-field"
-                        type="password"
-                        placeholder="New password"
-                        value={myPasswordForm.newPassword}
-                        onChange={(e) => setMyPasswordForm((p) => ({ ...p, newPassword: e.target.value }))}
-                    />
-                    <input
-                        className="input-field"
-                        type="password"
-                        placeholder="Confirm new password"
-                        value={myPasswordForm.confirmPassword}
-                        onChange={(e) => setMyPasswordForm((p) => ({ ...p, confirmPassword: e.target.value }))}
-                    />
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input
+                            className="input-field"
+                            type={showSuperAdminPwd ? "text" : "password"}
+                            placeholder="Current password"
+                            value={myPasswordForm.currentPassword}
+                            onChange={(e) => setMyPasswordForm((p) => ({ ...p, currentPassword: e.target.value }))}
+                            style={{ paddingRight: '40px' }}
+                        />
+                        <button type="button" onClick={() => setShowSuperAdminPwd(!showSuperAdminPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                            {showSuperAdminPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input
+                            className="input-field"
+                            type={showSuperAdminNewPwd ? "text" : "password"}
+                            placeholder="New password"
+                            value={myPasswordForm.newPassword}
+                            onChange={(e) => setMyPasswordForm((p) => ({ ...p, newPassword: e.target.value }))}
+                            style={{ paddingRight: '40px' }}
+                        />
+                        <button type="button" onClick={() => setShowSuperAdminNewPwd(!showSuperAdminNewPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                            {showSuperAdminNewPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input
+                            className="input-field"
+                            type={showSuperAdminConfirmPwd ? "text" : "password"}
+                            placeholder="Confirm new password"
+                            value={myPasswordForm.confirmPassword}
+                            onChange={(e) => setMyPasswordForm((p) => ({ ...p, confirmPassword: e.target.value }))}
+                            style={{ paddingRight: '40px' }}
+                        />
+                        <button type="button" onClick={() => setShowSuperAdminConfirmPwd(!showSuperAdminConfirmPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                            {showSuperAdminConfirmPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
                     <button className="btn btn-primary" type="submit" disabled={changingMyPassword}>
                         {changingMyPassword ? 'Updating...' : 'Change Password'}
                     </button>
@@ -218,7 +243,12 @@ export const Admins: React.FC = () => {
                     <input className="input-field" placeholder="Username" value={newAdmin.username} onChange={(e) => setNewAdmin((p) => ({ ...p, username: e.target.value }))} />
                     <input className="input-field" placeholder="Email" value={newAdmin.email} onChange={(e) => setNewAdmin((p) => ({ ...p, email: e.target.value }))} />
                     <input className="input-field" placeholder="Phone (optional)" value={newAdmin.phone} onChange={(e) => setNewAdmin((p) => ({ ...p, phone: e.target.value }))} />
-                    <input className="input-field" type="password" placeholder="Password" value={newAdmin.password} onChange={(e) => setNewAdmin((p) => ({ ...p, password: e.target.value }))} />
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input className="input-field" type={showCreateAdminPwd ? "text" : "password"} placeholder="Password" value={newAdmin.password} onChange={(e) => setNewAdmin((p) => ({ ...p, password: e.target.value }))} style={{ paddingRight: '40px' }} />
+                        <button type="button" onClick={() => setShowCreateAdminPwd(!showCreateAdminPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                            {showCreateAdminPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
                     <button className="btn btn-primary" type="submit" disabled={creating}>
                         <UserPlus size={16} />
                         {creating ? 'Creating...' : 'Create Admin'}
@@ -236,7 +266,12 @@ export const Admins: React.FC = () => {
                         <input className="input-field" placeholder="Username" value={editAdmin.username} onChange={(e) => setEditAdmin((p) => ({ ...p, username: e.target.value }))} />
                         <input className="input-field" placeholder="Email" value={editAdmin.email} onChange={(e) => setEditAdmin((p) => ({ ...p, email: e.target.value }))} />
                         <input className="input-field" placeholder="Phone (optional)" value={editAdmin.phone} onChange={(e) => setEditAdmin((p) => ({ ...p, phone: e.target.value }))} />
-                        <input className="input-field" type="password" placeholder="New password (optional)" value={editAdmin.password} onChange={(e) => setEditAdmin((p) => ({ ...p, password: e.target.value }))} />
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <input className="input-field" type={showEditAdminPwd ? "text" : "password"} placeholder="New password (optional)" value={editAdmin.password} onChange={(e) => setEditAdmin((p) => ({ ...p, password: e.target.value }))} style={{ paddingRight: '40px' }} />
+                            <button type="button" onClick={() => setShowEditAdminPwd(!showEditAdminPwd)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                                {showEditAdminPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
                             <button className="btn btn-primary" type="submit" disabled={updating}>
                                 {updating ? 'Saving...' : 'Save Changes'}

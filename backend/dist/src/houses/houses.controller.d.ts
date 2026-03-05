@@ -1,8 +1,11 @@
 import { HousesService } from './houses.service';
+import { JwtService } from '@nestjs/jwt';
 export declare class HousesController {
     private readonly housesService;
-    constructor(housesService: HousesService);
-    getHouses(skip?: string, take?: string): Promise<{
+    private readonly jwtService;
+    constructor(housesService: HousesService, jwtService: JwtService);
+    private getUserRoleFromRequest;
+    getHouses(skip?: string, take?: string, req?: any): Promise<{
         data: any;
         meta: {
             total: any;
@@ -11,7 +14,7 @@ export declare class HousesController {
             hasMore: boolean;
         };
     }>;
-    getHouseById(id: string): Promise<any>;
+    getHouseById(id: string, req: any): Promise<any>;
     createHouse(data: any, req: any): Promise<any>;
     updateHouse(id: string, data: any, req: any): Promise<any>;
     updateStatus(id: string, status: string): Promise<{
@@ -41,6 +44,7 @@ export declare class HousesController {
         image_url_8: string | null;
         description: string | null;
         is_private_bathroom: boolean;
+        contact_phone: string | null;
     }>;
     removeHouse(id: string): Promise<{
         id: string;
@@ -69,5 +73,6 @@ export declare class HousesController {
         image_url_8: string | null;
         description: string | null;
         is_private_bathroom: boolean;
+        contact_phone: string | null;
     }>;
 }

@@ -34,6 +34,7 @@ export declare class UsersService {
             image_url_8: string | null;
             description: string | null;
             is_private_bathroom: boolean;
+            contact_phone: string | null;
         };
     } & {
         id: string;
@@ -96,6 +97,22 @@ export declare class UsersService {
         name: string;
         phone: string | null;
         password: string;
+        avatarUrl: string | null;
+        role: import("@prisma/client").$Enums.Role;
+        status: string;
+        locked_until: Date | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+    }>;
+    updateAvatar(userId: string, avatarUrl: string): Promise<{
+        id: string;
+        username: string;
+        email: string;
+        name: string;
+        phone: string | null;
+        password: string;
+        avatarUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
         locked_until: Date | null;

@@ -15,11 +15,50 @@ const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@
 export class AuthService {
     private readonly MAX_LOGIN_ATTEMPTS = 5;
     private readonly LOCK_DURATION_MINUTES = 15;
+    private readonly TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
     constructor(
         private prisma: PrismaService,
         private jwtService: JwtService
     ) { }
+
+    private async verifyCaptchaToken(captchaToken?: string) {
+        if (process.env.NODE_ENV === 'development') {
+            return;
+        }
+
+        const secretKey = process.env.TURNSTILE_SECRET_KEY;
+        if (!secretKey || !captchaToken) {
+            throw new BadRequestException('Captcha verification failed');
+        }
+
+        const formBody = new URLSearchParams({
+            secret: secretKey,
+            response: captchaToken,
+        });
+
+        let verificationResponse: Response;
+        try {
+            verificationResponse = await fetch(this.TURNSTILE_VERIFY_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formBody,
+            });
+        } catch {
+            throw new BadRequestException('Captcha verification failed');
+        }
+
+        if (!verificationResponse.ok) {
+            throw new BadRequestException('Captcha verification failed');
+        }
+
+        const verificationResult = await verificationResponse.json() as { success?: boolean };
+        if (!verificationResult.success) {
+            throw new BadRequestException('Captcha verification failed');
+        }
+    }
 
     /**
      * Validate password requirements:
@@ -80,6 +119,8 @@ export class AuthService {
     }
 
     async register(registerDto: RegisterDto, ipAddress?: string, userAgent?: string) {
+        await this.verifyCaptchaToken(registerDto.captchaToken);
+
         // Validate password
         const passwordErrors = this.validatePassword(registerDto.password);
         if (passwordErrors.length > 0) {
@@ -139,6 +180,8 @@ export class AuthService {
     }
 
     async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string) {
+        await this.verifyCaptchaToken(loginDto.captchaToken);
+
         const user = await this.prisma.user.findFirst({
             where: {
                 OR: [

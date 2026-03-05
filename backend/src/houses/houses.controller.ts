@@ -7,29 +7,67 @@ import { Roles } from '../security/roles.decorator';
 import { Role } from '../security/roles.enum';
 import { UseInterceptors } from '@nestjs/common';
 import { AuditInterceptor } from '../audit/audit.interceptor';
+import { JwtService } from '@nestjs/jwt'; // Added JwtService import
 
 @Controller('houses')
 @UseInterceptors(AuditInterceptor)
 export class HousesController {
-    constructor(private readonly housesService: HousesService) { }
+    constructor(
+        private readonly housesService: HousesService,
+        private readonly jwtService: JwtService // Added JwtService to constructor
+    ) { }
+
+    // Added getUserRoleFromRequest method
+    private getUserRoleFromRequest(req: any): string | null {
+        try {
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                const token = authHeader.split(' ')[1];
+                const decoded = this.jwtService.decode(token) as any;
+                return decoded?.role || null;
+            }
+        } catch (e) {
+            // Ignore decoding errors
+        }
+        return null;
+    }
 
     @Get()
     async getHouses(
         @Query('skip') skip?: string,
-        @Query('take') take?: string
+        @Query('take') take?: string,
+        @Request() req?: any // Added @Request() req
     ) {
         const skipNum = skip ? parseInt(skip, 10) : 0;
         const takeNum = take ? parseInt(take, 10) : 10;
 
-        return this.housesService.getHouses(
+        // Added logic to check user role and strip contact_phone
+        const role = this.getUserRoleFromRequest(req);
+        const isAdmin = role === Role.ADMIN || role === Role.SUPER_ADMIN;
+
+        const result = await this.housesService.getHouses(
             Number.isNaN(skipNum) ? 0 : skipNum,
             Number.isNaN(takeNum) ? 10 : takeNum
         );
+
+        if (!isAdmin && result && result.data) {
+            result.data.forEach((h: any) => delete h.contact_phone);
+        }
+        return result;
     }
 
     @Get(':id')
-    async getHouseById(@Param('id') id: string) {
-        return this.housesService.getHouseById(id);
+    async getHouseById(@Param('id') id: string, @Request() req: any) { // Added @Request() req
+        const house = await this.housesService.getHouseById(id);
+        if (house) {
+            // Added logic to check user role and strip contact_phone
+            const role = this.getUserRoleFromRequest(req);
+            const isAdmin = role === Role.ADMIN || role === Role.SUPER_ADMIN;
+            if (!isAdmin) {
+                delete (house as any).contact_phone;
+            }
+        }
+        return house;
     }
 
     @Post()

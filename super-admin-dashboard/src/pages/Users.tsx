@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { UserX, UserCheck, Trash2, Edit2, Plus, X } from 'lucide-react';
+import { UserX, UserCheck, Trash2, Edit2, Plus, X, Eye, EyeOff } from 'lucide-react';
 import api from '../api/axios';
 import css from './Table.module.css';
 
@@ -25,6 +25,7 @@ export const Users: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Form states
     const [formData, setFormData] = useState({
@@ -120,6 +121,7 @@ export const Users: React.FC = () => {
             phone: user.phone || '',
             password: '' // leave blank unless changing
         });
+        setShowPassword(false);
         setIsEditModalOpen(true);
     };
 
@@ -134,6 +136,7 @@ export const Users: React.FC = () => {
                     className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     onClick={() => {
                         setFormData({ name: '', username: '', email: '', phone: '', password: '' });
+                        setShowPassword(false);
                         setIsCreateModalOpen(true);
                     }}
                 >
@@ -257,7 +260,12 @@ export const Users: React.FC = () => {
                             </div>
                             <div className={css.field} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                 <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Password</label>
-                                <input required type="password" placeholder="Minimum 8 chars" className="input-field" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                    <input required type={showPassword ? "text" : "password"} placeholder="Minimum 8 chars" className="input-field" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} style={{ paddingRight: '40px' }} />
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
                                 <button type="button" className="btn btn-outline" onClick={() => setIsCreateModalOpen(false)}>Cancel</button>
@@ -297,7 +305,12 @@ export const Users: React.FC = () => {
                             </div>
                             <div className={css.field} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                 <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>New Password (leave blank to keep current)</label>
-                                <input type="password" placeholder="Enter new password" className="input-field" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                    <input type={showPassword ? "text" : "password"} placeholder="Enter new password" className="input-field" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} style={{ paddingRight: '40px' }} />
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
                                 <button type="button" className="btn btn-outline" onClick={() => setIsEditModalOpen(false)}>Cancel</button>

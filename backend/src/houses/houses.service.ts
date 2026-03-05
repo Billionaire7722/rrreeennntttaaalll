@@ -18,6 +18,21 @@ export class HousesService {
         }));
     }
 
+    private async fetchCoordinatesFromAddress(address: string): Promise<{ lat: number, lon: number } | null> {
+        try {
+            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
+            const response = await fetch(url, { headers: { 'User-Agent': 'RentalAdminApp/1.0' } });
+            if (!response.ok) return null;
+            const data = await response.json();
+            if (data && data.length > 0) {
+                return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+            }
+        } catch (e) {
+            console.error('Failed to fetch coords from Nominatim:', e);
+        }
+        return null;
+    }
+
     private async attachPoster(houseId: string, actorId?: string, actorRole?: string) {
         if (!actorId || !this.isAdminRole(actorRole)) return;
         const prismaAny = this.prisma as any;
@@ -120,6 +135,17 @@ export class HousesService {
         const house = await this.prisma.house.findFirst({ where: { id, deleted_at: null } });
         if (!house) throw new Error('House not found');
 
+        let finalLat = data.latitude !== undefined ? Number(data.latitude) : undefined;
+        let finalLon = data.longitude !== undefined ? Number(data.longitude) : undefined;
+
+        if (data.address !== undefined && data.address !== house.address) {
+            const coords = await this.fetchCoordinatesFromAddress(data.address);
+            if (coords) {
+                finalLat = coords.lat;
+                finalLon = coords.lon;
+            }
+        }
+
         await this.prisma.house.update({
             where: { id },
             data: {
@@ -129,8 +155,9 @@ export class HousesService {
                 ...(data.bedrooms !== undefined && { bedrooms: Number(data.bedrooms) }),
                 ...(data.square !== undefined && { square: Number(data.square) }),
                 ...(data.description !== undefined && { description: data.description }),
-                ...(data.latitude !== undefined && { latitude: Number(data.latitude) }),
-                ...(data.longitude !== undefined && { longitude: Number(data.longitude) }),
+                ...(data.contact_phone !== undefined && { contact_phone: data.contact_phone }),
+                ...(finalLat !== undefined && { latitude: finalLat }),
+                ...(finalLon !== undefined && { longitude: finalLon }),
                 ...(data.image_url_1 !== undefined && { image_url_1: data.image_url_1 }),
                 ...(data.image_url_2 !== undefined && { image_url_2: data.image_url_2 }),
                 ...(data.image_url_3 !== undefined && { image_url_3: data.image_url_3 }),
@@ -163,17 +190,30 @@ export class HousesService {
 
     async createHouse(data: any, actorId?: string, actorRole?: string) {
         const prismaAny = this.prisma as any;
+
+        let finalLat = data.latitude ? Number(data.latitude) : 0;
+        let finalLon = data.longitude ? Number(data.longitude) : 0;
+
+        if (data.address) {
+            const coords = await this.fetchCoordinatesFromAddress(data.address);
+            if (coords) {
+                finalLat = coords.lat;
+                finalLon = coords.lon;
+            }
+        }
+
         const createdHouse = await this.prisma.house.create({
             data: {
                 original_id: data.original_id || Math.random().toString(36).substring(7),
                 name: data.name,
                 address: data.address,
-                latitude: data.latitude,
-                longitude: data.longitude,
+                latitude: finalLat,
+                longitude: finalLon,
                 price: data.price,
                 bedrooms: data.bedrooms,
                 square: data.square,
                 description: data.description,
+                contact_phone: data.contact_phone,
                 is_private_bathroom: data.is_private_bathroom,
                 status: data.status || 'available',
                 city: data.city || '',

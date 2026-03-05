@@ -39,6 +39,7 @@ model House {
   description         String?
   status              String?
   is_private_bathroom Boolean  @default(false)
+  contact_phone       String?
   
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
@@ -83,6 +84,7 @@ model User {
   email      String     @unique
   phone        String?
   password     String
+  avatarUrl    String?
   role         Role       @default(VIEWER)
   status       String     @default("ACTIVE")
   locked_until DateTime?

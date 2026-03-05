@@ -144,4 +144,13 @@ export class UsersService {
         delete (user as any).password;
         return user;
     }
+
+    async updateAvatar(userId: string, avatarUrl: string) {
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: { avatarUrl },
+        });
+        delete (user as any).password;
+        return user;
+    }
 }

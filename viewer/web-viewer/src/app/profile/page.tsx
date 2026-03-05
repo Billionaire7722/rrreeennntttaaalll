@@ -89,8 +89,24 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!authLoading && user) {
       fetchFavorites();
-      const savedAvatar = localStorage.getItem(`avatar_${user.id}`);
-      if (savedAvatar) setAvatarUrl(savedAvatar);
+      const loadProfile = async () => {
+        try {
+          const res = await api.get("/users/profile");
+          if (res.data.avatarUrl) {
+            setAvatarUrl(res.data.avatarUrl);
+            localStorage.setItem(`avatar_${user.id}`, res.data.avatarUrl);
+          } else {
+            const savedAvatar = localStorage.getItem(`avatar_${user.id}`);
+            if (savedAvatar) setAvatarUrl(savedAvatar);
+          }
+        } catch (err) {
+          console.error("Failed to load profile", err);
+          const savedAvatar = localStorage.getItem(`avatar_${user.id}`);
+          if (savedAvatar) setAvatarUrl(savedAvatar);
+        }
+      };
+
+      loadProfile();
     }
   }, [user, authLoading]);
 
@@ -132,7 +148,14 @@ export default function ProfilePage() {
 
       if (data.url) {
         setAvatarUrl(data.url);
-        if (user) localStorage.setItem(`avatar_${user.id}`, data.url);
+        if (user) {
+          localStorage.setItem(`avatar_${user.id}`, data.url);
+          try {
+            await api.post("/users/avatar", { url: data.url });
+          } catch (updateErr) {
+            console.error("Failed to persist avatar on backend", updateErr);
+          }
+        }
       }
     } catch (err) {
       console.error("Avatar upload error", err);
@@ -164,144 +187,169 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="w-full bg-white min-h-[calc(100vh-60px)] pb-28">
-      <div className="bg-white px-4 pt-8 pb-6 border-b border-gray-200">
-        <div className="max-w-3xl mx-auto flex items-center gap-5">
-          <div className="relative cursor-pointer group" onClick={handleAvatarClick}>
-            <div className="w-20 h-20 rounded-full border-4 border-gray-50 shadow-sm overflow-hidden bg-gray-100 flex items-center justify-center relative">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Avatar"
-                  className={`w-full h-full object-cover ${isUploading ? "opacity-50" : ""}`}
-                />
-              ) : (
-                <UserIcon className={`w-8 h-8 text-gray-400 ${isUploading ? "opacity-50" : ""}`} />
-              )}
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                {isUploading ? (
-                  <span className="text-white text-xs font-bold">Uploading...</span>
-                ) : (
-                  <Camera className="text-white w-6 h-6" />
+    <div className="w-full bg-gray-50 min-h-[calc(100vh-60px)] py-8 pb-28">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+          {/* Left Column - User Info */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white rounded-[16px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8 text-center flex flex-col items-center relative overflow-hidden">
+              {/* Background pattern */}
+              <div className="absolute top-0 w-full h-24 bg-gradient-to-r from-blue-500 to-teal-400"></div>
+              <div className="relative mt-8 cursor-pointer group rounded-full p-1 bg-white shadow-sm" onClick={handleAvatarClick}>
+                <div className="w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className={`w-full h-full object-cover ${isUploading ? "opacity-50" : ""}`} />
+                  ) : (
+                    <UserIcon className={`w-10 h-10 text-gray-400 ${isUploading ? "opacity-50" : ""}`} />
+                  )}
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                    {isUploading ? (
+                      <span className="text-white text-xs font-bold">Tải lên...</span>
+                    ) : (
+                      <Camera className="text-white w-6 h-6" />
+                    )}
+                  </div>
+                </div>
+                <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+              </div>
+
+              <h1 className="text-2xl font-bold text-gray-900 mt-4 tracking-tight">{user.name || "Viewer"}</h1>
+              <p className="text-sm text-gray-500 mt-1">{user.email}</p>
+
+              <div className="w-full mt-6 pt-6 border-t border-gray-100 grid grid-cols-2 gap-4 divide-x divide-gray-100">
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Đã lưu</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">{favorites.length}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Tin nhắn</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">{messages.length}</p>
+                </div>
+              </div>
+
+              <button className="mt-8 w-full py-2.5 px-4 border border-gray-200 rounded-[12px] text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm">
+                Chỉnh sửa hồ sơ
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column - Main Content */}
+          <div className="lg:col-span-8">
+            <div className="bg-white rounded-[16px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden min-h-[500px]">
+              <div className="flex border-b border-gray-100 bg-white/50 px-6 pt-6 gap-6">
+                <button
+                  onClick={() => setActiveTab("favorites")}
+                  className={`pb-4 text-sm font-semibold transition-all relative ${activeTab === "favorites"
+                    ? "text-blue-600"
+                    : "text-gray-500 hover:text-gray-800"
+                    }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Heart className="w-4 h-4" />
+                    Bất động sản đã lưu
+                  </span>
+                  {activeTab === "favorites" && (
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveTab("messages")}
+                  className={`pb-4 text-sm font-semibold transition-all relative ${activeTab === "messages"
+                    ? "text-blue-600"
+                    : "text-gray-500 hover:text-gray-800"
+                    }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4" />
+                    Tin nhắn của tôi
+                  </span>
+                  {activeTab === "messages" && (
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></span>
+                  )}
+                </button>
+              </div>
+
+              <div className="p-6">
+                {activeTab === "favorites" && (
+                  <div className="space-y-4">
+                    {loadingFavs ? (
+                      <div className="animate-pulse space-y-4">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="h-[120px] bg-gray-100 rounded-[12px] w-full" />
+                        ))}
+                      </div>
+                    ) : favorites.length === 0 ? (
+                      <div className="text-center py-20 px-4 bg-gray-50 rounded-[12px] border border-dashed border-gray-200">
+                        <Heart className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Chưa có mục đã lưu</h3>
+                        <p className="text-gray-500 text-sm max-w-sm mx-auto">Hãy nhấn vào biểu tượng trái tim trên các bài đăng để lưu lại những không gian bạn yêu thích.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {favorites.map((property: any) => (
+                          <PropertyCard
+                            key={property.id}
+                            property={property}
+                            isFavorite
+                            onToggleFavorite={handleRemoveFavorite}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === "messages" && (
+                  <div>
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="font-bold text-gray-900">Cuộc hội thoại</h3>
+                      <Link
+                        href="/chat"
+                        className="inline-flex items-center gap-2 rounded-[10px] bg-blue-50 text-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-100 transition-colors"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Mở phòng chat
+                      </Link>
+                    </div>
+
+                    {loadingMessages ? (
+                      <div className="text-center py-10 text-gray-500">Đang tải tin nhắn...</div>
+                    ) : messages.length === 0 ? (
+                      <div className="text-center py-16 px-4 bg-gray-50 rounded-[12px] border border-dashed border-gray-200">
+                        <MessageCircle className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Chưa có tin nhắn nào</h3>
+                        <p className="text-gray-500 text-sm max-w-sm mx-auto">Lịch sử trò chuyện của bạn với ban quản trị sẽ hiển thị tại đây.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {messages.map((msg) => {
+                          const isAdmin = msg.senderRole === "ADMIN" || msg.senderRole === "SUPER_ADMIN";
+                          return (
+                            <div key={msg.id} className="rounded-[12px] border border-gray-100 bg-gray-50 p-4 transition-all hover:shadow-sm">
+                              <div className="mb-2 flex items-center justify-between">
+                                <span
+                                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${isAdmin ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                                    }`}
+                                >
+                                  {isAdmin ? "Quản trị viên" : "Bạn"}
+                                </span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                  {new Date(msg.created_at).toLocaleString("vi-VN")}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{user.name || "Viewer"}</h1>
-            <p className="text-sm text-gray-500 mt-0.5">{user.email}</p>
           </div>
         </div>
-      </div>
-
-      <div className="sticky top-0 bg-white border-b border-gray-200 z-10 px-4">
-        <div className="max-w-3xl mx-auto flex">
-          <button
-            onClick={() => setActiveTab("favorites")}
-            className={`flex-1 py-3.5 text-sm font-semibold border-b-2 transition ${
-              activeTab === "favorites"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-800"
-            }`}
-          >
-            Favorites ({favorites.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("messages")}
-            className={`flex-1 py-3.5 text-sm font-semibold border-b-2 transition ${
-              activeTab === "messages"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-800"
-            }`}
-          >
-            Messages
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 py-6">
-        {activeTab === "favorites" && (
-          <div className="space-y-4">
-            {loadingFavs ? (
-              <div className="animate-pulse space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-[120px] bg-gray-200 rounded-xl w-full" />
-                ))}
-              </div>
-            ) : favorites.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 mx-2">
-                <Heart className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">No favorites yet</h3>
-                <p className="text-gray-500 text-sm">Tap the heart icon on a listing to save it here.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {favorites.map((property: any) => (
-                  <PropertyCard
-                    key={property.id}
-                    property={property}
-                    isFavorite
-                    onToggleFavorite={handleRemoveFavorite}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "messages" && (
-          <div className="space-y-3">
-            <div className="flex justify-end">
-              <Link
-                href="/chat"
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Open chat
-              </Link>
-            </div>
-
-            {loadingMessages ? (
-              <div className="text-center py-10 text-gray-500">Loading messages...</div>
-            ) : messages.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 mx-2">
-                <MessageCircle className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">No messages yet</h3>
-                <p className="text-gray-500 text-sm">Your chat history with admins will appear here.</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {messages.map((msg) => {
-                  const isAdmin = msg.senderRole === "ADMIN" || msg.senderRole === "SUPER_ADMIN";
-                  return (
-                    <div key={msg.id} className="rounded-xl border border-gray-200 bg-white p-3">
-                      <div className="mb-1 flex items-center justify-between">
-                        <span
-                          className={`text-xs font-semibold ${
-                            isAdmin ? "text-purple-700" : "text-blue-700"
-                          }`}
-                        >
-                          {isAdmin ? "Admin" : "You"}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(msg.created_at).toLocaleString("vi-VN")}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-800 whitespace-pre-wrap">{msg.content}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

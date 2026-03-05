@@ -17,10 +17,20 @@ interface User {
 interface AuthContextType {
     user: User | null;
     token: string | null;
-    login: (loginId: string, password: string) => Promise<void>;
-    register: (data: any) => Promise<void>;
+    login: (loginId: string, password: string, captchaToken: string) => Promise<void>;
+    register: (data: RegisterPayload) => Promise<void>;
     logout: () => void;
     loading: boolean;
+}
+
+interface RegisterPayload {
+    username: string;
+    email: string;
+    name: string;
+    phone: string;
+    password: string;
+    confirmPassword: string;
+    captchaToken: string;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -90,8 +100,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
     }, [token, user?.id]);
 
-    const login = async (loginId: string, password: string) => {
-        const res = await api.post('/auth/login', { loginId, password });
+    const login = async (loginId: string, password: string, captchaToken: string) => {
+        const res = await api.post('/auth/login', { loginId, password, captchaToken });
         const { access_token } = res.data;
         const decoded: any = jwtDecode(access_token);
         if (decoded.role !== 'VIEWER') {
@@ -111,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         router.push('/');
     };
 
-    const register = async (data: any) => {
+    const register = async (data: RegisterPayload) => {
         const res = await api.post('/auth/register', data);
         const { access_token } = res.data;
         const decoded: any = jwtDecode(access_token);

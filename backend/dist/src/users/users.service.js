@@ -137,6 +137,14 @@ let UsersService = class UsersService {
         delete user.password;
         return user;
     }
+    async updateAvatar(userId, avatarUrl) {
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: { avatarUrl },
+        });
+        delete user.password;
+        return user;
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

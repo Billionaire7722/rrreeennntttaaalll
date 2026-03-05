@@ -9,8 +9,8 @@ import { Bed, Square, MapPin, Locate } from 'lucide-react';
 import { useAuth } from '@/context/useAuth';
 
 // Dynamic SVG Icons for Available (Green) and Rented (Red)
-const getMarkerIcon = (status: string) => {
-    const isAvailable = status.toLowerCase() === 'available';
+const getMarkerIcon = (status?: string | null) => {
+    const isAvailable = status?.toLowerCase() === 'available';
     const color = isAvailable ? '#10b981' : '#ef4444'; // Tailwind text-green-500 / text-red-500
 
     const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3" fill="white"/></svg>`;

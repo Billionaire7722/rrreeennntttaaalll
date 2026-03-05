@@ -23,7 +23,7 @@ services:
   backend:
     build:
       target: builder # Target the builder stage to retain devDependencies (Prisma CLI, ts-node, etc)
-    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm run start:dev" # Auto-seed logic exclusively for development mode
+    command: sh -c "npx prisma generate && npx prisma migrate deploy && npx prisma db seed && npm run start:dev" # Auto-seed logic exclusively for development mode
     env_file:
       - ./backend/.env
     environment:

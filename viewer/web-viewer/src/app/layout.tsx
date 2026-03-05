@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { AuthProvider } from "@/context/AuthContext";
 import { SocketProvider } from "@/contexts/SocketContext";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -38,6 +39,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased bg-gray-50`}>
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+          async
+          defer
+          strategy="afterInteractive"
+        />
         <AuthAndSocketProvider>
           <div className="flex flex-col min-h-screen w-full relative pb-[60px] bg-white">
             {children}

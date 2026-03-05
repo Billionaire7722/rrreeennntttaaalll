@@ -25,4 +25,8 @@ export class RegisterDto {
     @IsNotEmpty()
     @IsString()
     confirmPassword: string;
+
+    @IsOptional()
+    @IsString()
+    captchaToken?: string;
 }

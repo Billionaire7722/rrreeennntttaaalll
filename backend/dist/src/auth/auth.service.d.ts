@@ -7,7 +7,9 @@ export declare class AuthService {
     private jwtService;
     private readonly MAX_LOGIN_ATTEMPTS;
     private readonly LOCK_DURATION_MINUTES;
+    private readonly TURNSTILE_VERIFY_URL;
     constructor(prisma: PrismaService, jwtService: JwtService);
+    private verifyCaptchaToken;
     private validatePassword;
     private checkDuplicateUser;
     register(registerDto: RegisterDto, ipAddress?: string, userAgent?: string): Promise<{
