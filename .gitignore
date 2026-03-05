@@ -52,3 +52,4 @@ node_modules
 local_credentials.md
 backend/.env.production
 backend/.env.development
+scripts/deploy-vps.local.ps1

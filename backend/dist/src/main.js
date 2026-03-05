@@ -28,7 +28,7 @@ async function bootstrap() {
         skipMissingProperties: true,
     }));
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
-    if (!security_config_1.isProduction || process.env.ENABLE_SWAGGER === 'true') {
+    if (process.env.ENABLE_SWAGGER === 'true') {
         const config = new swagger_1.DocumentBuilder()
             .setTitle('Rental Application API')
             .setDescription('The core backend API for the Rental platform. Provides property management and user data functionality.')

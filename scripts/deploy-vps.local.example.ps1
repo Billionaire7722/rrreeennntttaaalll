@@ -1,0 +1,6 @@
+$env:DEPLOY_VPS_HOST = "103.200.22.111"
+$env:DEPLOY_VPS_USER = "root"
+$env:DEPLOY_VPS_PATH = "/root/rrreeennntttaaalll"
+$env:DEPLOY_VPS_HOSTKEY = "ssh-ed25519 255 SHA256:REPLACE_WITH_YOUR_HOSTKEY"
+$env:DEPLOY_VPS_PASSWORD = "REPLACE_WITH_YOUR_VPS_PASSWORD"
+$env:DEPLOY_SERVICES = "backend web-viewer rental-admin super-admin"

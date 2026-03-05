@@ -180,7 +180,6 @@ let AuthService = class AuthService {
         return failedAttempts;
     }
     async login(loginDto, ipAddress, userAgent) {
-        await this.verifyCaptchaToken(loginDto.captchaToken);
         const user = await this.prisma.user.findFirst({
             where: {
                 OR: [
@@ -192,6 +191,9 @@ let AuthService = class AuthService {
         if (!user) {
             await this.logLoginAttempt(null, null, false, ipAddress, userAgent);
             throw new common_1.UnauthorizedException('Email hoặc mật khẩu không đúng');
+        }
+        if (user.role === roles_enum_1.Role.VIEWER) {
+            await this.verifyCaptchaToken(loginDto.captchaToken);
         }
         if (user.status !== 'ACTIVE') {
             await this.logLoginAttempt(user.id, user.role, false, ipAddress, userAgent);

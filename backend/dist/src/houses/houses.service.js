@@ -29,14 +29,27 @@ let HousesService = class HousesService {
         }));
     }
     async fetchCoordinatesFromAddress(address) {
+        const normalized = String(address || '').trim();
+        if (!normalized)
+            return null;
+        const candidateQueries = [normalized];
+        if (!/viet\s*nam/i.test(normalized)) {
+            candidateQueries.push(`${normalized}, Vietnam`);
+        }
         try {
-            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
-            const response = await fetch(url, { headers: { 'User-Agent': 'RentalAdminApp/1.0' } });
-            if (!response.ok)
-                return null;
-            const data = await response.json();
-            if (data && data.length > 0) {
-                return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+            for (const query of candidateQueries) {
+                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+                const response = await fetch(url, { headers: { 'User-Agent': 'RentalAdminApp/1.0' } });
+                if (!response.ok)
+                    continue;
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+                        return { lat, lon };
+                    }
+                }
             }
         }
         catch (e) {
@@ -193,8 +206,14 @@ let HousesService = class HousesService {
     }
     async createHouse(data, actorId, actorRole) {
         const prismaAny = this.prisma;
-        let finalLat = data.latitude ? Number(data.latitude) : 0;
-        let finalLon = data.longitude ? Number(data.longitude) : 0;
+        const normalizeNumber = (value) => {
+            if (value === undefined || value === null || value === '')
+                return null;
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : null;
+        };
+        let finalLat = normalizeNumber(data.latitude);
+        let finalLon = normalizeNumber(data.longitude);
         if (data.address) {
             const coords = await this.fetchCoordinatesFromAddress(data.address);
             if (coords) {
@@ -202,11 +221,17 @@ let HousesService = class HousesService {
                 finalLon = coords.lon;
             }
         }
+        const normalizedAddress = String(data.address || '').trim();
+        const normalizedDistrict = String(data.district || '').trim();
+        const normalizedCity = String(data.city || '').trim();
+        const addressParts = normalizedAddress.split(',').map((part) => part.trim()).filter(Boolean);
+        const fallbackCity = normalizedCity || addressParts[addressParts.length - 1] || '';
+        const fallbackDistrict = normalizedDistrict || (addressParts.length >= 2 ? addressParts[addressParts.length - 2] : '');
         const createdHouse = await this.prisma.house.create({
             data: {
                 original_id: data.original_id || Math.random().toString(36).substring(7),
                 name: data.name,
-                address: data.address,
+                address: normalizedAddress,
                 latitude: finalLat,
                 longitude: finalLon,
                 price: data.price,
@@ -216,8 +241,8 @@ let HousesService = class HousesService {
                 contact_phone: data.contact_phone,
                 is_private_bathroom: data.is_private_bathroom,
                 status: data.status || 'available',
-                city: data.city || '',
-                district: data.district || '',
+                city: fallbackCity,
+                district: fallbackDistrict,
                 image_url_1: data.image_url_1,
                 image_url_2: data.image_url_2,
                 image_url_3: data.image_url_3,
