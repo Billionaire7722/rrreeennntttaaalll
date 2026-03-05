@@ -29,7 +29,7 @@ export default function PropertyCard({ property, isFavorite, onToggleFavorite }:
     const defaultImage = '/images/defaultimage.jpg';
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group relative">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group relative">
             <Link href={`/properties/${property.id}`} className="block relative h-48 w-full overflow-hidden">
                 <img
                     src={property.image_url || defaultImage}
