@@ -8,7 +8,7 @@ import { useLanguage } from '@/context/LanguageContext';
 export default function BottomTabBar() {
     const pathname = usePathname();
     const { t } = useLanguage();
-    const hideOnRoutes = new Set(['/login', '/register']);
+    const hideOnRoutes = new Set(['/login', '/register', '/chat']);
 
     if (hideOnRoutes.has(pathname)) {
         return null;
