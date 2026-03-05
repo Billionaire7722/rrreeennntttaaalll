@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '../security/roles.enum';
 
@@ -65,11 +65,33 @@ export class HousesService {
         });
     }
 
-    async getHouses(skip: number = 0, take: number = 10) {
+    private async assertAdminCanManageHouse(houseId: string, actorId?: string, actorRole?: string) {
+        if (!actorId || !actorRole) return;
+        if (actorRole === Role.SUPER_ADMIN) return;
+        if (actorRole !== Role.ADMIN) return;
+
         const prismaAny = this.prisma as any;
+        const owned = await prismaAny.houseAdmin.findUnique({
+            where: {
+                houseId_adminId: {
+                    houseId,
+                    adminId: actorId,
+                }
+            }
+        });
+
+        if (!owned) {
+            throw new ForbiddenException('You cannot manage houses created by other admins');
+        }
+    }
+
+    async getHouses(skip: number = 0, take: number = 10, adminId?: string) {
+        const prismaAny = this.prisma as any;
+        const whereClause: any = { deleted_at: null };
+        if (adminId) { whereClause.houseAdmins = { some: { adminId: adminId } }; }
         const [data, total] = await Promise.all([
             prismaAny.house.findMany({
-                where: { deleted_at: null },
+                where: whereClause,
                 skip,
                 take,
                 orderBy: { created_at: 'desc' },
@@ -100,7 +122,7 @@ export class HousesService {
                     }
                 }
             }),
-            prismaAny.house.count({ where: { deleted_at: null } })
+            prismaAny.house.count({ where: whereClause })
         ]);
 
         const mappedData = data.map((house: any) => ({
@@ -119,10 +141,14 @@ export class HousesService {
         };
     }
 
-    async getHouseById(id: string) {
+    async getHouseById(id: string, adminId?: string) {
         const prismaAny = this.prisma as any;
         const house = await prismaAny.house.findFirst({
-            where: { id, deleted_at: null },
+            where: {
+                id,
+                deleted_at: null,
+                ...(adminId ? { houseAdmins: { some: { adminId } } } : {}),
+            },
             include: {
                 houseAdmins: {
                     select: {
@@ -147,6 +173,7 @@ export class HousesService {
         const prismaAny = this.prisma as any;
         const house = await this.prisma.house.findFirst({ where: { id, deleted_at: null } });
         if (!house) throw new Error('House not found');
+        await this.assertAdminCanManageHouse(id, actorId, actorRole);
 
         let finalLat = data.latitude !== undefined ? Number(data.latitude) : undefined;
         let finalLon = data.longitude !== undefined ? Number(data.longitude) : undefined;
@@ -275,11 +302,12 @@ export class HousesService {
         };
     }
 
-    async updateStatus(id: string, status: string) {
+    async updateStatus(id: string, status: string, actorId?: string, actorRole?: string) {
         const house = await this.prisma.house.findUnique({
             where: { id }
         });
         if (!house) throw new Error('House not found');
+        await this.assertAdminCanManageHouse(id, actorId, actorRole);
 
         return this.prisma.house.update({
             where: { id },
@@ -287,11 +315,12 @@ export class HousesService {
         });
     }
 
-    async removeHouse(id: string) {
+    async removeHouse(id: string, actorId?: string, actorRole?: string) {
         const house = await this.prisma.house.findUnique({
             where: { id }
         });
         if (!house) throw new Error('House not found');
+        await this.assertAdminCanManageHouse(id, actorId, actorRole);
 
         return this.prisma.house.update({
             where: { id },

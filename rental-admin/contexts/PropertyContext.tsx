@@ -45,10 +45,10 @@ export const [PropertyProvider, useProperties] = createContextHook(() => {
   );
 
   const query = useQuery({
-    queryKey: ["houses"],
+    queryKey: ["houses", authHeaders],
     queryFn: async () => {
       try {
-        const response = await fetch(`${HOUSES_API_URL}?skip=0&take=100`);
+        const response = await fetch(`${HOUSES_API_URL}?skip=0&take=100`, { headers: authHeaders });
         if (!response.ok) throw new Error("Failed to fetch houses");
         const json = await response.json();
         const rawData = json.data || json;
