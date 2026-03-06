@@ -22,7 +22,7 @@ function Get-RepoStatus {
             Raw  = $line
         }
     }
-    return $entries
+    return @($entries)
 }
 
 function Require-EnvValue {
@@ -80,7 +80,7 @@ try {
     }
     $servicesArg = ($serviceList -join ' ').Trim()
 
-    $statusEntries = Get-RepoStatus
+    $statusEntries = @(Get-RepoStatus)
     $trackedEntries = @($statusEntries | Where-Object { $_.Code -ne '??' })
     $untrackedEntries = @($statusEntries | Where-Object { $_.Code -eq '??' })
 
