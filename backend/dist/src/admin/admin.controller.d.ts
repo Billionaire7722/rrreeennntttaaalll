@@ -8,6 +8,7 @@ export declare class AdminController {
     getUsers(skip?: number, take?: number): Promise<{
         users: {
             id: string;
+            username: string;
             email: string;
             name: string;
             phone: string | null;

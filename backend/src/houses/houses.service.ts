@@ -99,12 +99,16 @@ export class HousesService {
                     id: true,
                     original_id: true,
                     name: true,
+                    created_at: true,
+                    updated_at: true,
                     address: true,
                     district: true,
                     city: true,
                     price: true,
                     bedrooms: true,
                     square: true,
+                    description: true,
+                    contact_phone: true,
                     image_url_1: true,
                     status: true,
                     is_private_bathroom: true,
@@ -191,6 +195,8 @@ export class HousesService {
             data: {
                 ...(data.name !== undefined && { name: data.name }),
                 ...(data.address !== undefined && { address: data.address }),
+                ...(data.city !== undefined && { city: data.city }),
+                ...(data.district !== undefined && { district: data.district }),
                 ...(data.price !== undefined && { price: Number(data.price) }),
                 ...(data.bedrooms !== undefined && { bedrooms: Number(data.bedrooms) }),
                 ...(data.square !== undefined && { square: Number(data.square) }),
@@ -328,3 +334,4 @@ export class HousesService {
         });
     }
 }
+

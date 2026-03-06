@@ -58,7 +58,7 @@ export const Users: React.FC = () => {
 
     const handleStatusToggle = async (userId: string, currentStatus: string) => {
         const newStatus = currentStatus === 'ACTIVE' ? 'BANNED' : 'ACTIVE';
-        if (!window.confirm(`Are you sure you want to ${newStatus === 'BANNED' ? 'deactivate' : 'reactivate'} this user?`)) return;
+        if (!window.confirm(`Are you sure you want to ${newStatus === 'BANNED' ? 'deactivate' : 'reactivate'} this viewer?`)) return;
 
         try {
             await api.patch(`/admin/admins/${userId}/status`, { status: newStatus });
@@ -89,9 +89,9 @@ export const Users: React.FC = () => {
             setIsCreateModalOpen(false);
             setFormData({ name: '', username: '', email: '', phone: '', password: '' });
             fetchUsers();
-            alert("User created successfully");
+            alert("Viewer created successfully");
         } catch (err: any) {
-            alert(err.response?.data?.message || 'Failed to create user');
+            alert(err.response?.data?.message || 'Failed to create viewer');
         }
     };
 
@@ -112,9 +112,9 @@ export const Users: React.FC = () => {
             setIsEditModalOpen(false);
             setSelectedUser(null);
             fetchUsers();
-            alert("User updated successfully");
+            alert("Viewer updated successfully");
         } catch (err: any) {
-            alert(err.response?.data?.message || 'Failed to update user');
+            alert(err.response?.data?.message || 'Failed to update viewer');
         }
     };
 
@@ -150,6 +150,10 @@ export const Users: React.FC = () => {
                 </button>
             </div>
 
+            <div style={{ padding: '0 24px 18px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                Passwords are stored as secure hashes in the database, so current viewer passwords cannot be revealed. You can show or hide any new password before saving a replacement.
+            </div>
+
             <div className={css.tableScroll}>
                 <table className="data-table">
                     <thead>
@@ -166,7 +170,7 @@ export const Users: React.FC = () => {
                         {loading ? (
                             <tr><td colSpan={6} style={{ textAlign: 'center' }}>Loading...</td></tr>
                         ) : users.length === 0 ? (
-                            <tr><td colSpan={6} style={{ textAlign: 'center' }}>No users found.</td></tr>
+                            <tr><td colSpan={6} style={{ textAlign: 'center' }}>No viewers found.</td></tr>
                         ) : (
                             users.map(u => (
                                 <tr key={u.id}>
@@ -190,7 +194,7 @@ export const Users: React.FC = () => {
                                             <button
                                                 onClick={() => openEditModal(u)}
                                                 className="btn btn-outline"
-                                                title="Edit User"
+                                                title="Edit Viewer"
                                             >
                                                 <Edit2 size={16} />
                                             </button>
@@ -395,3 +399,6 @@ export const Users: React.FC = () => {
         </div>
     );
 };
+
+
+

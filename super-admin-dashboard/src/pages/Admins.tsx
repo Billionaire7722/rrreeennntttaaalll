@@ -241,6 +241,9 @@ export const Admins: React.FC = () => {
                 <div className={css.tableHeader}>
                     <h2>Create Admin</h2>
                 </div>
+                <div style={{ padding: '0 24px 18px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    Admin passwords are stored as secure hashes in the database, so current passwords cannot be revealed. You can show or hide any replacement password before saving it.
+                </div>
                 <form onSubmit={handleCreateAdmin} style={{ padding: '16px 24px', display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
                     <input className="input-field" placeholder="Full name" value={newAdmin.name} onChange={(e) => setNewAdmin((p) => ({ ...p, name: e.target.value }))} />
                     <input className="input-field" placeholder="Username" value={newAdmin.username} onChange={(e) => setNewAdmin((p) => ({ ...p, username: e.target.value }))} />
@@ -401,3 +404,5 @@ export const Admins: React.FC = () => {
         </div>
     );
 };
+
+

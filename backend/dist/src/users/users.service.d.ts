@@ -6,6 +6,9 @@ export declare class UsersService {
     private prisma;
     private messagesGateway;
     constructor(prisma: PrismaService, messagesGateway: MessagesGateway);
+    private isAdminRole;
+    private getViewerAssignment;
+    private assignViewerToAdmin;
     getFavorites(userId: string): Promise<({
         house: {
             id: string;
@@ -45,14 +48,24 @@ export declare class UsersService {
     toggleFavorite(userId: string, toggleFavoriteDto: ToggleFavoriteDto): Promise<{
         message: string;
     }>;
-    getMessages(userId: string): Promise<{
+    getMessages(userId: string): Promise<({
+        admin: {
+            id: string;
+            username: string;
+            name: string;
+            avatarUrl: string | null;
+        } | null;
+    } & {
         id: string;
         created_at: Date;
         userId: string;
         content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
-    }[]>;
+        seen_at: Date | null;
+        seen_by_role: import("@prisma/client").$Enums.Role | null;
+        adminId: string | null;
+    })[]>;
     sendMessage(userId: string, sendMessageDto: SendMessageDto): Promise<{
         id: string;
         created_at: Date;
@@ -60,9 +73,18 @@ export declare class UsersService {
         content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        seen_at: Date | null;
+        seen_by_role: import("@prisma/client").$Enums.Role | null;
+        adminId: string | null;
     }>;
-    getViewerMessages(skip?: number, take?: number): Promise<{
+    getViewerMessages(adminId: string, adminRole: string, skip?: number, take?: number): Promise<{
         items: ({
+            admin: {
+                id: string;
+                username: string;
+                name: string;
+                avatarUrl: string | null;
+            } | null;
             user: {
                 id: string;
                 username: string;
@@ -78,6 +100,9 @@ export declare class UsersService {
             content: string;
             senderId: string | null;
             senderRole: import("@prisma/client").$Enums.Role;
+            seen_at: Date | null;
+            seen_by_role: import("@prisma/client").$Enums.Role | null;
+            adminId: string | null;
         })[];
         skip: number;
         take: number;
@@ -89,6 +114,15 @@ export declare class UsersService {
         content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        seen_at: Date | null;
+        seen_by_role: import("@prisma/client").$Enums.Role | null;
+        adminId: string | null;
+    }>;
+    markViewerConversationSeen(viewerId: string, adminId: string): Promise<{
+        updated: number;
+    }>;
+    markAdminConversationSeen(adminId: string, adminRole: string, viewerId: string): Promise<{
+        updated: number;
     }>;
     getProfile(userId: string): Promise<{
         id: string;

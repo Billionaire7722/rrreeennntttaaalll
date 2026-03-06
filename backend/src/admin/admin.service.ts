@@ -18,7 +18,15 @@ export class AdminService {
                 skip: Number(skip),
                 take: Number(take),
                 select: {
-                    id: true, name: true, email: true, phone: true, status: true, created_at: true, deleted_at: true, role: true
+                    id: true,
+                    name: true,
+                    username: true,
+                    email: true,
+                    phone: true,
+                    status: true,
+                    created_at: true,
+                    deleted_at: true,
+                    role: true
                 }
             }),
             this.prisma.user.count({ where: { role: Role.VIEWER } })

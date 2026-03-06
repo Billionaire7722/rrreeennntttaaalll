@@ -4,15 +4,57 @@ param(
     [switch]$SkipCommit,
     [switch]$SkipPush,
     [switch]$SkipDeploy,
+    [switch]$AllowUntracked,
     [switch]$Yes
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+function Get-RepoStatus {
+    $lines = git status --porcelain
+    $entries = @()
+    foreach ($line in $lines) {
+        if (-not $line) { continue }
+        $entries += [PSCustomObject]@{
+            Code = $line.Substring(0, 2)
+            Path = $line.Substring(3).Trim()
+            Raw  = $line
+        }
+    }
+    return $entries
+}
+
+function Require-EnvValue {
+    param(
+        [string]$Value,
+        [string]$Prompt,
+        [string]$Default = ""
+    )
+
+    if ($Value) { return $Value }
+    $inputValue = Read-Host $Prompt
+    if (-not $inputValue) { return $Default }
+    return $inputValue
+}
+
+function Confirm-OrThrow {
+    param(
+        [string]$Prompt,
+        [switch]$AutoApprove
+    )
+
+    if ($AutoApprove) { return }
+    $answer = Read-Host $Prompt
+    if ($answer -notin @("y", "Y", "yes", "YES")) {
+        throw "Cancelled by user."
+    }
+}
+
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Resolve-Path (Join-Path $scriptDir "..")
 $localConfig = Join-Path $scriptDir "deploy-vps.local.ps1"
+
 if (Test-Path $localConfig) {
     . $localConfig
 }
@@ -28,23 +70,52 @@ try {
         $CommitMessage = "chore: deploy $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
     }
 
-    $status = git status --porcelain
+    $servicesValue = if ($Services) { $Services } elseif ($env:DEPLOY_SERVICES) { $env:DEPLOY_SERVICES } else { "backend web-viewer rental-admin super-admin" }
+    $serviceList = @($servicesValue -split "\s+" | Where-Object { $_ })
+
+    $validServices = @("backend", "web-viewer", "rental-admin", "super-admin", "postgres", "redis", "prisma-migrate")
+    $invalidServices = @($serviceList | Where-Object { $_ -notin $validServices })
+    if ($invalidServices.Count -gt 0) {
+        throw "Unknown services: $($invalidServices -join ', ')"
+    }
+    $servicesArg = ($serviceList -join ' ').Trim()
+
+    $statusEntries = Get-RepoStatus
+    $trackedEntries = @($statusEntries | Where-Object { $_.Code -ne '??' })
+    $untrackedEntries = @($statusEntries | Where-Object { $_.Code -eq '??' })
+
     if (-not $SkipCommit) {
-        if ($status) {
+        if ($statusEntries.Count -eq 0) {
+            Write-Host "No local changes to commit."
+        }
+        else {
             Write-Host "Pending changes:"
             git status --short
-            if (-not $Yes) {
-                $confirm = Read-Host "Commit all changes above? (y/N)"
-                if ($confirm -notin @("y", "Y", "yes", "YES")) {
-                    throw "Cancelled by user."
+
+            if ($untrackedEntries.Count -gt 0 -and -not $AllowUntracked) {
+                throw "Untracked files detected. Commit or remove them first, or rerun with -AllowUntracked."
+            }
+
+            if ($trackedEntries.Count -eq 0 -and $untrackedEntries.Count -gt 0 -and $AllowUntracked) {
+                Confirm-OrThrow -Prompt "Commit untracked files too? (y/N)" -AutoApprove:$Yes
+            }
+            elseif ($trackedEntries.Count -gt 0) {
+                Confirm-OrThrow -Prompt "Commit the tracked changes listed above? (y/N)" -AutoApprove:$Yes
+            }
+
+            git add --update
+            if ($AllowUntracked -and $untrackedEntries.Count -gt 0) {
+                foreach ($entry in $untrackedEntries) {
+                    git add -- $entry.Path
                 }
             }
 
-            git add -A
+            $stagedStatus = git diff --cached --name-only
+            if (-not $stagedStatus) {
+                throw "Nothing was staged for commit."
+            }
+
             git commit -m $CommitMessage
-        }
-        else {
-            Write-Host "No local changes to commit."
         }
     }
 
@@ -53,16 +124,15 @@ try {
     }
 
     if (-not $SkipDeploy) {
-        $vpsHost = if ($env:DEPLOY_VPS_HOST) { $env:DEPLOY_VPS_HOST } else { Read-Host "VPS host/IP" }
-        $vpsUser = if ($env:DEPLOY_VPS_USER) { $env:DEPLOY_VPS_USER } else { Read-Host "VPS user (default: root)" }
-        if (-not $vpsUser) { $vpsUser = "root" }
-        $vpsPath = if ($env:DEPLOY_VPS_PATH) { $env:DEPLOY_VPS_PATH } else { Read-Host "Project path on VPS (default: /root/rrreeennntttaaalll)" }
-        if (-not $vpsPath) { $vpsPath = "/root/rrreeennntttaaalll" }
+        $vpsHost = Require-EnvValue -Value $env:DEPLOY_VPS_HOST -Prompt "VPS host/IP"
+        $vpsUser = Require-EnvValue -Value $env:DEPLOY_VPS_USER -Prompt "VPS user (default: root)" -Default "root"
+        $vpsPath = Require-EnvValue -Value $env:DEPLOY_VPS_PATH -Prompt "Project path on VPS (default: /root/rrreeennntttaaalll)" -Default "/root/rrreeennntttaaalll"
         $hostKey = $env:DEPLOY_VPS_HOSTKEY
         $password = $env:DEPLOY_VPS_PASSWORD
-        if (-not $Services) {
-            $Services = if ($env:DEPLOY_SERVICES) { $env:DEPLOY_SERVICES } else { "backend web-viewer rental-admin super-admin" }
-        }
+
+        Write-Host "Deploy target: $vpsUser@$vpsHost"
+        Write-Host "Services: $servicesArg"
+        Confirm-OrThrow -Prompt "Proceed with VPS deploy? (y/N)" -AutoApprove:$Yes
 
         $remoteCmd = @"
 set -e
@@ -70,11 +140,11 @@ cd '$vpsPath'
 git fetch origin
 git checkout '$branch'
 git pull --ff-only origin '$branch'
-docker-compose up -d --build $Services
-docker-compose ps
+docker-compose up -d --build $servicesArg
+docker-compose ps $servicesArg
 "@.Trim()
 
-        $plink = (Get-Command plink -ErrorAction SilentlyContinue)
+        $plink = Get-Command plink -ErrorAction SilentlyContinue
         if ($plink -and $password) {
             $args = @("-ssh", "-batch")
             if ($hostKey) {
@@ -84,7 +154,7 @@ docker-compose ps
             & $plink.Source @args
         }
         else {
-            $ssh = (Get-Command ssh -ErrorAction SilentlyContinue)
+            $ssh = Get-Command ssh -ErrorAction SilentlyContinue
             if (-not $ssh) {
                 throw "Neither plink nor ssh is available."
             }

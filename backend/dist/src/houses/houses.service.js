@@ -75,11 +75,35 @@ let HousesService = class HousesService {
             update: {},
         });
     }
-    async getHouses(skip = 0, take = 10) {
+    async assertAdminCanManageHouse(houseId, actorId, actorRole) {
+        if (!actorId || !actorRole)
+            return;
+        if (actorRole === roles_enum_1.Role.SUPER_ADMIN)
+            return;
+        if (actorRole !== roles_enum_1.Role.ADMIN)
+            return;
         const prismaAny = this.prisma;
+        const owned = await prismaAny.houseAdmin.findUnique({
+            where: {
+                houseId_adminId: {
+                    houseId,
+                    adminId: actorId,
+                }
+            }
+        });
+        if (!owned) {
+            throw new common_1.ForbiddenException('You cannot manage houses created by other admins');
+        }
+    }
+    async getHouses(skip = 0, take = 10, adminId) {
+        const prismaAny = this.prisma;
+        const whereClause = { deleted_at: null };
+        if (adminId) {
+            whereClause.houseAdmins = { some: { adminId: adminId } };
+        }
         const [data, total] = await Promise.all([
             prismaAny.house.findMany({
-                where: { deleted_at: null },
+                where: whereClause,
                 skip,
                 take,
                 orderBy: { created_at: 'desc' },
@@ -87,12 +111,16 @@ let HousesService = class HousesService {
                     id: true,
                     original_id: true,
                     name: true,
+                    created_at: true,
+                    updated_at: true,
                     address: true,
                     district: true,
                     city: true,
                     price: true,
                     bedrooms: true,
                     square: true,
+                    description: true,
+                    contact_phone: true,
                     image_url_1: true,
                     status: true,
                     is_private_bathroom: true,
@@ -110,7 +138,7 @@ let HousesService = class HousesService {
                     }
                 }
             }),
-            prismaAny.house.count({ where: { deleted_at: null } })
+            prismaAny.house.count({ where: whereClause })
         ]);
         const mappedData = data.map((house) => ({
             ...house,
@@ -126,10 +154,14 @@ let HousesService = class HousesService {
             }
         };
     }
-    async getHouseById(id) {
+    async getHouseById(id, adminId) {
         const prismaAny = this.prisma;
         const house = await prismaAny.house.findFirst({
-            where: { id, deleted_at: null },
+            where: {
+                id,
+                deleted_at: null,
+                ...(adminId ? { houseAdmins: { some: { adminId } } } : {}),
+            },
             include: {
                 houseAdmins: {
                     select: {
@@ -155,6 +187,7 @@ let HousesService = class HousesService {
         const house = await this.prisma.house.findFirst({ where: { id, deleted_at: null } });
         if (!house)
             throw new Error('House not found');
+        await this.assertAdminCanManageHouse(id, actorId, actorRole);
         let finalLat = data.latitude !== undefined ? Number(data.latitude) : undefined;
         let finalLon = data.longitude !== undefined ? Number(data.longitude) : undefined;
         if (data.address !== undefined && data.address !== house.address) {
@@ -169,6 +202,8 @@ let HousesService = class HousesService {
             data: {
                 ...(data.name !== undefined && { name: data.name }),
                 ...(data.address !== undefined && { address: data.address }),
+                ...(data.city !== undefined && { city: data.city }),
+                ...(data.district !== undefined && { district: data.district }),
                 ...(data.price !== undefined && { price: Number(data.price) }),
                 ...(data.bedrooms !== undefined && { bedrooms: Number(data.bedrooms) }),
                 ...(data.square !== undefined && { square: Number(data.square) }),
@@ -271,23 +306,25 @@ let HousesService = class HousesService {
             postedByAdmins: this.formatPostedByAdmins(populatedHouse.houseAdmins || []),
         };
     }
-    async updateStatus(id, status) {
+    async updateStatus(id, status, actorId, actorRole) {
         const house = await this.prisma.house.findUnique({
             where: { id }
         });
         if (!house)
             throw new Error('House not found');
+        await this.assertAdminCanManageHouse(id, actorId, actorRole);
         return this.prisma.house.update({
             where: { id },
             data: { status }
         });
     }
-    async removeHouse(id) {
+    async removeHouse(id, actorId, actorRole) {
         const house = await this.prisma.house.findUnique({
             where: { id }
         });
         if (!house)
             throw new Error('House not found');
+        await this.assertAdminCanManageHouse(id, actorId, actorRole);
         return this.prisma.house.update({
             where: { id },
             data: { deleted_at: new Date() }

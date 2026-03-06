@@ -36,6 +36,9 @@ export declare class MessagesGateway implements OnGatewayInit, OnGatewayConnecti
         content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        seen_at: Date | null;
+        seen_by_role: import("@prisma/client").$Enums.Role | null;
+        adminId: string | null;
     }) | {
         error: string;
     }>;
@@ -45,6 +48,7 @@ export declare class MessagesGateway implements OnGatewayInit, OnGatewayConnecti
         isTyping: boolean;
     }): void;
     notifyAdmins(message: any, onlyAdminId?: string): Promise<void>;
+    notifySuperAdmins(message: any): Promise<void>;
     sendMessageToUser(userId: string, message: any): Promise<void>;
 }
 export {};

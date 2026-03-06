@@ -4,7 +4,7 @@ export declare class HousesController {
     private readonly housesService;
     private readonly jwtService;
     constructor(housesService: HousesService, jwtService: JwtService);
-    private getUserRoleFromRequest;
+    private getUserFromRequest;
     getHouses(skip?: string, take?: string, req?: any): Promise<{
         data: any;
         meta: {
@@ -17,7 +17,7 @@ export declare class HousesController {
     getHouseById(id: string, req: any): Promise<any>;
     createHouse(data: any, req: any): Promise<any>;
     updateHouse(id: string, data: any, req: any): Promise<any>;
-    updateStatus(id: string, status: string): Promise<{
+    updateStatus(id: string, status: string, req: any): Promise<{
         id: string;
         name: string;
         status: string | null;
@@ -46,7 +46,7 @@ export declare class HousesController {
         is_private_bathroom: boolean;
         contact_phone: string | null;
     }>;
-    removeHouse(id: string): Promise<{
+    removeHouse(id: string, req: any): Promise<{
         id: string;
         name: string;
         status: string | null;

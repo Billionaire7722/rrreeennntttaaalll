@@ -10,6 +10,7 @@ import { AuditLogs } from './pages/AuditLogs';
 import { LoginLogs } from './pages/LoginLogs';
 import { Metrics } from './pages/Metrics';
 import { LiveMonitor } from './pages/LiveMonitor';
+import { HousesSheet } from './pages/HousesSheet';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route index element={<Overview />} />
             <Route path="users" element={<Users />} />
             <Route path="admins" element={<Admins />} />
+            <Route path="houses" element={<HousesSheet />} />
             <Route path="audit-logs" element={<AuditLogs />} />
             <Route path="login-logs" element={<LoginLogs />} />
             <Route path="metrics" element={<Metrics />} />

@@ -10,7 +10,7 @@ if not exist "scripts\deploy-vps.local.ps1" (
   exit /b 1
 )
 
-echo Starting auto deploy...
+echo Starting safe deploy...
 powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\deploy-vps.ps1" -Yes
 set EXIT_CODE=%ERRORLEVEL%
 
@@ -25,4 +25,3 @@ echo.
 echo Deploy completed successfully.
 pause
 exit /b 0
-

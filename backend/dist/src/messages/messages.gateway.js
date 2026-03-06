@@ -78,6 +78,9 @@ let MessagesGateway = class MessagesGateway {
         const message = await this.prisma.message.create({
             data: {
                 userId: client.user.role === roles_enum_1.Role.VIEWER ? client.user.userId : (recipientId || client.user.userId),
+                adminId: client.user.role === roles_enum_1.Role.VIEWER
+                    ? (recipientId || null)
+                    : client.user.userId,
                 senderId: client.user.userId,
                 senderRole: client.user.role,
                 content,
@@ -151,6 +154,13 @@ let MessagesGateway = class MessagesGateway {
             if (!isAdmin)
                 return;
             if (onlyAdminId && socket.user?.userId !== onlyAdminId)
+                return;
+            socket.emit('new_message', message);
+        });
+    }
+    async notifySuperAdmins(message) {
+        this.connectedClients.forEach((socket) => {
+            if (socket.user?.role !== roles_enum_1.Role.SUPER_ADMIN)
                 return;
             socket.emit('new_message', message);
         });

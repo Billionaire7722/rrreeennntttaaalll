@@ -38,14 +38,20 @@ let UsersController = class UsersController {
     getMessages(req) {
         return this.usersService.getMessages(req.user.userId);
     }
+    markViewerConversationSeen(req, adminId) {
+        return this.usersService.markViewerConversationSeen(req.user.userId, adminId);
+    }
     sendMessage(req, sendMessageDto) {
         return this.usersService.sendMessage(req.user.userId, sendMessageDto);
     }
-    getViewerMessages(skip, take) {
-        return this.usersService.getViewerMessages(skip, take);
+    getViewerMessages(req, skip, take) {
+        return this.usersService.getViewerMessages(req.user.userId, req.user.role, skip, take);
     }
     replyToViewer(req, viewerId, sendMessageDto) {
         return this.usersService.replyToViewer(req.user.userId, req.user.role, viewerId, sendMessageDto);
+    }
+    markAdminConversationSeen(req, viewerId) {
+        return this.usersService.markAdminConversationSeen(req.user.userId, req.user.role, viewerId);
     }
     updateAvatar(req, body) {
         return this.usersService.updateAvatar(req.user.userId, body.url);
@@ -86,6 +92,15 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "getMessages", null);
 __decorate([
+    (0, common_1.Post)('messages/:adminId/seen'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('adminId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "markViewerConversationSeen", null);
+__decorate([
     (0, common_1.Post)('messages'),
     (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
     __param(0, (0, common_1.Request)()),
@@ -97,10 +112,11 @@ __decorate([
 __decorate([
     (0, common_1.Get)('admin/messages'),
     (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
-    __param(0, (0, common_1.Query)('skip')),
-    __param(1, (0, common_1.Query)('take')),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Query)('skip')),
+    __param(2, (0, common_1.Query)('take')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:paramtypes", [Object, Number, Number]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "getViewerMessages", null);
 __decorate([
@@ -113,6 +129,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, send_message_dto_1.SendMessageDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "replyToViewer", null);
+__decorate([
+    (0, common_1.Post)('admin/messages/:viewerId/seen'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('viewerId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "markAdminConversationSeen", null);
 __decorate([
     (0, common_1.Post)('avatar'),
     (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),

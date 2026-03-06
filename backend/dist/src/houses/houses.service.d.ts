@@ -6,7 +6,8 @@ export declare class HousesService {
     private formatPostedByAdmins;
     private fetchCoordinatesFromAddress;
     private attachPoster;
-    getHouses(skip?: number, take?: number): Promise<{
+    private assertAdminCanManageHouse;
+    getHouses(skip?: number, take?: number, adminId?: string): Promise<{
         data: any;
         meta: {
             total: any;
@@ -15,10 +16,10 @@ export declare class HousesService {
             hasMore: boolean;
         };
     }>;
-    getHouseById(id: string): Promise<any>;
+    getHouseById(id: string, adminId?: string): Promise<any>;
     updateHouse(id: string, data: any, actorId?: string, actorRole?: string): Promise<any>;
     createHouse(data: any, actorId?: string, actorRole?: string): Promise<any>;
-    updateStatus(id: string, status: string): Promise<{
+    updateStatus(id: string, status: string, actorId?: string, actorRole?: string): Promise<{
         id: string;
         name: string;
         status: string | null;
@@ -47,7 +48,7 @@ export declare class HousesService {
         is_private_bathroom: boolean;
         contact_phone: string | null;
     }>;
-    removeHouse(id: string): Promise<{
+    removeHouse(id: string, actorId?: string, actorRole?: string): Promise<{
         id: string;
         name: string;
         status: string | null;
