@@ -155,20 +155,6 @@ export default function LoginPage() {
                         <p className="mt-4 text-lg text-teal-100 leading-relaxed">
                             Browse thousands of verified listings, connect with landlords, and find the perfect space that feels like home.
                         </p>
-                        <div className="mt-8 flex gap-6">
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-white">10K+</p>
-                                <p className="text-sm text-teal-200">Listings</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-white">5K+</p>
-                                <p className="text-sm text-teal-200">Happy Renters</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-white">50+</p>
-                                <p className="text-sm text-teal-200">Cities</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
