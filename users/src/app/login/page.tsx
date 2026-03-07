@@ -174,24 +174,41 @@ export default function LoginPage() {
             </div>
 
             {/* Right side - Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-8 bg-slate-50">
-                <div className="w-full max-w-[420px]">
+            <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-8 bg-slate-50 lg:bg-slate-50 relative">
+                {/* Mobile background */}
+                <div className="lg:hidden absolute inset-0">
+                    <Image
+                        src="/images/auth-background.jpg"
+                        alt="Background"
+                        fill
+                        priority
+                        className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-teal-900/80 via-teal-800/70 to-slate-900/90"></div>
+                </div>
+
+                <div className="w-full max-w-[420px] relative z-10">
                     {/* Mobile logo */}
-                    <div className="lg:hidden mb-8 flex items-center justify-center gap-3">
-                        <Image
-                            src="/images/yh-logo.jpg"
-                            alt="Your Home Logo"
-                            width={48}
-                            height={48}
-                            className="rounded-xl shadow-md"
-                        />
-                        <div>
-                            <h1 className="text-xl font-bold text-slate-900">Your Home</h1>
-                            <p className="text-teal-600 text-xs">Find your perfect place</p>
+                    <div className="lg:hidden mb-6 text-center">
+                        <div className="flex items-center justify-center gap-3 mb-4">
+                            <Image
+                                src="/images/yh-logo.jpg"
+                                alt="Your Home Logo"
+                                width={56}
+                                height={56}
+                                className="rounded-xl shadow-lg"
+                            />
+                            <div className="text-left">
+                                <h1 className="text-2xl font-bold text-white">Your Home</h1>
+                                <p className="text-teal-200 text-sm">Find your perfect place</p>
+                            </div>
                         </div>
+                        <p className="text-white/80 text-sm max-w-xs mx-auto">
+                            Discover thousands of rental homes in your area
+                        </p>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
+                    <div className="bg-white rounded-2xl p-8 shadow-xl lg:shadow-sm border border-slate-200/50 lg:border-slate-200">
                         <div>
                             <h2 className="text-2xl font-bold text-slate-900">Welcome back</h2>
                             <p className="mt-2 text-sm text-slate-500">
