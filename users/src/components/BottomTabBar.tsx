@@ -34,13 +34,13 @@ export default function BottomTabBar() {
                     href="/"
                     className="flex-1 flex items-center justify-center h-full"
                 >
-                    <Map size={26} className={pathname === '/' ? 'text-blue-600' : 'text-gray-400'} />
+                    <Map size={26} className={pathname === '/' ? 'text-teal-600' : 'text-gray-400'} />
                 </Link>
 
                 {/* Center Add Button */}
                 <div className="flex-1 flex items-center justify-center relative">
                     <button
-                        className="absolute -top-6 bg-blue-600 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all outline-none"
+                        className="absolute -top-6 bg-teal-600 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg shadow-teal-500/30 hover:bg-teal-700 hover:scale-105 active:scale-95 transition-all outline-none"
                         onClick={() => {
                             if (!user) {
                                 alert("Please log in to add a property");
@@ -58,7 +58,7 @@ export default function BottomTabBar() {
                     href="/profile"
                     className="flex-1 flex items-center justify-center h-full"
                 >
-                    <User size={26} className={pathname === '/profile' ? 'text-blue-600' : 'text-gray-400'} />
+                    <User size={26} className={pathname === '/profile' ? 'text-teal-600' : 'text-gray-400'} />
                 </Link>
             </div>
 

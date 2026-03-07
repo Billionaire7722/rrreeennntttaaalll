@@ -74,7 +74,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
                 </div>
                 <button
                     onClick={() => setIsFilterOpen(true)}
-                    className="bg-blue-600 w-9 h-9 rounded-lg flex justify-center items-center flex-shrink-0 hover:bg-blue-700 transition"
+                    className="bg-teal-600 w-9 h-9 rounded-lg flex justify-center items-center flex-shrink-0 hover:bg-teal-700 transition"
                 >
                     <Filter size={18} className="text-white" />
                 </button>
@@ -99,7 +99,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
                                 <button
                                     key={key}
                                     onClick={() => { setLanguage(key); setIsLangOpen(false); }}
-                                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${language === key ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'}`}
+                                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${language === key ? 'bg-teal-50 text-teal-600 font-medium' : 'text-gray-700'}`}
                                 >
                                     <img src={flag.url} alt={key} className="w-5 h-auto rounded-sm" />
                                     <span>{flag.label}</span>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 export const dynamic = 'force-dynamic';
 
@@ -167,7 +167,7 @@ export default function RegisterPage() {
 
     const getInputClassName = (fieldName: keyof FormErrors) => {
         const baseClass =
-            'block h-12 w-full rounded-xl border bg-white pl-11 pr-4 text-[15px] text-gray-900 placeholder:text-gray-400 transition-all focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100';
+            'block h-12 w-full rounded-xl border bg-white pl-11 pr-4 text-[15px] text-gray-900 placeholder:text-gray-400 transition-all focus:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-100';
 
         if (errors[fieldName] && touched[fieldName]) {
             return `${baseClass} border-red-400 focus:border-red-500 focus:ring-red-100`;
@@ -177,29 +177,91 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="relative min-h-screen overflow-hidden">
-            <div className="absolute inset-0">
+        <div className="relative min-h-screen overflow-hidden flex">
+            {/* Left side - Image */}
+            <div className="hidden lg:block lg:w-1/2 relative">
                 <Image
-                    src="/images/background.png"
-                    alt="background"
+                    src="/images/auth-background.jpg"
+                    alt="Beautiful home interior"
                     fill
                     priority
                     className="object-cover"
                 />
-            </div>
-            <div className="absolute inset-0 bg-black/40"></div>
-
-            <div className="relative flex min-h-screen items-center justify-center px-4 py-8">
-                <div className="w-full max-w-[420px] rounded-xl border border-white/30 bg-white/90 p-8 shadow-xl backdrop-blur-lg sm:p-9">
-                    <div>
-                        <div className="mb-6 flex justify-center">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white shadow-lg shadow-blue-600/20">
-                                R
+                <div className="absolute inset-0 bg-gradient-to-r from-teal-900/70 to-teal-800/50"></div>
+                <div className="absolute inset-0 flex flex-col justify-center px-12 xl:px-16">
+                    <div className="max-w-md">
+                        <div className="flex items-center gap-3 mb-8">
+                            <Image
+                                src="/images/yh-logo.jpg"
+                                alt="Your Home Logo"
+                                width={56}
+                                height={56}
+                                className="rounded-xl shadow-lg"
+                            />
+                            <div>
+                                <h1 className="text-2xl font-bold text-white">Your Home</h1>
+                                <p className="text-teal-200 text-sm">Find your perfect place</p>
                             </div>
                         </div>
-                        <h2 className="text-center text-3xl font-semibold tracking-tight text-slate-900">Create Account</h2>
-                        <p className="mt-2 text-center text-sm text-slate-500">Sign up quickly to get started.</p>
+                        <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight text-balance">
+                            Start your journey to the perfect home
+                        </h2>
+                        <p className="mt-4 text-lg text-teal-100 leading-relaxed">
+                            Create an account to save your favorite listings, contact landlords directly, and receive personalized recommendations.
+                        </p>
+                        <div className="mt-8 space-y-3">
+                            <div className="flex items-center gap-3 text-white">
+                                <div className="w-8 h-8 rounded-full bg-teal-500/30 flex items-center justify-center">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <span>Save and compare your favorite properties</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-white">
+                                <div className="w-8 h-8 rounded-full bg-teal-500/30 flex items-center justify-center">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <span>Get instant notifications for new listings</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-white">
+                                <div className="w-8 h-8 rounded-full bg-teal-500/30 flex items-center justify-center">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <span>Message landlords directly through the app</span>
+                            </div>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Right side - Form */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-8 bg-slate-50 overflow-y-auto">
+                <div className="w-full max-w-[420px]">
+                    {/* Mobile logo */}
+                    <div className="lg:hidden mb-6 flex items-center justify-center gap-3">
+                        <Image
+                            src="/images/yh-logo.jpg"
+                            alt="Your Home Logo"
+                            width={48}
+                            height={48}
+                            className="rounded-xl shadow-md"
+                        />
+                        <div>
+                            <h1 className="text-xl font-bold text-slate-900">Your Home</h1>
+                            <p className="text-teal-600 text-xs">Find your perfect place</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900">Create your account</h2>
+                            <p className="mt-2 text-sm text-slate-500">Join thousands of happy renters today</p>
+                        </div>
 
                     <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
                         {error && (
@@ -347,20 +409,21 @@ export default function RegisterPage() {
                             type="submit"
                             disabled={loading}
                             className={`flex h-12 w-full items-center justify-center rounded-xl text-sm font-semibold text-white transition-all duration-200 ${loading
-                                    ? 'cursor-not-allowed bg-blue-400'
-                                    : 'bg-blue-600 shadow-md shadow-blue-600/25 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg'
-                                } focus:outline-none focus:ring-4 focus:ring-blue-100`}
+                                    ? 'cursor-not-allowed bg-teal-400'
+                                    : 'bg-teal-600 shadow-md shadow-teal-600/25 hover:-translate-y-0.5 hover:bg-teal-700 hover:shadow-lg'
+                                } focus:outline-none focus:ring-4 focus:ring-teal-100`}
                         >
                             {loading ? 'Creating account...' : 'Create Account'}
                         </button>
 
                         <p className="pt-1 text-center text-sm text-slate-500">
                             Already have an account?{' '}
-                            <Link href="/login" className="font-semibold text-blue-600 transition-colors hover:text-blue-700">
+                            <Link href="/login" className="font-semibold text-teal-600 transition-colors hover:text-teal-700">
                                 Sign in
                             </Link>
                         </p>
                     </form>
+                    </div>
                 </div>
             </div>
         </div>
