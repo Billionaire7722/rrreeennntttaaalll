@@ -40,7 +40,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
             </div>
 
             {/* Center: Search Bar & Filter */}
-            <div className="flex-1 flex flex-row items-center gap-2 min-w-0">
+            <div className="flex flex-row items-center gap-2 max-w-[280px] sm:max-w-[320px]">
                 <div className="flex-1 flex flex-row items-center bg-gray-100 rounded-lg px-2.5 h-9 min-w-0">
                     <Search size={16} className="text-gray-500 flex-shrink-0" />
                     <input
