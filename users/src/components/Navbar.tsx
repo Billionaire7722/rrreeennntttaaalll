@@ -33,12 +33,11 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
     return (
         <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 h-[60px] flex items-center justify-between px-3 sm:px-4 w-full">
             {/* Left: User Greeting */}
-            <div className="flex-1 hidden sm:flex">
-                <span className="text-sm font-medium text-gray-800 truncate max-w-[120px]">
+            <div className="flex-1 flex">
+                <span className="text-sm font-medium text-gray-800 truncate max-w-[80px] sm:max-w-[120px]">
                     {t("hello")}, {user ? user.name || t("guest") : t("guest")}
                 </span>
             </div>
-            <div className="flex-1 sm:hidden" />
 
             {/* Center: Search Bar & Filter */}
             <div className="flex flex-row items-center gap-2 w-[200px] sm:w-[280px] md:w-[360px]">
