@@ -2,12 +2,20 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/useAuth';
+import { useLanguage, Language } from '@/context/LanguageContext';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, Globe, ChevronDown } from 'lucide-react';
 import Captcha from '@/components/Captcha';
+
+const FLAGS: Record<Language, { url: string, label: string }> = {
+    vi: { url: "https://flagcdn.com/w20/vn.png", label: "Tiếng Việt" },
+    en: { url: "https://flagcdn.com/w20/gb.png", label: "English" },
+    zh: { url: "https://flagcdn.com/w20/cn.png", label: "中文" },
+    es: { url: "https://flagcdn.com/w20/es.png", label: "Español" },
+};
 
 interface FormErrors {
     loginId?: string;
@@ -17,6 +25,7 @@ interface FormErrors {
 
 export default function LoginPage() {
     const { login } = useAuth();
+    const { language, setLanguage } = useLanguage();
     const [loginId, setLoginId] = useState('');
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState<FormErrors>({});
@@ -24,6 +33,18 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [captchaToken, setCaptchaToken] = useState<string | null>(null);
     const [touched, setTouched] = useState<Record<string, boolean>>({});
+    const [isLangOpen, setIsLangOpen] = useState(false);
+    const langDropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
+                setIsLangOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const validateField = (name: string, value: string): string | undefined => {
         switch (name) {
@@ -195,11 +216,38 @@ export default function LoginPage() {
                     </div>
 
                     <div className="bg-white rounded-2xl p-8 shadow-xl lg:shadow-sm border border-slate-200/50 lg:border-slate-200">
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-900">Welcome back</h2>
-                            <p className="mt-2 text-sm text-slate-500">
-                                Sign in to continue exploring rental homes
-                            </p>
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-900">Welcome back</h2>
+                                <p className="mt-2 text-sm text-slate-500">
+                                    Sign in to continue exploring rental homes
+                                </p>
+                            </div>
+                            {/* Language Switcher */}
+                            <div className="relative" ref={langDropdownRef}>
+                                <button
+                                    onClick={() => setIsLangOpen(!isLangOpen)}
+                                    className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition text-sm"
+                                >
+                                    <Globe size={14} className="text-slate-500" />
+                                    <img src={FLAGS[language].url} alt={language} className="w-4 h-auto rounded-sm" />
+                                    <ChevronDown size={12} className={`text-slate-400 transition-transform ${isLangOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {isLangOpen && (
+                                    <div className="absolute right-0 mt-1.5 w-36 bg-white rounded-lg shadow-xl border border-slate-200 py-1 overflow-hidden z-[100]">
+                                        {(Object.entries(FLAGS) as [Language, { url: string, label: string }][]).map(([key, flag]) => (
+                                            <button
+                                                key={key}
+                                                onClick={() => { setLanguage(key); setIsLangOpen(false); }}
+                                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${language === key ? 'bg-teal-50 text-teal-600 font-medium' : 'text-slate-700'}`}
+                                            >
+                                                <img src={flag.url} alt={key} className="w-5 h-auto rounded-sm" />
+                                                <span>{flag.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                     <form className="mt-7 space-y-5" onSubmit={handleSubmit}>

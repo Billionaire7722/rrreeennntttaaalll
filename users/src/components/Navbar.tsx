@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/useAuth';
-import { useLanguage, Language } from '@/context/LanguageContext';
-import { Search, Filter, LogOut, User, ChevronDown } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
+import { Search, Filter, LogOut, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import FilterModal, { FilterOptions, DEFAULT_FILTERS } from './FilterModal';
 
@@ -11,41 +11,19 @@ interface NavbarProps {
     onFilterChange?: (filters: FilterOptions) => void;
 }
 
-const FLAGS: Record<Language, { url: string, label: string }> = {
-    vi: { url: "https://flagcdn.com/w20/vn.png", label: "Tiếng Việt" },
-    en: { url: "https://flagcdn.com/w20/gb.png", label: "English" },
-    zh: { url: "https://flagcdn.com/w20/cn.png", label: "中文" },
-    es: { url: "https://flagcdn.com/w20/es.png", label: "Español" },
-};
-
 export default function Navbar({ onFilterChange }: NavbarProps = {}) {
     const { user, logout } = useAuth();
-    const { language, setLanguage, t } = useLanguage();
+    const { t } = useLanguage();
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [filters, setFilters] = useState<FilterOptions>(DEFAULT_FILTERS);
-
-    // Dropdown state
-    const [isLangOpen, setIsLangOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (onFilterChange) {
             onFilterChange({ ...filters, searchQuery });
         }
     }, [searchQuery, filters]);
-
-    // Close dropdown on outside click
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsLangOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
 
     const handleLogout = async () => {
         await logout();
@@ -80,35 +58,8 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
                 </button>
             </div>
 
-            {/* Right: Language Dropdown and Logout / Login */}
+            {/* Right: Logout / Login */}
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-
-                {/* Language Switcher */}
-                <div className="relative" ref={dropdownRef}>
-                    <button
-                        onClick={() => setIsLangOpen(!isLangOpen)}
-                        className="flex items-center gap-1 px-2 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition"
-                    >
-                        <img src={FLAGS[language].url} alt={language} className="w-5 h-auto rounded-sm" />
-                        <ChevronDown size={14} className={`text-gray-500 transition-transform ${isLangOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {isLangOpen && (
-                        <div className="absolute right-0 mt-1.5 w-36 bg-white rounded-lg shadow-xl border border-gray-200 py-1 overflow-hidden z-[100]">
-                            {(Object.entries(FLAGS) as [Language, { url: string, label: string }][]).map(([key, flag]) => (
-                                <button
-                                    key={key}
-                                    onClick={() => { setLanguage(key); setIsLangOpen(false); }}
-                                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${language === key ? 'bg-teal-50 text-teal-600 font-medium' : 'text-gray-700'}`}
-                                >
-                                    <img src={flag.url} alt={key} className="w-5 h-auto rounded-sm" />
-                                    <span>{flag.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
                 {user ? (
                     <button onClick={handleLogout} className="p-2 hover:bg-gray-100 rounded-lg transition">
                         <LogOut size={18} className="text-gray-500" />

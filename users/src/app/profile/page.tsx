@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 export const dynamic = 'force-dynamic';
 
@@ -191,15 +191,35 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-          <UserIcon className="h-10 w-10 text-gray-400" />
+      <div className="min-h-[calc(100vh-120px)] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
+        <div className="max-w-sm w-full">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-teal-100 to-teal-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <UserIcon className="h-10 w-10 text-teal-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome to Your Home</h2>
+            <p className="text-slate-500 text-sm leading-relaxed mb-8">
+              Sign in to save your favorite properties, track your listings, and connect with landlords.
+            </p>
+            <div className="space-y-3">
+              <Link 
+                href="/login" 
+                className="flex w-full items-center justify-center px-6 py-3 text-base font-semibold rounded-xl text-white bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-600/20 transition-all hover:-translate-y-0.5"
+              >
+                Sign In
+              </Link>
+              <Link 
+                href="/register" 
+                className="flex w-full items-center justify-center px-6 py-3 text-base font-semibold rounded-xl text-teal-600 bg-teal-50 hover:bg-teal-100 transition-colors"
+              >
+                Create Account
+              </Link>
+            </div>
+          </div>
+          <p className="text-center text-xs text-slate-400 mt-6">
+            Find your perfect rental home with Your Home
+          </p>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">Not logged in</h2>
-        <p className="text-gray-500 mb-8">Please sign in to view your profile.</p>
-        <Link href="/login" className="inline-flex w-full items-center justify-center px-6 py-3.5 text-base font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition">
-          Sign in / Register
-        </Link>
       </div>
     );
   }
