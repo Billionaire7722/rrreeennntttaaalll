@@ -32,12 +32,9 @@ export default function BottomTabBar() {
                 {/* Map tab - left */}
                 <Link
                     href="/"
-                    className="flex-1 flex flex-col items-center justify-center h-full"
+                    className="flex-1 flex items-center justify-center h-full"
                 >
-                    <Map size={24} className={pathname === '/' ? 'text-blue-600' : 'text-gray-400'} />
-                    <span className={`text-[11px] font-semibold mt-1 ${pathname === '/' ? 'text-blue-600' : 'text-gray-400'}`}>
-                        {t("map")}
-                    </span>
+                    <Map size={26} className={pathname === '/' ? 'text-blue-600' : 'text-gray-400'} />
                 </Link>
 
                 {/* Center Add Button */}
@@ -59,12 +56,9 @@ export default function BottomTabBar() {
                 {/* Profile tab - right */}
                 <Link
                     href="/profile"
-                    className="flex-1 flex flex-col items-center justify-center h-full"
+                    className="flex-1 flex items-center justify-center h-full"
                 >
-                    <User size={24} className={pathname === '/profile' ? 'text-blue-600' : 'text-gray-400'} />
-                    <span className={`text-[11px] font-semibold mt-1 ${pathname === '/profile' ? 'text-blue-600' : 'text-gray-400'}`}>
-                        {t("profile")}
-                    </span>
+                    <User size={26} className={pathname === '/profile' ? 'text-blue-600' : 'text-gray-400'} />
                 </Link>
             </div>
 
