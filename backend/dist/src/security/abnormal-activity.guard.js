@@ -30,7 +30,7 @@ let AbnormalActivityGuard = class AbnormalActivityGuard {
         if (method !== 'DELETE' && method !== 'PATCH' && method !== 'POST') {
             return true;
         }
-        if (!user || user.role !== roles_enum_1.Role.ADMIN) {
+        if (!user || user.role !== roles_enum_1.Role.USER) {
             return true;
         }
         const now = Date.now();

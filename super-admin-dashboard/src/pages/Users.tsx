@@ -58,7 +58,7 @@ export const Users: React.FC = () => {
 
     const handleStatusToggle = async (userId: string, currentStatus: string) => {
         const newStatus = currentStatus === 'ACTIVE' ? 'BANNED' : 'ACTIVE';
-        if (!window.confirm(`Are you sure you want to ${newStatus === 'BANNED' ? 'deactivate' : 'reactivate'} this viewer?`)) return;
+        if (!window.confirm(`Are you sure you want to ${newStatus === 'BANNED' ? 'deactivate' : 'reactivate'} this user?`)) return;
 
         try {
             await api.patch(`/admin/admins/${userId}/status`, { status: newStatus });
@@ -89,9 +89,9 @@ export const Users: React.FC = () => {
             setIsCreateModalOpen(false);
             setFormData({ name: '', username: '', email: '', phone: '', password: '' });
             fetchUsers();
-            alert("Viewer created successfully");
+            alert("User created successfully");
         } catch (err: any) {
-            alert(err.response?.data?.message || 'Failed to create viewer');
+            alert(err.response?.data?.message || 'Failed to create user');
         }
     };
 
@@ -112,9 +112,9 @@ export const Users: React.FC = () => {
             setIsEditModalOpen(false);
             setSelectedUser(null);
             fetchUsers();
-            alert("Viewer updated successfully");
+            alert("User updated successfully");
         } catch (err: any) {
-            alert(err.response?.data?.message || 'Failed to update viewer');
+            alert(err.response?.data?.message || 'Failed to update user');
         }
     };
 
@@ -135,7 +135,7 @@ export const Users: React.FC = () => {
         <div className={`glass-panel ${css.tableContainer}`}>
             <div className={css.tableHeader}>
                 <div>
-                    <h2>Viewer Management</h2>
+                    <h2>User Management</h2>
                     <span className={css.totalBadge}>Total: {total}</span>
                 </div>
                 <button
@@ -146,12 +146,12 @@ export const Users: React.FC = () => {
                         setIsCreateModalOpen(true);
                     }}
                 >
-                    <Plus size={18} /> Add Viewer
+                    <Plus size={18} /> Add User
                 </button>
             </div>
 
             <div style={{ padding: '0 24px 18px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                Passwords are stored as secure hashes in the database, so current viewer passwords cannot be revealed. You can show or hide any new password before saving a replacement.
+                Passwords are stored as secure hashes in the database, so current user passwords cannot be revealed. You can show or hide any new password before saving a replacement.
             </div>
 
             <div className={css.tableScroll}>
@@ -170,7 +170,7 @@ export const Users: React.FC = () => {
                         {loading ? (
                             <tr><td colSpan={6} style={{ textAlign: 'center' }}>Loading...</td></tr>
                         ) : users.length === 0 ? (
-                            <tr><td colSpan={6} style={{ textAlign: 'center' }}>No viewers found.</td></tr>
+                            <tr><td colSpan={6} style={{ textAlign: 'center' }}>No users found.</td></tr>
                         ) : (
                             users.map(u => (
                                 <tr key={u.id}>
@@ -194,7 +194,7 @@ export const Users: React.FC = () => {
                                             <button
                                                 onClick={() => openEditModal(u)}
                                                 className="btn btn-outline"
-                                                title="Edit Viewer"
+                                                title="Edit User"
                                             >
                                                 <Edit2 size={16} />
                                             </button>
@@ -208,7 +208,7 @@ export const Users: React.FC = () => {
                                             <button
                                                 onClick={() => setDeleteTarget(u)}
                                                 className="btn btn-danger"
-                                                title="Delete Viewer"
+                                                title="Delete User"
                                             >
                                                 <Trash2 size={16} />
                                             </button>
@@ -246,7 +246,7 @@ export const Users: React.FC = () => {
                 <div className="modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3>Create New Viewer</h3>
+                            <h3>Create New User</h3>
                             <button className="modal-close" onClick={() => setIsCreateModalOpen(false)}>
                                 <X size={20} />
                             </button>
@@ -292,7 +292,7 @@ export const Users: React.FC = () => {
                 <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3>Edit Viewer Info</h3>
+                            <h3>Edit User Info</h3>
                             <button className="modal-close" onClick={() => setIsEditModalOpen(false)}>
                                 <X size={20} />
                             </button>
@@ -337,14 +337,14 @@ export const Users: React.FC = () => {
                 <div className="modal-overlay" onClick={() => !deleting && setDeleteTarget(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3>Confirm Viewer Deletion</h3>
+                            <h3>Confirm User Deletion</h3>
                             <button className="modal-close" onClick={() => !deleting && setDeleteTarget(null)}>
                                 <X size={20} />
                             </button>
                         </div>
                         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             <p style={{ margin: 0, color: '#334155' }}>
-                                You are about to soft-delete this viewer:
+                                You are about to soft-delete this user:
                             </p>
                             <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 12px' }}>
                                 <div style={{ fontWeight: 700, color: '#0f172a' }}>{deleteTarget.name}</div>
@@ -359,7 +359,7 @@ export const Users: React.FC = () => {
                                     Cancel
                                 </button>
                                 <button type="button" className="btn btn-danger" onClick={confirmDelete} disabled={deleting}>
-                                    {deleting ? 'Deleting...' : 'Delete Viewer'}
+                                    {deleting ? 'Deleting...' : 'Delete User'}
                                 </button>
                             </div>
                         </div>

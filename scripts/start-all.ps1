@@ -16,17 +16,12 @@ Start-Sleep -Seconds 5
 Write-Host "`n🔥 Starting Backend (NestJS)..." -ForegroundColor Cyan
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'd:\rental\backend'; npm run start:dev"
 
-# 3. Start Web Viewer (Next.js) 
-Write-Host "🌐 Starting Web Viewer (Next.js)..." -ForegroundColor Cyan
+# 3. Start Users (Next.js) 
+Write-Host "🌐 Starting Users (Next.js)..." -ForegroundColor Cyan
 Start-Sleep -Seconds 3
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'd:\rental\viewer\web-viewer'; `$env:NEXT_PUBLIC_API_BASE_URL='http://localhost:3000'; npm run dev"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'd:\rental\users'; `$env:NEXT_PUBLIC_API_BASE_URL='http://localhost:3000'; npm run dev"
 
-# 4. Start Rental Admin (Expo)
-Write-Host "📱 Starting Rental Admin (Expo)..." -ForegroundColor Cyan
-Start-Sleep -Seconds 5
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'd:\rental\rental-admin'; `$env:EXPO_PUBLIC_API_BASE_URL='http://localhost:3000'; npx expo start --web"
-
-# 5. Start Super Admin Dashboard (Vite)
+# 4. Start Super Admin Dashboard (Vite)
 Write-Host "👑 Starting Super Admin (Vite)..." -ForegroundColor Cyan
 Start-Sleep -Seconds 5
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'd:\rental\super-admin-dashboard'; `$env:VITE_API_BASE_URL='http://localhost:3000'; npm run dev"
@@ -34,9 +29,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'd:\rental\sup
 Write-Host "`n✅ All services started!" -ForegroundColor Green
 Write-Host "`n📋 Service URLs:" -ForegroundColor White
 Write-Host "  - Backend:     http://localhost:3000" -ForegroundColor Yellow
-Write-Host "  - Web Viewer:  http://localhost:3002" -ForegroundColor Yellow
-Write-Host "  - Rental Admin: http://localhost:8081" -ForegroundColor Yellow
-Write-Host "  - Super Admin: http://localhost:5173" -ForegroundColor Yellow
+Write-Host "  - Users App:     http://localhost:3002" -ForegroundColor Yellow
+Write-Host "  - Super Admin:   http://localhost:5173" -ForegroundColor Yellow
 Write-Host "`n👤 Default Accounts:" -ForegroundColor White
 Write-Host "  - Super Admin: ceo@rentalapp.com / Admin@123" -ForegroundColor Yellow
-Write-Host "  - Admin:       admin@rental.com / Admin@123" -ForegroundColor Yellow

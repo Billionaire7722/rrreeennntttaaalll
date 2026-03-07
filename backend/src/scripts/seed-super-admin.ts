@@ -22,7 +22,7 @@ async function main() {
         console.log(`Found ${existingSuperAdmins.length} existing SUPER_ADMIN(s). Demoting to ADMIN...`);
         await prisma.user.updateMany({
             where: { role: Role.SUPER_ADMIN },
-            data: { role: Role.ADMIN }
+            data: { role: Role.USER }
         });
     }
 

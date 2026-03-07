@@ -70,10 +70,10 @@ try {
         $CommitMessage = "chore: deploy $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
     }
 
-    $servicesValue = if ($Services) { $Services } elseif ($env:DEPLOY_SERVICES) { $env:DEPLOY_SERVICES } else { "backend web-viewer rental-admin super-admin" }
+    $servicesValue = if ($Services) { $Services } elseif ($env:DEPLOY_SERVICES) { $env:DEPLOY_SERVICES } else { "backend users super-admin" }
     $serviceList = @($servicesValue -split "\s+" | Where-Object { $_ })
 
-    $validServices = @("backend", "web-viewer", "rental-admin", "super-admin", "postgres", "redis", "prisma-migrate")
+    $validServices = @("backend", "users", "super-admin", "postgres", "redis", "prisma-migrate")
     $invalidServices = @($serviceList | Where-Object { $_ -notin $validServices })
     if ($invalidServices.Count -gt 0) {
         throw "Unknown services: $($invalidServices -join ', ')"

@@ -60,7 +60,7 @@ let UsersController = class UsersController {
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Get)('profile'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -68,7 +68,7 @@ __decorate([
 ], UsersController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.Get)('favorites'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -76,7 +76,7 @@ __decorate([
 ], UsersController.prototype, "getFavorites", null);
 __decorate([
     (0, common_1.Post)('favorites/toggle'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -85,7 +85,7 @@ __decorate([
 ], UsersController.prototype, "toggleFavorite", null);
 __decorate([
     (0, common_1.Get)('messages'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -93,7 +93,7 @@ __decorate([
 ], UsersController.prototype, "getMessages", null);
 __decorate([
     (0, common_1.Post)('messages/:adminId/seen'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('adminId')),
     __metadata("design:type", Function),
@@ -102,7 +102,7 @@ __decorate([
 ], UsersController.prototype, "markViewerConversationSeen", null);
 __decorate([
     (0, common_1.Post)('messages'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -111,7 +111,7 @@ __decorate([
 ], UsersController.prototype, "sendMessage", null);
 __decorate([
     (0, common_1.Get)('admin/messages'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Query)('skip')),
     __param(2, (0, common_1.Query)('take')),
@@ -121,7 +121,7 @@ __decorate([
 ], UsersController.prototype, "getViewerMessages", null);
 __decorate([
     (0, common_1.Post)('admin/messages/:viewerId/reply'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('viewerId')),
     __param(2, (0, common_1.Body)()),
@@ -131,7 +131,7 @@ __decorate([
 ], UsersController.prototype, "replyToViewer", null);
 __decorate([
     (0, common_1.Post)('admin/messages/:viewerId/seen'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('viewerId')),
     __metadata("design:type", Function),
@@ -140,7 +140,7 @@ __decorate([
 ], UsersController.prototype, "markAdminConversationSeen", null);
 __decorate([
     (0, common_1.Post)('avatar'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

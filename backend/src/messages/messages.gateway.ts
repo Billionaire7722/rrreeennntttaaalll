@@ -28,8 +28,7 @@ interface AuthenticatedSocket extends Socket {
     namespace: '/messages',
 })
 export class MessagesGateway
-    implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+    implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
@@ -39,7 +38,7 @@ export class MessagesGateway
     constructor(
         private jwtService: JwtService,
         private prisma: PrismaService,
-    ) {}
+    ) { }
 
     afterInit(server: Server) {
         console.log('WebSocket Gateway initialized');
@@ -47,8 +46,8 @@ export class MessagesGateway
 
     async handleConnection(client: AuthenticatedSocket) {
         try {
-            const token = client.handshake.auth?.token || 
-                          client.handshake.headers?.authorization?.replace('Bearer ', '');
+            const token = client.handshake.auth?.token ||
+                client.handshake.headers?.authorization?.replace('Bearer ', '');
 
             if (!token) {
                 console.log('Client disconnected: no token', client.id);
@@ -63,7 +62,7 @@ export class MessagesGateway
             };
 
             this.connectedClients.set(client.id, client);
-            
+
             if (!this.userSockets.has(client.user.userId)) {
                 this.userSockets.set(client.user.userId, new Set());
             }
@@ -101,14 +100,10 @@ export class MessagesGateway
 
         const { content, recipientId } = data;
 
-        // Save message to database
         const message = await this.prisma.message.create({
             data: {
-                userId: client.user.role === Role.VIEWER ? client.user.userId : (recipientId || client.user.userId),
-                adminId:
-                    client.user.role === Role.VIEWER
-                        ? (recipientId || null)
-                        : client.user.userId,
+                userId: client.user.userId,
+                receiverId: recipientId || null,
                 senderId: client.user.userId,
                 senderRole: client.user.role as Role,
                 content,
@@ -129,27 +124,10 @@ export class MessagesGateway
         // Emit to sender
         client.emit('message_sent', message);
 
-        // If admin sending to viewer
-        if (client.user.role === Role.ADMIN || client.user.role === Role.SUPER_ADMIN) {
-            if (recipientId) {
-                // Send to specific viewer
-                const recipientSockets = this.userSockets.get(recipientId);
-                if (recipientSockets) {
-                    recipientSockets.forEach(socketId => {
-                        this.connectedClients.get(socketId)?.emit('new_message', message);
-                    });
-                }
-            } else {
-                // Send to all viewers (broadcast from admin)
-                this.server.emit('new_message', message);
-            }
+        if (recipientId) {
+            this.sendMessageToUser(recipientId, message);
         } else {
-            // Viewer sent message - notify selected admin or fallback to all admins
-            if (recipientId) {
-                this.notifyAdmins(message, recipientId);
-            } else {
-                this.notifyAdmins(message);
-            }
+            this.notifySuperAdmins(message);
         }
 
         return message;
@@ -167,45 +145,31 @@ export class MessagesGateway
     ) {
         if (!client.user) return;
 
-        if (client.user.role === Role.ADMIN || client.user.role === Role.SUPER_ADMIN) {
-            if (data.recipientId) {
-                const recipientSockets = this.userSockets.get(data.recipientId);
-                if (recipientSockets) {
-                    recipientSockets.forEach(socketId => {
-                        this.connectedClients.get(socketId)?.emit('user_typing', {
-                            userId: client.user?.userId,
-                            isTyping: data.isTyping,
-                        });
+        if (data.recipientId) {
+            const recipientSockets = this.userSockets.get(data.recipientId);
+            if (recipientSockets) {
+                recipientSockets.forEach(socketId => {
+                    this.connectedClients.get(socketId)?.emit('user_typing', {
+                        userId: client.user?.userId,
+                        isTyping: data.isTyping,
                     });
-                }
+                });
             }
         } else {
-            // Viewer typing - notify all admins
-            this.server.emit('user_typing', {
-                userId: client.user.userId,
-                userName: client.user.role,
-                isTyping: data.isTyping,
+            // broadcast to super admins if no recipient specified
+            this.connectedClients.forEach((socket) => {
+                if (socket.user?.role === Role.SUPER_ADMIN) {
+                    socket.emit('user_typing', {
+                        userId: client.user?.userId,
+                        userName: client.user?.role,
+                        isTyping: data.isTyping,
+                    });
+                }
             });
         }
     }
 
-    async notifyAdmins(message: any, onlyAdminId?: string) {
-        this.connectedClients.forEach((socket) => {
-            const isAdmin = socket.user?.role === Role.ADMIN || socket.user?.role === Role.SUPER_ADMIN;
-            if (!isAdmin) return;
-            if (onlyAdminId && socket.user?.userId !== onlyAdminId) return;
-            socket.emit('new_message', message);
-        });
-    }
-
-    async notifySuperAdmins(message: any) {
-        this.connectedClients.forEach((socket) => {
-            if (socket.user?.role !== Role.SUPER_ADMIN) return;
-            socket.emit('new_message', message);
-        });
-    }
-
-    // Helper method to send message from REST API
+    // Helper method to send message to a specific user
     async sendMessageToUser(userId: string, message: any) {
         const userSocketSet = this.userSockets.get(userId);
         if (userSocketSet) {
@@ -213,5 +177,12 @@ export class MessagesGateway
                 this.connectedClients.get(socketId)?.emit('new_message', message);
             });
         }
+    }
+
+    async notifySuperAdmins(message: any) {
+        this.connectedClients.forEach((socket) => {
+            if (socket.user?.role !== Role.SUPER_ADMIN) return;
+            socket.emit('new_message', message);
+        });
     }
 }

@@ -10,15 +10,14 @@ datasource db {
 
 enum Role {
   SUPER_ADMIN
-  ADMIN
-  VIEWER
-  GUEST
+  USER
 }
 
 model House {
   id                  String   @id @default(uuid())
   original_id         String   @unique
   name                String
+  property_type       String?
   address             String
   district            String
   city                String
@@ -35,22 +34,25 @@ model House {
   image_url_5         String?
   image_url_6         String?
   image_url_7         String?
-  image_url_8         String?
+  video_url_1         String?
+  video_url_2         String?
   description         String?
   status              String?
   is_private_bathroom Boolean  @default(false)
   contact_phone       String?
+  owner_id            String?
   
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
   deleted_at          DateTime?
 
   favorites           Favorite[]
-  houseAdmins         HouseAdmin[]
+  owner               User?    @relation("HouseOwner", fields: [owner_id], references: [id], onDelete: SetNull)
 
   @@index([city])
   @@index([district])
   @@index([price])
+  @@index([owner_id])
 }
 
 model AuditLog {
@@ -85,45 +87,18 @@ model User {
   phone        String?
   password     String
   avatarUrl    String?
-  role         Role       @default(VIEWER)
+  role         Role       @default(USER)
   status       String     @default("ACTIVE")
   locked_until DateTime?
   deleted_at   DateTime?
   created_at   DateTime   @default(now())
   updated_at   DateTime   @updatedAt
   favorites  Favorite[]
-  messages   Message[]
-  housePosts HouseAdmin[]
-  viewerAssignment ViewerAdminAssignment? @relation("ViewerAssignmentViewer")
-  assignedViewers  ViewerAdminAssignment[] @relation("ViewerAssignmentAdmin")
-  adminConversations Message[] @relation("MessageAdmin")
+  messages   Message[] @relation("MessageSender")
+  ownedHouses House[] @relation("HouseOwner")
+  receivedMessages Message[] @relation("MessageReceiver")
 }
 
-model ViewerAdminAssignment {
-  id         String   @id @default(uuid())
-  viewerId   String   @unique
-  adminId    String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  viewer     User @relation("ViewerAssignmentViewer", fields: [viewerId], references: [id], onDelete: Cascade)
-  admin      User @relation("ViewerAssignmentAdmin", fields: [adminId], references: [id], onDelete: Cascade)
-
-  @@index([adminId])
-}
-
-model HouseAdmin {
-  id         String   @id @default(uuid())
-  houseId    String
-  adminId    String
-  created_at DateTime @default(now())
-
-  house      House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
-  admin      User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
-
-  @@unique([houseId, adminId])
-  @@index([adminId])
-}
 
 model Favorite {
   id         String   @id @default(uuid())
@@ -140,16 +115,16 @@ model Favorite {
 model Message {
   id         String   @id @default(uuid())
   userId     String
-  adminId    String?
+  receiverId String?
   senderId   String?
-  senderRole Role     @default(VIEWER)
+  senderRole Role     @default(USER)
   content    String
   created_at DateTime @default(now())
   seen_at    DateTime?
   seen_by_role Role?
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  admin      User?    @relation("MessageAdmin", fields: [adminId], references: [id], onDelete: SetNull)
+  user       User     @relation("MessageSender", fields: [userId], references: [id], onDelete: Cascade)
+  receiver   User?    @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
 
-  @@index([adminId])
+  @@index([receiverId])
 }

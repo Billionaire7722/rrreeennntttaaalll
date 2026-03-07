@@ -3,11 +3,9 @@ export declare class HousesService {
     private prisma;
     constructor(prisma: PrismaService);
     private isAdminRole;
-    private formatPostedByAdmins;
     private fetchCoordinatesFromAddress;
-    private attachPoster;
-    private assertAdminCanManageHouse;
-    getHouses(skip?: number, take?: number, adminId?: string): Promise<{
+    private assertUserCanManageHouse;
+    getHouses(skip?: number, take?: number, ownerId?: string): Promise<{
         data: any;
         meta: {
             total: any;
@@ -16,7 +14,7 @@ export declare class HousesService {
             hasMore: boolean;
         };
     }>;
-    getHouseById(id: string, adminId?: string): Promise<any>;
+    getHouseById(id: string, ownerId?: string): Promise<any>;
     updateHouse(id: string, data: any, actorId?: string, actorRole?: string): Promise<any>;
     createHouse(data: any, actorId?: string, actorRole?: string): Promise<any>;
     updateStatus(id: string, status: string, actorId?: string, actorRole?: string): Promise<{
@@ -27,6 +25,7 @@ export declare class HousesService {
         created_at: Date;
         updated_at: Date;
         original_id: string;
+        property_type: string | null;
         address: string;
         district: string;
         city: string;
@@ -43,10 +42,12 @@ export declare class HousesService {
         image_url_5: string | null;
         image_url_6: string | null;
         image_url_7: string | null;
-        image_url_8: string | null;
+        video_url_1: string | null;
+        video_url_2: string | null;
         description: string | null;
         is_private_bathroom: boolean;
         contact_phone: string | null;
+        owner_id: string | null;
     }>;
     removeHouse(id: string, actorId?: string, actorRole?: string): Promise<{
         id: string;
@@ -56,6 +57,7 @@ export declare class HousesService {
         created_at: Date;
         updated_at: Date;
         original_id: string;
+        property_type: string | null;
         address: string;
         district: string;
         city: string;
@@ -72,9 +74,11 @@ export declare class HousesService {
         image_url_5: string | null;
         image_url_6: string | null;
         image_url_7: string | null;
-        image_url_8: string | null;
+        video_url_1: string | null;
+        video_url_2: string | null;
         description: string | null;
         is_private_bathroom: boolean;
         contact_phone: string | null;
+        owner_id: string | null;
     }>;
 }

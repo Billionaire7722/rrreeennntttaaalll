@@ -149,7 +149,7 @@ export class AuthService {
                 email: registerDto.email.toLowerCase(),
                 phone: registerDto.phone,
                 password: hashedPassword,
-                role: Role.VIEWER,
+                role: Role.USER,
             },
         });
 
@@ -195,7 +195,7 @@ export class AuthService {
         }
 
         // Keep captcha for public viewer auth; skip it for admin/super-admin panels.
-        if (user.role === Role.VIEWER) {
+        if (user.role === Role.USER) {
             await this.verifyCaptchaToken(loginDto.captchaToken);
         }
 
@@ -244,7 +244,7 @@ export class AuthService {
                     name,
                     username: email.split('@')[0] + Math.floor(Math.random() * 1000),
                     password: randomPassword,
-                    role: Role.VIEWER
+                    role: Role.USER
                 }
             });
         }

@@ -51,7 +51,7 @@ async function main() {
         console.log(`Found ${existingSuperAdmins.length} existing SUPER_ADMIN(s). Demoting to ADMIN...`);
         await prisma.user.updateMany({
             where: { role: roles_enum_1.Role.SUPER_ADMIN },
-            data: { role: roles_enum_1.Role.ADMIN }
+            data: { role: roles_enum_1.Role.USER }
         });
     }
     const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'ceo@rentalapp.com';

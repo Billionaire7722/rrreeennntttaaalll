@@ -50,9 +50,8 @@ let HousesController = class HousesController {
             const skipNum = skip ? parseInt(skip, 10) : 0;
             const takeNum = take ? parseInt(take, 10) : 10;
             const { role, userId } = this.getUserFromRequest(req);
-            const isAdmin = role === roles_enum_1.Role.ADMIN || role === roles_enum_1.Role.SUPER_ADMIN;
-            const adminFilterId = (role === roles_enum_1.Role.ADMIN && userId) ? userId : undefined;
-            const result = await this.housesService.getHouses(Number.isNaN(skipNum) ? 0 : skipNum, Number.isNaN(takeNum) ? 10 : takeNum, adminFilterId);
+            const isAdmin = role === roles_enum_1.Role.SUPER_ADMIN;
+            const result = await this.housesService.getHouses(Number.isNaN(skipNum) ? 0 : skipNum, Number.isNaN(takeNum) ? 10 : takeNum, undefined);
             if (!isAdmin && result && result.data) {
                 result.data.forEach((h) => delete h.contact_phone);
             }
@@ -63,12 +62,14 @@ let HousesController = class HousesController {
             throw e;
         }
     }
+    async getMyHouses(req) {
+        return this.housesService.getHouses(0, 100, req.user?.userId);
+    }
     async getHouseById(id, req) {
         const { role, userId } = this.getUserFromRequest(req);
-        const adminFilterId = (role === roles_enum_1.Role.ADMIN && userId) ? userId : undefined;
-        const house = await this.housesService.getHouseById(id, adminFilterId);
+        const house = await this.housesService.getHouseById(id, undefined);
         if (house) {
-            const isAdmin = role === roles_enum_1.Role.ADMIN || role === roles_enum_1.Role.SUPER_ADMIN;
+            const isAdmin = role === roles_enum_1.Role.SUPER_ADMIN;
             if (!isAdmin) {
                 delete house.contact_phone;
             }
@@ -99,6 +100,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], HousesController.prototype, "getHouses", null);
 __decorate([
+    (0, common_1.Get)('me'),
+    (0, common_2.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER, roles_enum_1.Role.SUPER_ADMIN),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], HousesController.prototype, "getMyHouses", null);
+__decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Request)()),
@@ -109,7 +119,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(),
     (0, common_2.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER, roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
@@ -119,7 +129,7 @@ __decorate([
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, common_2.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER, roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Request)()),
@@ -130,7 +140,7 @@ __decorate([
 __decorate([
     (0, common_1.Patch)(':id/status'),
     (0, common_2.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER, roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)('status')),
     __param(2, (0, common_1.Request)()),
@@ -141,7 +151,7 @@ __decorate([
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_2.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER, roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),

@@ -19,87 +19,57 @@ let HousesService = class HousesService {
         this.prisma = prisma;
     }
     isAdminRole(role) {
-        return role === roles_enum_1.Role.ADMIN || role === roles_enum_1.Role.SUPER_ADMIN;
+        return role === roles_enum_1.Role.SUPER_ADMIN;
     }
-    formatPostedByAdmins(houseAdmins) {
-        return houseAdmins.map((item) => ({
-            id: item.admin.id,
-            name: item.admin.name,
-            avatarUrl: null,
-        }));
-    }
-    async fetchCoordinatesFromAddress(address) {
-        const normalized = String(address || '').trim();
-        if (!normalized)
-            return null;
-        const candidateQueries = [normalized];
-        if (!/viet\s*nam/i.test(normalized)) {
-            candidateQueries.push(`${normalized}, Vietnam`);
-        }
-        try {
-            for (const query of candidateQueries) {
-                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
-                const response = await fetch(url, { headers: { 'User-Agent': 'RentalAdminApp/1.0' } });
-                if (!response.ok)
-                    continue;
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    if (Number.isFinite(lat) && Number.isFinite(lon)) {
-                        return { lat, lon };
+    async fetchCoordinatesFromAddress(queries) {
+        for (const baseQuery of queries) {
+            const normalized = String(baseQuery || '').trim();
+            if (!normalized)
+                continue;
+            const candidateQueries = [normalized];
+            if (!/viet\s*nam/i.test(normalized)) {
+                candidateQueries.push(`${normalized}, Vietnam`);
+            }
+            try {
+                for (const query of candidateQueries) {
+                    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+                    const response = await fetch(url, { headers: { 'User-Agent': 'RentalAdminApp/1.0' } });
+                    if (!response.ok)
+                        continue;
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+                            return { lat, lon };
+                        }
                     }
                 }
             }
-        }
-        catch (e) {
-            console.error('Failed to fetch coords from Nominatim:', e);
+            catch (e) {
+                console.error(`Failed to fetch coords from Nominatim for "${normalized}":`, e);
+            }
         }
         return null;
     }
-    async attachPoster(houseId, actorId, actorRole) {
-        if (!actorId || !this.isAdminRole(actorRole))
-            return;
-        const prismaAny = this.prisma;
-        await prismaAny.houseAdmin.upsert({
-            where: {
-                houseId_adminId: {
-                    houseId,
-                    adminId: actorId,
-                }
-            },
-            create: {
-                houseId,
-                adminId: actorId,
-            },
-            update: {},
-        });
-    }
-    async assertAdminCanManageHouse(houseId, actorId, actorRole) {
-        if (!actorId || !actorRole)
+    async assertUserCanManageHouse(houseId, actorId, actorRole) {
+        if (!actorId)
             return;
         if (actorRole === roles_enum_1.Role.SUPER_ADMIN)
             return;
-        if (actorRole !== roles_enum_1.Role.ADMIN)
-            return;
         const prismaAny = this.prisma;
-        const owned = await prismaAny.houseAdmin.findUnique({
-            where: {
-                houseId_adminId: {
-                    houseId,
-                    adminId: actorId,
-                }
-            }
+        const house = await prismaAny.house.findUnique({
+            where: { id: houseId }
         });
-        if (!owned) {
-            throw new common_1.ForbiddenException('You cannot manage houses created by other admins');
+        if (!house || house.owner_id !== actorId) {
+            throw new common_1.ForbiddenException('You cannot manage houses created by others');
         }
     }
-    async getHouses(skip = 0, take = 10, adminId) {
+    async getHouses(skip = 0, take = 10, ownerId) {
         const prismaAny = this.prisma;
         const whereClause = { deleted_at: null };
-        if (adminId) {
-            whereClause.houseAdmins = { some: { adminId: adminId } };
+        if (ownerId) {
+            whereClause.owner_id = ownerId;
         }
         const [data, total] = await Promise.all([
             prismaAny.house.findMany({
@@ -126,14 +96,11 @@ let HousesService = class HousesService {
                     is_private_bathroom: true,
                     latitude: true,
                     longitude: true,
-                    houseAdmins: {
+                    owner: {
                         select: {
-                            admin: {
-                                select: {
-                                    id: true,
-                                    name: true,
-                                }
-                            }
+                            id: true,
+                            name: true,
+                            avatarUrl: true
                         }
                     }
                 }
@@ -142,7 +109,7 @@ let HousesService = class HousesService {
         ]);
         const mappedData = data.map((house) => ({
             ...house,
-            postedByAdmins: this.formatPostedByAdmins(house.houseAdmins),
+            postedByAdmins: house.owner ? [house.owner] : [],
         }));
         return {
             data: mappedData,
@@ -154,23 +121,20 @@ let HousesService = class HousesService {
             }
         };
     }
-    async getHouseById(id, adminId) {
+    async getHouseById(id, ownerId) {
         const prismaAny = this.prisma;
         const house = await prismaAny.house.findFirst({
             where: {
                 id,
                 deleted_at: null,
-                ...(adminId ? { houseAdmins: { some: { adminId } } } : {}),
+                ...(ownerId ? { owner_id: ownerId } : {}),
             },
             include: {
-                houseAdmins: {
+                owner: {
                     select: {
-                        admin: {
-                            select: {
-                                id: true,
-                                name: true,
-                            }
-                        }
+                        id: true,
+                        name: true,
+                        avatarUrl: true
                     }
                 }
             }
@@ -179,19 +143,36 @@ let HousesService = class HousesService {
             throw new Error('House not found');
         return {
             ...house,
-            postedByAdmins: this.formatPostedByAdmins(house.houseAdmins || []),
+            postedByAdmins: house.owner ? [house.owner] : [],
         };
     }
     async updateHouse(id, data, actorId, actorRole) {
         const prismaAny = this.prisma;
-        const house = await this.prisma.house.findFirst({ where: { id, deleted_at: null } });
+        const house = await prismaAny.house.findFirst({ where: { id, deleted_at: null } });
         if (!house)
             throw new Error('House not found');
-        await this.assertAdminCanManageHouse(id, actorId, actorRole);
+        await this.assertUserCanManageHouse(id, actorId, actorRole);
         let finalLat = data.latitude !== undefined ? Number(data.latitude) : undefined;
         let finalLon = data.longitude !== undefined ? Number(data.longitude) : undefined;
+        const normalizedAddress = String(data.address || house.address || '').trim();
+        const normalizedDistrict = String(data.district || house.district || '').trim();
+        const normalizedCity = String(data.city || house.city || '').trim();
         if (data.address !== undefined && data.address !== house.address) {
-            const coords = await this.fetchCoordinatesFromAddress(data.address);
+            const searchQueries = [];
+            if (normalizedAddress && normalizedDistrict && normalizedCity) {
+                searchQueries.push(`${normalizedAddress}, ${normalizedDistrict}, ${normalizedCity}`);
+            }
+            if (normalizedAddress && normalizedCity) {
+                searchQueries.push(`${normalizedAddress}, ${normalizedCity}`);
+            }
+            if (normalizedDistrict && normalizedCity) {
+                searchQueries.push(`${normalizedDistrict}, ${normalizedCity}`);
+            }
+            if (normalizedCity)
+                searchQueries.push(normalizedCity);
+            if (normalizedAddress)
+                searchQueries.push(normalizedAddress);
+            const coords = await this.fetchCoordinatesFromAddress(searchQueries);
             if (coords) {
                 finalLat = coords.lat;
                 finalLon = coords.lon;
@@ -214,20 +195,22 @@ let HousesService = class HousesService {
                 ...(data.image_url_1 !== undefined && { image_url_1: data.image_url_1 }),
                 ...(data.image_url_2 !== undefined && { image_url_2: data.image_url_2 }),
                 ...(data.image_url_3 !== undefined && { image_url_3: data.image_url_3 }),
+                ...(data.image_url_4 !== undefined && { image_url_4: data.image_url_4 }),
+                ...(data.image_url_5 !== undefined && { image_url_5: data.image_url_5 }),
+                ...(data.image_url_6 !== undefined && { image_url_6: data.image_url_6 }),
+                ...(data.image_url_7 !== undefined && { image_url_7: data.image_url_7 }),
+                ...(data.video_url_1 !== undefined && { video_url_1: data.video_url_1 }),
+                ...(data.video_url_2 !== undefined && { video_url_2: data.video_url_2 }),
             },
         });
-        await this.attachPoster(id, actorId, actorRole);
         const refreshedHouse = await prismaAny.house.findFirst({
             where: { id, deleted_at: null },
             include: {
-                houseAdmins: {
+                owner: {
                     select: {
-                        admin: {
-                            select: {
-                                id: true,
-                                name: true,
-                            },
-                        },
+                        id: true,
+                        name: true,
+                        avatarUrl: true
                     },
                 },
             },
@@ -236,7 +219,7 @@ let HousesService = class HousesService {
             throw new Error('House not found');
         return {
             ...refreshedHouse,
-            postedByAdmins: this.formatPostedByAdmins(refreshedHouse.houseAdmins || []),
+            postedByAdmins: refreshedHouse.owner ? [refreshedHouse.owner] : [],
         };
     }
     async createHouse(data, actorId, actorRole) {
@@ -249,16 +232,30 @@ let HousesService = class HousesService {
         };
         let finalLat = normalizeNumber(data.latitude);
         let finalLon = normalizeNumber(data.longitude);
+        const normalizedAddress = String(data.address || '').trim();
+        const normalizedDistrict = String(data.district || '').trim();
+        const normalizedCity = String(data.city || '').trim();
         if (data.address) {
-            const coords = await this.fetchCoordinatesFromAddress(data.address);
+            const searchQueries = [];
+            if (normalizedAddress && normalizedDistrict && normalizedCity) {
+                searchQueries.push(`${normalizedAddress}, ${normalizedDistrict}, ${normalizedCity}`);
+            }
+            if (normalizedAddress && normalizedCity) {
+                searchQueries.push(`${normalizedAddress}, ${normalizedCity}`);
+            }
+            if (normalizedDistrict && normalizedCity) {
+                searchQueries.push(`${normalizedDistrict}, ${normalizedCity}`);
+            }
+            if (normalizedCity)
+                searchQueries.push(normalizedCity);
+            if (normalizedAddress)
+                searchQueries.push(normalizedAddress);
+            const coords = await this.fetchCoordinatesFromAddress(searchQueries);
             if (coords) {
                 finalLat = coords.lat;
                 finalLon = coords.lon;
             }
         }
-        const normalizedAddress = String(data.address || '').trim();
-        const normalizedDistrict = String(data.district || '').trim();
-        const normalizedCity = String(data.city || '').trim();
         const addressParts = normalizedAddress.split(',').map((part) => part.trim()).filter(Boolean);
         const fallbackCity = normalizedCity || addressParts[addressParts.length - 1] || '';
         const fallbackDistrict = normalizedDistrict || (addressParts.length >= 2 ? addressParts[addressParts.length - 2] : '');
@@ -278,23 +275,27 @@ let HousesService = class HousesService {
                 status: data.status || 'available',
                 city: fallbackCity,
                 district: fallbackDistrict,
-                image_url_1: data.image_url_1,
-                image_url_2: data.image_url_2,
-                image_url_3: data.image_url_3,
+                property_type: data.property_type,
+                image_url_1: data.image_url_1 || null,
+                image_url_2: data.image_url_2 || null,
+                image_url_3: data.image_url_3 || null,
+                image_url_4: data.image_url_4 || null,
+                image_url_5: data.image_url_5 || null,
+                image_url_6: data.image_url_6 || null,
+                image_url_7: data.image_url_7 || null,
+                video_url_1: data.video_url_1 || null,
+                video_url_2: data.video_url_2 || null,
+                owner_id: actorId,
             }
         });
-        await this.attachPoster(createdHouse.id, actorId, actorRole);
         const populatedHouse = await prismaAny.house.findFirst({
             where: { id: createdHouse.id, deleted_at: null },
             include: {
-                houseAdmins: {
+                owner: {
                     select: {
-                        admin: {
-                            select: {
-                                id: true,
-                                name: true,
-                            },
-                        },
+                        id: true,
+                        name: true,
+                        avatarUrl: true
                     },
                 },
             },
@@ -303,7 +304,7 @@ let HousesService = class HousesService {
             throw new Error('House not found');
         return {
             ...populatedHouse,
-            postedByAdmins: this.formatPostedByAdmins(populatedHouse.houseAdmins || []),
+            postedByAdmins: populatedHouse.owner ? [populatedHouse.owner] : [],
         };
     }
     async updateStatus(id, status, actorId, actorRole) {
@@ -312,7 +313,7 @@ let HousesService = class HousesService {
         });
         if (!house)
             throw new Error('House not found');
-        await this.assertAdminCanManageHouse(id, actorId, actorRole);
+        await this.assertUserCanManageHouse(id, actorId, actorRole);
         return this.prisma.house.update({
             where: { id },
             data: { status }
@@ -324,7 +325,7 @@ let HousesService = class HousesService {
         });
         if (!house)
             throw new Error('House not found');
-        await this.assertAdminCanManageHouse(id, actorId, actorRole);
+        await this.assertUserCanManageHouse(id, actorId, actorRole);
         return this.prisma.house.update({
             where: { id },
             data: { deleted_at: new Date() }

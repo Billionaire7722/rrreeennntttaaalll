@@ -145,7 +145,7 @@ export const HousesSheet: React.FC = () => {
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Posted By</th>
+                            <th>Owner</th>
                             <th>Created</th>
                             <th>Status</th>
                             <th>Address</th>
@@ -171,7 +171,7 @@ export const HousesSheet: React.FC = () => {
                                 return (
                                     <tr key={house.id}>
                                         <td><input className="input-field" value={draft.name || ''} onChange={(e) => updateDraft(house.id, 'name', e.target.value)} /></td>
-                                        <td>{(house.postedByAdmins || []).map((admin) => admin.name).join(', ') || 'Unknown'}</td>
+                                        <td>{(house.postedByAdmins || []).map((o) => o.name).join(', ') || 'Unknown'}</td>
                                         <td>{new Date(house.created_at).toLocaleString()}</td>
                                         <td>
                                             <select className="input-field" value={draft.status || 'available'} onChange={(e) => updateDraft(house.id, 'status', e.target.value)}>

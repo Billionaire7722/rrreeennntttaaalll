@@ -1,17 +1,18 @@
 ﻿# Rental Platform Project
 
+# Rental Platform Project
+
 This project is a comprehensive property rental platform consisting of a high-performance backend API and multiple frontend applications.
 
 ## Project Goal (Important)
 
 The core goal of this project is to run a single rental ecosystem with strict role-based access control and shared data across all apps:
 
-- **SUPER_ADMIN**: one protected master account, highest authority, can create/manage `ADMIN` accounts and audit the whole system.
-- **ADMIN**: uses `rental-admin` to create/update/soft-delete houses and reply to viewer messages.
-- **VIEWER**: registered user of `web-viewer` / `mobile-viewer`, can favorite houses and message admins.
-- **GUEST**: no login required, can browse map pins and popup summaries only; detail actions require login/register.
+- **SUPER_ADMIN**: one protected master account, highest authority, can manage all users and properties, and audit the whole system.
+- **USER**: registered user of the `users` application, can add properties, update their properties, favorite houses, and message others.
+- **GUEST**: no login required, can browse map pins and popup summaries only.
 
-All applications (super-admin dashboard, rental-admin, web-viewer, mobile-viewer) connect to the same backend and PostgreSQL database so data and permissions are enforced centrally.
+All applications (super-admin-dashboard, users) connect to the same backend and PostgreSQL database so data and permissions are enforced centrally.
 
 ---
 
@@ -38,20 +39,19 @@ npm run start:dev
 - Health: http://localhost:3000/health
 - Swagger: http://localhost:3000/docs
 
-### Step 3: Start Web Viewer
-```
-bash
-cd viewer/web-viewer
+### Step 3: Start Users App
+```bash
+cd users
 set NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
 npm run dev
 ```
-- Web Viewer: http://localhost:3002
+- Users App: http://localhost:3002
 
 ### Default Accounts
 | Role | Email | Password |
 |------|-------|----------|
 | Super Admin | set in your private env/seeding flow | set in your private env/seeding flow |
-| Admin | created by super-admin | set during admin creation |
+| User | Register via frontend | Any password |
 
 See `LOCAL_DEV.md` for more details.
 
@@ -61,7 +61,7 @@ See `LOCAL_DEV.md` for more details.
 
 - **Backend**: NestJS, TypeScript, Prisma ORM, PostgreSQL (with PostGIS extension), Redis, BullMQ, Swagger.
 - **Media Storage**: Cloudinary (image/video optimisation, WebP conversion, public URL persistence).
-- **Frontend** (`rental-admin`, `rental-viewer`, `super-admin-dashboard`, `web-rental-viewer`): React Native, Expo, React Navigation, React Native Maps, Leaflet, Tailwind CSS (NativeWind, Web), Vite, Next.js 15, React 19, Recharts.
+- **Frontend** (`users`, `super-admin-dashboard`): Vite, Next.js 15, React 19, Recharts. Leaflet, Tailwind CSS.
 - **Infrastructure**: Docker, Docker Compose for running database and caching layers.
 
 ---
@@ -78,45 +78,20 @@ A scalable, enterprise-grade REST API built with NestJS.
 - **API Documentation**: Auto-generated Swagger UI available at `/docs`.
 - **Health & Metrics**: Prometheus metrics (`/metrics`) and structured system health endpoint (`/health`).
 
-### 2. Admin Dashboard (`/rental-admin`)
-A management interface for property administrators (`ADMIN` role).
-- **Profile Tab**: Admin-specific profile page with clickable avatar upload (streamed to Cloudinary).
-- **Property Management (CRUD)**:
-  - **Add New Home**: Modal form with city + searchable ward/commune picker, price, bedrooms, area, GPS coordinates, description, and a merged **áº¢nh & Video** upload section (up to 8 images + 2 videos). Images and videos upload directly to Cloudinary; public URLs are stored in PostgreSQL. If no images are selected, `assets/images/defaultimage.jpg` is uploaded automatically as the default.
-  - **Edit Property**: Pre-filled modal accessible from the property list (pencil icon) and from the property detail screen. Supports updating all fields and replacing media via Cloudinary.
-  - **Delete Property**: Soft-delete with confirmation.
-  - **Manage Houses list**: Card grid showing all properties the admin has listed, with per-card Edit and Delete controls.
-- **Property Detail screen**: Replaces the "Contact" button with an **Edit** button (pencil icon) that opens the edit modal inline.
-- **Responsive modals**: Both Add and Edit modals cap at `maxWidth: 520` and centre horizontally, preventing cut-off on narrow mobile browsers.
-- **Searchable Ward/Commune input** (`DistrictSearchInput`): Replaces the plain `Picker` with a text-filterable combobox. The dropdown renders in a transparent `Modal` overlay so it is never clipped by the parent `ScrollView`.
-- **Map Interface**: Interactive map to view existing properties and drop pins for new property locations.
-- **Real-time API Sync**: Connects directly to the backend REST API to manage the unified PostgreSQL database.
-
-### 3. Mobile Viewer Application (`/viewer/mobile-viewer`)
-A user-facing application for customers searching for rental properties (`VIEWER` role, with guest browsing support).
+### 2. Users App (`/users`)
+A user-facing Next.js 15 App-Router React application for customers searching for rental properties or adding their own (`USER` role, with guest browsing support).
 - **Authentication**: JWT validation flow covering user registration, email/password login, and mock Google OAuth.
+- **Property Management**: Users can directly Add properties, providing details like location, price, and media (Cloudinary).
 - **Personalization**: Dedicated sections for saving 'Favorite' properties and managing inquiries via 'Messages'.
-- **Advanced Filtering**: Filter properties dynamically by price ranges, number of bedrooms, area, and availability status.
-- **Interactive Browsing**: Browse properties visually on a map interface that requests only the pins inside the user's current viewport.
+- **Interactive Browsing**: Map interface (Leaflet) that requests only the pins inside the user's current viewport.
+- **Real-time Chat**: Integrated chat feature allowing users to message property owners directly via WebSocket (Socket.io).
 
-### 4. Super Admin Dashboard (`/super-admin-dashboard`)
+### 3. Super Admin Dashboard (`/super-admin-dashboard`)
 An isolated secure web application dedicated entirely to system oversight (`SUPER_ADMIN` role).
-- **Security & RBAC Enforcement**: Binds strictly to backend `RolesGuard` protected endpoints restricted from standard admins.
-- **System Metrics**: Visual overview of total users, admins, active properties, and recent activity logs.
-- **Identity & Access Management**: Fully capable of demoting admins, toggling active/banned status limits, and wiping accounts securely.
+- **Security & RBAC Enforcement**: Binds strictly to backend `RolesGuard` protected endpoints restricted from standard users.
+- **System Metrics**: Visual overview of total users, active properties, and recent activity logs.
+- **Identity & Access Management**: Fully capable of toggling active/banned status limits, and wiping user accounts securely.
 - **Audit Trails**: Inspect deep system traces including JSON differentials of property edits and authentication login logs.
-
-### 5. Native Web Rental Viewer (`/viewer/web-viewer`)
-A Next.js 15 App-Router React application delivering a superior browser experience mirroring the Expo app functionality.
-- **High Performance SEO**: Leverages React Server Components structure optimized with Tailwind CSS.
-- **Native Web Mapping**: Powered by `react-leaflet` to smoothly load properties across geographic viewports without crashing memory.
-- **Shared API Ecosystem**: Intercepts the same NestJS tokens as the Mobile Apps meaning user login states carry seamlessly over.
-- **Real-time Chat**: Integrated chat feature at `/chat` allowing viewers to message administrators directly via WebSocket (Socket.io).
-  - Viewers can send and receive messages in real-time
-  - Message history persists in database
-  - Admin can reply via rental-admin interface
-  - Connection status indicator shows online/offline status
-  - Accessible from Profile page -> Tin nháº¯n tab -> "Há»— trá»£ ká»¹ thuáº­t"
 
 ### 6. Permissions & Data Structure Architecture
 The following Mermaid diagram illustrates the data structure and permission boundaries between the unified frontend ecosystem and PostgreSQL database.
@@ -130,9 +105,7 @@ graph TD
 
     %% Client Applications
     SA["Super Admin Dashboard<br/>(Role: SUPER_ADMIN)"]:::frontend
-    A["Admin App Expo<br/>(Role: ADMIN)"]:::frontend
-    V["Viewer Mobile Expo<br/>(Role: VIEWER / GUEST)"]:::frontend
-    WV["Web Viewer Next.js<br/>(Role: VIEWER / GUEST)"]:::frontend
+    U_APP["Users App Next.js<br/>(Role: USER / GUEST)"]:::frontend
 
     %% Backend API
     API{{"NestJS REST API"}}:::backend
@@ -146,16 +119,13 @@ graph TD
     end
 
     %% Routing Flow & Permissions
-    SA -- "Manage Users/Admins, View Metrics & Audits" --> API
-    A -- "Manage Houses (CRUD)" --> API
-    V -- "Search Houses, Manage Favorites" --> API
-    WV -- "Interactive React Web Search, Context Auth" --> API
+    SA -- "Manage Users, View Metrics & Audits" --> API
+    U_APP -- "Search Houses, Add Properties, Chat" --> API
 
     %% Data Access
     API -- "CRUD Users & Roles" --> U
     API -- "CRUD Properties & Geolocations" --> H
     API -- "Record Authentications" --> LL
-    API -- "Record Mutations" --> AL
 ```
 
 ---
@@ -212,91 +182,38 @@ bash
    *The backend will be running at `http://localhost:3000`.*
    *View the Swagger API docs at `http://localhost:3000/docs`.*
 
-### Step 2: Start the Admin Dashboard
+### Step 2: Start the Super Admin Dashboard
 
 Open a **new** terminal window:
-```
-bash
-cd rental-admin
-```
-
-1. **Install Dependencies**:
-   
-```
-bash
-   npm install
-   
-```
-2. **Start the Web App**:
-   
-```
-bash
-   npm run web
-   
-```
-   *The admin app will automatically open in your browser, typically at `http://localhost:8081`.*
-
-### Step 3: Start the Mobile Viewer Application
-
-Open a **new** terminal window:
-```
-bash
-cd viewer/mobile-viewer
-```
-
-1. **Install Dependencies**:
-   
-```
-bash
-   npm install
-   
-```
-2. **Start the Web App**:
-   
-```
-bash
-   npm run web
-   
-```
-   *The viewer app will automatically open in your browser, typically at `http://localhost:8082`.*
-
-### Step 4: Start the Super Admin Dashboard
-
-Open a **new** terminal window:
-```
-bash
+```bash
 cd super-admin-dashboard
 ```
 
 1. **Install Dependencies**:
    
-```
-bash
+```bash
    npm install
    
 ```
 2. **Build and Preview the App**:
    
-```
-bash
+```bash
    npm run build
    npm run preview
    
 ```
    *The super admin app will start a Vite preview server, typically available at `http://localhost:4173/`.*
 
-### Step 5: Start the Next.js Web Rental Viewer
+### Step 3: Start the Users App
 
 Open a **new** terminal window:
-```
-bash
-cd viewer/web-viewer
+```bash
+cd users
 ```
 
 1. **Install Dependencies**:
    
-```
-bash
+```bash
    npm install
    
 ```

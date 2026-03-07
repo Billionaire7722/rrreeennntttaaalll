@@ -13,49 +13,49 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
     @Get('profile')
-    @Roles(Role.VIEWER)
+    @Roles(Role.USER)
     getProfile(@Request() req) {
         return this.usersService.getProfile(req.user.userId);
     }
 
     @Get('favorites')
-    @Roles(Role.VIEWER)
+    @Roles(Role.USER)
     getFavorites(@Request() req) {
         return this.usersService.getFavorites(req.user.userId);
     }
 
     @Post('favorites/toggle')
-    @Roles(Role.VIEWER)
+    @Roles(Role.USER)
     toggleFavorite(@Request() req, @Body() toggleFavoriteDto: ToggleFavoriteDto) {
         return this.usersService.toggleFavorite(req.user.userId, toggleFavoriteDto);
     }
 
     @Get('messages')
-    @Roles(Role.VIEWER)
+    @Roles(Role.USER)
     getMessages(@Request() req) {
         return this.usersService.getMessages(req.user.userId);
     }
 
     @Post('messages/:adminId/seen')
-    @Roles(Role.VIEWER)
+    @Roles(Role.USER)
     markViewerConversationSeen(@Request() req, @Param('adminId') adminId: string) {
         return this.usersService.markViewerConversationSeen(req.user.userId, adminId);
     }
 
     @Post('messages')
-    @Roles(Role.VIEWER)
+    @Roles(Role.USER)
     sendMessage(@Request() req, @Body() sendMessageDto: SendMessageDto) {
         return this.usersService.sendMessage(req.user.userId, sendMessageDto);
     }
 
     @Get('admin/messages')
-    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @Roles(Role.SUPER_ADMIN)
     getViewerMessages(@Request() req, @Query('skip') skip?: number, @Query('take') take?: number) {
         return this.usersService.getViewerMessages(req.user.userId, req.user.role, skip, take);
     }
 
     @Post('admin/messages/:viewerId/reply')
-    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @Roles(Role.SUPER_ADMIN)
     replyToViewer(
         @Request() req,
         @Param('viewerId') viewerId: string,
@@ -65,13 +65,13 @@ export class UsersController {
     }
 
     @Post('admin/messages/:viewerId/seen')
-    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @Roles(Role.SUPER_ADMIN)
     markAdminConversationSeen(@Request() req, @Param('viewerId') viewerId: string) {
         return this.usersService.markAdminConversationSeen(req.user.userId, req.user.role, viewerId);
     }
 
     @Post('avatar')
-    @Roles(Role.VIEWER)
+    @Roles(Role.USER)
     updateAvatar(@Request() req, @Body() body: { url: string }) {
         return this.usersService.updateAvatar(req.user.userId, body.url);
     }

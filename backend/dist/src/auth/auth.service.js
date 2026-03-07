@@ -159,7 +159,7 @@ let AuthService = class AuthService {
                 email: registerDto.email.toLowerCase(),
                 phone: registerDto.phone,
                 password: hashedPassword,
-                role: roles_enum_1.Role.VIEWER,
+                role: roles_enum_1.Role.USER,
             },
         });
         await this.logLoginAttempt(newUser.id, newUser.role, true, ipAddress, userAgent);
@@ -192,7 +192,7 @@ let AuthService = class AuthService {
             await this.logLoginAttempt(null, null, false, ipAddress, userAgent);
             throw new common_1.UnauthorizedException('Email hoặc mật khẩu không đúng');
         }
-        if (user.role === roles_enum_1.Role.VIEWER) {
+        if (user.role === roles_enum_1.Role.USER) {
             await this.verifyCaptchaToken(loginDto.captchaToken);
         }
         if (user.status !== 'ACTIVE') {
@@ -233,7 +233,7 @@ let AuthService = class AuthService {
                     name,
                     username: email.split('@')[0] + Math.floor(Math.random() * 1000),
                     password: randomPassword,
-                    role: roles_enum_1.Role.VIEWER
+                    role: roles_enum_1.Role.USER
                 }
             });
         }

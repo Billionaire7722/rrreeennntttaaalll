@@ -59,14 +59,14 @@ async function seedUsers() {
             email: 'admin@test.com',
             username: 'admin',
             name: 'Admin',
-            role: 'ADMIN',
+            role: 'USER',
             password: hashedPassword,
         },
         {
             email: 'viewer@test.com',
             username: 'viewer',
             name: 'Viewer',
-            role: 'VIEWER',
+            role: 'USER',
             password: hashedPassword,
         }
     ];

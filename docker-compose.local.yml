@@ -5,7 +5,7 @@ version: '3.8'
 services:
   postgres:
     ports:
-      - "5432:5432" # Expose DB for direct localhost connection (DBeaver, DataGrip)
+      - "5433:5432" # Expose DB for direct localhost connection (DBeaver, DataGrip)
     volumes:
       - rental_pg_data_local:/var/lib/postgresql/data # Separate dev data from prod
 
@@ -46,32 +46,19 @@ services:
     environment:
       - VITE_API_BASE_URL=http://localhost:3000
 
-  web-viewer:
+  users:
     build:
       target: builder # Retain devDependencies for NextJS
       args:
         NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
     command: npm run dev # Next.js dev server
     volumes:
-      - ./viewer/web-viewer:/app
+      - ./users:/app
       - /app/node_modules
       - /app/.next
     environment:
       - NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
       - NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
-
-  rental-admin:
-    build:
-      target: builder # Retain Expo CLI
-    command: npx expo start --web --port 8081 # Expo local server
-    volumes:
-      - ./rental-admin:/app
-      - /app/node_modules
-    ports:
-      - "8082:8081" # Map dev server port instead of production nginx port 80
-    environment:
-      - EXPO_PUBLIC_API_BASE_URL=http://localhost:3000
-      - REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
 
 volumes:
   # Explicitly isolate local volumes so they never collide with prod volumes

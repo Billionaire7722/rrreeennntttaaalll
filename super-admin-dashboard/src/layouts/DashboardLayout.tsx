@@ -19,8 +19,7 @@ export const DashboardLayout: React.FC = () => {
 
     const links = [
         { to: '/', label: 'Overview', icon: <BarChart3 size={20} /> },
-        { to: '/users', label: 'Viewer Management', icon: <Users size={20} /> },
-        { to: '/admins', label: 'Admin Management', icon: <ShieldCheck size={20} /> },
+        { to: '/users', label: 'User Management', icon: <Users size={20} /> },
         { to: '/houses', label: 'Houses Sheet', icon: <Table2 size={20} /> },
         { to: '/metrics', label: 'System Metrics', icon: <Activity size={20} /> },
         { to: '/live-monitor', label: 'Live Monitor', icon: <Radar size={20} /> },

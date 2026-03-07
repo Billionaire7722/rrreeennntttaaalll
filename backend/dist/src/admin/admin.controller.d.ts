@@ -114,6 +114,7 @@ export declare class AdminController {
         created_at: Date;
         updated_at: Date;
         original_id: string;
+        property_type: string | null;
         address: string;
         district: string;
         city: string;
@@ -130,10 +131,12 @@ export declare class AdminController {
         image_url_5: string | null;
         image_url_6: string | null;
         image_url_7: string | null;
-        image_url_8: string | null;
+        video_url_1: string | null;
+        video_url_2: string | null;
         description: string | null;
         is_private_bathroom: boolean;
         contact_phone: string | null;
+        owner_id: string | null;
     }>;
     getAuditLogs(skip?: number, take?: number, adminId?: string, actionType?: string, startDate?: string, endDate?: string): Promise<{
         items: {

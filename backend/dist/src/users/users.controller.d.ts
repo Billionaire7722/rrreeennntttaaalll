@@ -28,6 +28,7 @@ export declare class UsersController {
             created_at: Date;
             updated_at: Date;
             original_id: string;
+            property_type: string | null;
             address: string;
             district: string;
             city: string;
@@ -44,10 +45,12 @@ export declare class UsersController {
             image_url_5: string | null;
             image_url_6: string | null;
             image_url_7: string | null;
-            image_url_8: string | null;
+            video_url_1: string | null;
+            video_url_2: string | null;
             description: string | null;
             is_private_bathroom: boolean;
             contact_phone: string | null;
+            owner_id: string | null;
         };
     } & {
         id: string;
@@ -59,7 +62,13 @@ export declare class UsersController {
         message: string;
     }>;
     getMessages(req: any): Promise<({
-        admin: {
+        user: {
+            id: string;
+            username: string;
+            name: string;
+            avatarUrl: string | null;
+        };
+        receiver: {
             id: string;
             username: string;
             name: string;
@@ -74,7 +83,7 @@ export declare class UsersController {
         senderRole: import("@prisma/client").$Enums.Role;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
-        adminId: string | null;
+        receiverId: string | null;
     })[]>;
     markViewerConversationSeen(req: any, adminId: string): Promise<{
         updated: number;
@@ -88,16 +97,10 @@ export declare class UsersController {
         senderRole: import("@prisma/client").$Enums.Role;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
-        adminId: string | null;
+        receiverId: string | null;
     }>;
     getViewerMessages(req: any, skip?: number, take?: number): Promise<{
         items: ({
-            admin: {
-                id: string;
-                username: string;
-                name: string;
-                avatarUrl: string | null;
-            } | null;
             user: {
                 id: string;
                 username: string;
@@ -106,6 +109,12 @@ export declare class UsersController {
                 phone: string | null;
                 role: import("@prisma/client").$Enums.Role;
             };
+            receiver: {
+                id: string;
+                username: string;
+                name: string;
+                avatarUrl: string | null;
+            } | null;
         } & {
             id: string;
             created_at: Date;
@@ -115,7 +124,7 @@ export declare class UsersController {
             senderRole: import("@prisma/client").$Enums.Role;
             seen_at: Date | null;
             seen_by_role: import("@prisma/client").$Enums.Role | null;
-            adminId: string | null;
+            receiverId: string | null;
         })[];
         skip: number;
         take: number;
@@ -129,7 +138,7 @@ export declare class UsersController {
         senderRole: import("@prisma/client").$Enums.Role;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
-        adminId: string | null;
+        receiverId: string | null;
     }>;
     markAdminConversationSeen(req: any, viewerId: string): Promise<{
         updated: number;

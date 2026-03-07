@@ -44,14 +44,12 @@ export class HousesController {
             const takeNum = take ? parseInt(take, 10) : 10;
 
             const { role, userId } = this.getUserFromRequest(req);
-            const isAdmin = role === Role.ADMIN || role === Role.SUPER_ADMIN;
-
-            const adminFilterId = (role === Role.ADMIN && userId) ? userId : undefined;
+            const isAdmin = role === Role.SUPER_ADMIN;
 
             const result = await this.housesService.getHouses(
                 Number.isNaN(skipNum) ? 0 : skipNum,
                 Number.isNaN(takeNum) ? 10 : takeNum,
-                adminFilterId
+                undefined
             );
 
             if (!isAdmin && result && result.data) {
@@ -64,13 +62,19 @@ export class HousesController {
         }
     }
 
+    @Get('me')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.USER, Role.SUPER_ADMIN)
+    async getMyHouses(@Request() req: any) {
+        return this.housesService.getHouses(0, 100, req.user?.userId);
+    }
+
     @Get(':id')
     async getHouseById(@Param('id') id: string, @Request() req: any) {
         const { role, userId } = this.getUserFromRequest(req);
-        const adminFilterId = (role === Role.ADMIN && userId) ? userId : undefined;
-        const house = await this.housesService.getHouseById(id, adminFilterId);
+        const house = await this.housesService.getHouseById(id, undefined);
         if (house) {
-            const isAdmin = role === Role.ADMIN || role === Role.SUPER_ADMIN;
+            const isAdmin = role === Role.SUPER_ADMIN;
             if (!isAdmin) {
                 delete (house as any).contact_phone;
             }
@@ -80,14 +84,14 @@ export class HousesController {
 
     @Post()
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @Roles(Role.USER, Role.SUPER_ADMIN)
     async createHouse(@Body() data: any, @Request() req) {
         return this.housesService.createHouse(data, req.user?.userId, req.user?.role);
     }
 
     @Patch(':id')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @Roles(Role.USER, Role.SUPER_ADMIN)
     async updateHouse(
         @Param('id') id: string,
         @Body() data: any,
@@ -98,7 +102,7 @@ export class HousesController {
 
     @Patch(':id/status')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @Roles(Role.USER, Role.SUPER_ADMIN)
     async updateStatus(
         @Param('id') id: string,
         @Body('status') status: string,
@@ -109,7 +113,7 @@ export class HousesController {
 
     @Delete(':id')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @Roles(Role.USER, Role.SUPER_ADMIN)
     async removeHouse(@Param('id') id: string, @Request() req: any) {
         return this.housesService.removeHouse(id, req.user?.userId, req.user?.role);
     }
