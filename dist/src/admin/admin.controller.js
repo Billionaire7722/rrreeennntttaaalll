@@ -39,6 +39,9 @@ let AdminController = class AdminController {
     async createAdmin(body) {
         return this.adminService.createAdmin(body);
     }
+    async createUser(body) {
+        return this.adminService.createUser(body);
+    }
     async updateAdmin(id, body) {
         return this.adminService.updateAdmin(id, body);
     }
@@ -102,6 +105,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "createAdmin", null);
+__decorate([
+    (0, common_1.Post)('users'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "createUser", null);
 __decorate([
     (0, common_1.Patch)('admins/:id'),
     __param(0, (0, common_1.Param)('id')),

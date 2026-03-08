@@ -6,9 +6,10 @@ exports.default = (0, config_1.defineConfig)({
     schema: "prisma/schema.prisma",
     migrations: {
         path: "prisma/migrations",
+        seed: "ts-node prisma/seed.ts",
     },
     datasource: {
-        url: process.env["DATABASE_URL"],
+        url: process.env["DATABASE_URL"] || "postgresql://postgres:postgres@postgres:5432/rental?schema=public",
     },
 });
 //# sourceMappingURL=prisma.config.js.map

@@ -56,6 +56,7 @@ const audit_module_1 = require("./audit/audit.module");
 const cloudinary_module_1 = require("./cloudinary/cloudinary.module");
 const upload_module_1 = require("./upload/upload.module");
 const presence_module_1 = require("./presence/presence.module");
+const messages_module_1 = require("./messages/messages.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logging_middleware_1.LoggingMiddleware).forRoutes('*');
@@ -87,7 +88,8 @@ exports.AppModule = AppModule = __decorate([
             audit_module_1.AuditModule,
             cloudinary_module_1.CloudinaryModule,
             upload_module_1.UploadModule,
-            presence_module_1.PresenceModule
+            presence_module_1.PresenceModule,
+            messages_module_1.MessagesModule
         ],
         controllers: [],
         providers: [],

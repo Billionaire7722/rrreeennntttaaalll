@@ -18,6 +18,7 @@ const users_service_1 = require("./users.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const toggle_favorite_dto_1 = require("./dto/toggle-favorite.dto");
 const send_message_dto_1 = require("./dto/send-message.dto");
+const change_password_dto_1 = require("./dto/change-password.dto");
 const roles_guard_1 = require("../security/roles.guard");
 const roles_decorator_1 = require("../security/roles.decorator");
 const roles_enum_1 = require("../security/roles.enum");
@@ -35,23 +36,47 @@ let UsersController = class UsersController {
     toggleFavorite(req, toggleFavoriteDto) {
         return this.usersService.toggleFavorite(req.user.userId, toggleFavoriteDto);
     }
-    getMessages(req) {
-        return this.usersService.getMessages(req.user.userId);
+    getConversations(req) {
+        return this.usersService.getConversations(req.user.userId);
+    }
+    getMessageThread(req, otherId) {
+        return this.usersService.getMessageThread(req.user.userId, otherId);
+    }
+    markConversationSeen(req, otherId) {
+        return this.usersService.markConversationSeen(req.user.userId, otherId);
     }
     sendMessage(req, sendMessageDto) {
         return this.usersService.sendMessage(req.user.userId, sendMessageDto);
     }
-    getViewerMessages(skip, take) {
-        return this.usersService.getViewerMessages(skip, take);
+    getViewerMessages(req, skip, take) {
+        return this.usersService.getViewerMessages(req.user.userId, req.user.role, skip, take);
     }
     replyToViewer(req, viewerId, sendMessageDto) {
         return this.usersService.replyToViewer(req.user.userId, req.user.role, viewerId, sendMessageDto);
+    }
+    markAdminConversationSeen(req, viewerId) {
+        return this.usersService.markAdminConversationSeen(req.user.userId, req.user.role, viewerId);
+    }
+    updateAvatar(req, body) {
+        return this.usersService.updateAvatar(req.user.userId, body.url);
+    }
+    updateCover(req, body) {
+        return this.usersService.updateCover(req.user.userId, body.url);
+    }
+    getPublicProfile(id) {
+        return this.usersService.getPublicProfile(id);
+    }
+    updateProfile(req, body) {
+        return this.usersService.updateProfile(req.user.userId, body);
+    }
+    changePassword(req, changePasswordDto) {
+        return this.usersService.changePassword(req.user.userId, changePasswordDto);
     }
 };
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Get)('profile'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -59,7 +84,7 @@ __decorate([
 ], UsersController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.Get)('favorites'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -67,7 +92,7 @@ __decorate([
 ], UsersController.prototype, "getFavorites", null);
 __decorate([
     (0, common_1.Post)('favorites/toggle'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -75,16 +100,34 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "toggleFavorite", null);
 __decorate([
-    (0, common_1.Get)('messages'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, common_1.Get)('conversations'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], UsersController.prototype, "getMessages", null);
+], UsersController.prototype, "getConversations", null);
+__decorate([
+    (0, common_1.Get)('messages/:otherId'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('otherId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "getMessageThread", null);
+__decorate([
+    (0, common_1.Post)('messages/:otherId/seen'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('otherId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "markConversationSeen", null);
 __decorate([
     (0, common_1.Post)('messages'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.VIEWER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -93,16 +136,17 @@ __decorate([
 ], UsersController.prototype, "sendMessage", null);
 __decorate([
     (0, common_1.Get)('admin/messages'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
-    __param(0, (0, common_1.Query)('skip')),
-    __param(1, (0, common_1.Query)('take')),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Query)('skip')),
+    __param(2, (0, common_1.Query)('take')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:paramtypes", [Object, Number, Number]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "getViewerMessages", null);
 __decorate([
     (0, common_1.Post)('admin/messages/:viewerId/reply'),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('viewerId')),
     __param(2, (0, common_1.Body)()),
@@ -110,6 +154,58 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, send_message_dto_1.SendMessageDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "replyToViewer", null);
+__decorate([
+    (0, common_1.Post)('admin/messages/:viewerId/seen'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('viewerId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "markAdminConversationSeen", null);
+__decorate([
+    (0, common_1.Post)('avatar'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "updateAvatar", null);
+__decorate([
+    (0, common_1.Post)('cover'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "updateCover", null);
+__decorate([
+    (0, common_1.Get)('public/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "getPublicProfile", null);
+__decorate([
+    (0, common_1.Post)('profile'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.Post)('change-password'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, change_password_dto_1.ChangePasswordDto]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "changePassword", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

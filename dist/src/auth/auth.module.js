@@ -14,6 +14,7 @@ const passport_1 = require("@nestjs/passport");
 const jwt_1 = require("@nestjs/jwt");
 const prisma_module_1 = require("../prisma/prisma.module");
 const jwt_strategy_1 = require("./jwt.strategy");
+const security_config_1 = require("../config/security.config");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -23,7 +24,7 @@ exports.AuthModule = AuthModule = __decorate([
             prisma_module_1.PrismaModule,
             passport_1.PassportModule,
             jwt_1.JwtModule.register({
-                secret: process.env.JWT_SECRET || 'fallback_secret_key',
+                secret: (0, security_config_1.getJwtSecretOrThrow)(),
                 signOptions: { expiresIn: '7d' },
             }),
         ],

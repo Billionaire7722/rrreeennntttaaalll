@@ -22,18 +22,59 @@ const roles_decorator_1 = require("../security/roles.decorator");
 const roles_enum_1 = require("../security/roles.enum");
 const common_3 = require("@nestjs/common");
 const audit_interceptor_1 = require("../audit/audit.interceptor");
+const jwt_1 = require("@nestjs/jwt");
 let HousesController = class HousesController {
     housesService;
-    constructor(housesService) {
+    jwtService;
+    constructor(housesService, jwtService) {
         this.housesService = housesService;
+        this.jwtService = jwtService;
     }
-    async getHouses(skip, take) {
-        const skipNum = skip ? parseInt(skip, 10) : 0;
-        const takeNum = take ? parseInt(take, 10) : 10;
-        return this.housesService.getHouses(Number.isNaN(skipNum) ? 0 : skipNum, Number.isNaN(takeNum) ? 10 : takeNum);
+    getUserFromRequest(req) {
+        try {
+            const authHeader = req?.headers?.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                const token = authHeader.split(' ')[1];
+                const decoded = this.jwtService.verify(token, {
+                    secret: process.env.JWT_SECRET || 'dev_jwt_secret_change_in_production',
+                });
+                return { role: decoded?.role || null, userId: decoded?.sub || null };
+            }
+        }
+        catch (e) {
+        }
+        return { role: null, userId: null };
     }
-    async getHouseById(id) {
-        return this.housesService.getHouseById(id);
+    async getHouses(skip, take, req) {
+        try {
+            const skipNum = skip ? parseInt(skip, 10) : 0;
+            const takeNum = take ? parseInt(take, 10) : 10;
+            const { role, userId } = this.getUserFromRequest(req);
+            const isAdmin = role === roles_enum_1.Role.SUPER_ADMIN;
+            const result = await this.housesService.getHouses(Number.isNaN(skipNum) ? 0 : skipNum, Number.isNaN(takeNum) ? 10 : takeNum, undefined);
+            if (!isAdmin && result && result.data) {
+                result.data.forEach((h) => delete h.contact_phone);
+            }
+            return result;
+        }
+        catch (e) {
+            console.error("GET HOUSES ERROR:", e);
+            throw e;
+        }
+    }
+    async getMyHouses(req) {
+        return this.housesService.getHouses(0, 100, req.user?.userId);
+    }
+    async getHouseById(id, req) {
+        const { role, userId } = this.getUserFromRequest(req);
+        const house = await this.housesService.getHouseById(id, undefined);
+        if (house) {
+            const isAdmin = role === roles_enum_1.Role.SUPER_ADMIN;
+            if (!isAdmin) {
+                delete house.contact_phone;
+            }
+        }
+        return house;
     }
     async createHouse(data, req) {
         return this.housesService.createHouse(data, req.user?.userId, req.user?.role);
@@ -41,11 +82,11 @@ let HousesController = class HousesController {
     async updateHouse(id, data, req) {
         return this.housesService.updateHouse(id, data, req.user?.userId, req.user?.role);
     }
-    async updateStatus(id, status) {
-        return this.housesService.updateStatus(id, status);
+    async updateStatus(id, status, req) {
+        return this.housesService.updateStatus(id, status, req.user?.userId, req.user?.role);
     }
-    async removeHouse(id) {
-        return this.housesService.removeHouse(id);
+    async removeHouse(id, req) {
+        return this.housesService.removeHouse(id, req.user?.userId, req.user?.role);
     }
 };
 exports.HousesController = HousesController;
@@ -53,21 +94,32 @@ __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)('skip')),
     __param(1, (0, common_1.Query)('take')),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], HousesController.prototype, "getHouses", null);
 __decorate([
+    (0, common_1.Get)('me'),
+    (0, common_2.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER, roles_enum_1.Role.SUPER_ADMIN),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], HousesController.prototype, "getMyHouses", null);
+__decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], HousesController.prototype, "getHouseById", null);
 __decorate([
     (0, common_1.Post)(),
     (0, common_2.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER, roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
@@ -77,7 +129,7 @@ __decorate([
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, common_2.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER, roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Request)()),
@@ -88,25 +140,28 @@ __decorate([
 __decorate([
     (0, common_1.Patch)(':id/status'),
     (0, common_2.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER, roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)('status')),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], HousesController.prototype, "updateStatus", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_2.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER, roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], HousesController.prototype, "removeHouse", null);
 exports.HousesController = HousesController = __decorate([
     (0, common_1.Controller)('houses'),
     (0, common_3.UseInterceptors)(audit_interceptor_1.AuditInterceptor),
-    __metadata("design:paramtypes", [houses_service_1.HousesService])
+    __metadata("design:paramtypes", [houses_service_1.HousesService,
+        jwt_1.JwtService])
 ], HousesController);
 //# sourceMappingURL=houses.controller.js.map

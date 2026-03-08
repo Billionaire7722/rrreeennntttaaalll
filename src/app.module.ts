@@ -14,6 +14,7 @@ import { AuditModule } from './audit/audit.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { UploadModule } from './upload/upload.module';
 import { PresenceModule } from './presence/presence.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -39,7 +40,8 @@ import { PresenceModule } from './presence/presence.module';
     AuditModule,
     CloudinaryModule,
     UploadModule,
-    PresenceModule
+    PresenceModule,
+    MessagesModule
   ],
   controllers: [],
   providers: [],

@@ -14,21 +14,35 @@ export class AdminService {
     async getAllUsers(skip = 0, take = 50) {
         const [users, total] = await Promise.all([
             this.prisma.user.findMany({
-                where: { role: Role.VIEWER },
+                where: { role: Role.USER },
                 skip: Number(skip),
                 take: Number(take),
                 select: {
-                    id: true, name: true, email: true, phone: true, status: true, created_at: true, deleted_at: true, role: true
+                    id: true,
+                    name: true,
+                    username: true,
+                    email: true,
+                    phone: true,
+                    status: true,
+                    created_at: true,
+                    deleted_at: true,
+                    role: true,
+                    avatarUrl: true,
+                    coverUrl: true,
+                    bio: true,
+                    _count: {
+                        select: { ownedHouses: true }
+                    }
                 }
             }),
-            this.prisma.user.count({ where: { role: Role.VIEWER } })
+            this.prisma.user.count({ where: { role: Role.USER } })
         ]);
         return { users, total, skip: Number(skip), take: Number(take) };
     }
 
     async getAllAdmins(skip = 0, take = 50) {
         const where = {
-            role: { in: [Role.ADMIN, Role.SUPER_ADMIN] },
+            role: Role.SUPER_ADMIN,
             deleted_at: null
         };
 
@@ -253,8 +267,8 @@ export class AdminService {
             deletedProperties,
             loginAttemptsToday
         ] = await Promise.all([
-            this.prisma.user.count({ where: { role: Role.VIEWER } }),
-            this.prisma.user.count({ where: { role: { in: [Role.ADMIN, Role.SUPER_ADMIN] } } }),
+            this.prisma.user.count({ where: { role: Role.USER } }),
+            this.prisma.user.count({ where: { role: Role.SUPER_ADMIN } }),
             this.prisma.house.count({ where: { deleted_at: null } }),
             this.prisma.house.count({ where: { deleted_at: { not: null } } }),
             this.prisma.loginLog.count({ where: { timestamp: { gte: todayStart } } })
@@ -337,7 +351,7 @@ export class AdminService {
         // Demote existing SUPER_ADMINs
         await this.prisma.user.updateMany({
             where: { role: Role.SUPER_ADMIN },
-            data: { role: Role.ADMIN }
+            data: { role: Role.USER }
         });
 
         // Add exact credentials
@@ -396,7 +410,7 @@ export class AdminService {
                 email: data.email,
                 phone: data.phone,
                 password: hashedPassword,
-                role: Role.ADMIN,
+                role: Role.SUPER_ADMIN,
                 status: 'ACTIVE',
             },
             select: { id: true, name: true, username: true, email: true, role: true, status: true },
@@ -405,10 +419,41 @@ export class AdminService {
         return admin;
     }
 
+    async createUser(data: { name: string; username: string; email: string; phone?: string; password: string }) {
+        const existing = await this.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { email: data.email },
+                    { username: data.username },
+                ],
+            },
+        });
+
+        if (existing) {
+            throw new ForbiddenException('Username or email already exists');
+        }
+
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const user = await this.prisma.user.create({
+            data: {
+                name: data.name,
+                username: data.username,
+                email: data.email,
+                phone: data.phone,
+                password: hashedPassword,
+                role: Role.USER,
+                status: 'ACTIVE',
+            },
+            select: { id: true, name: true, username: true, email: true, role: true, status: true },
+        });
+
+        return user;
+    }
+
     async getLiveSessions(skip = 0, take = 50, role?: string) {
         const where: any = {
             role: {
-                in: [Role.VIEWER, Role.ADMIN, Role.SUPER_ADMIN]
+                in: [Role.USER, Role.SUPER_ADMIN]
             }
         };
         if (role) {

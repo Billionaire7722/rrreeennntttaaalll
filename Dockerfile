@@ -28,10 +28,11 @@ RUN apk add --no-cache python3 make g++
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# Copy built output and prisma schema
+# Copy built output, prisma schema, and config
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh ./docker-entrypoint.sh

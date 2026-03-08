@@ -5,13 +5,14 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '../prisma/prisma.module';
 import { JwtStrategy } from './jwt.strategy';
+import { getJwtSecretOrThrow } from '../config/security.config';
 
 @Module({
     imports: [
         PrismaModule,
         PassportModule,
         JwtModule.register({
-            secret: process.env.JWT_SECRET || 'fallback_secret_key',
+            secret: getJwtSecretOrThrow(),
             signOptions: { expiresIn: '7d' },
         }),
     ],

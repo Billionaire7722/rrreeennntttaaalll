@@ -1,29 +1,42 @@
 import { UsersService } from './users.service';
 import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
 import { SendMessageDto } from './dto/send-message.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
     getProfile(req: any): Promise<{
         id: string;
-        name: string;
-        status: string;
-        created_at: Date;
-        updated_at: Date;
-        deleted_at: Date | null;
         username: string;
         email: string;
+        name: string;
+        firstName: string | null;
+        lastName: string | null;
         phone: string | null;
         password: string;
+        avatarUrl: string | null;
+        coverUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
+        status: string;
         locked_until: Date | null;
+        name_updated_at: Date | null;
+        bio: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
     }>;
     getFavorites(req: any): Promise<({
         house: {
             id: string;
-            original_id: string;
             name: string;
+            status: string | null;
+            deleted_at: Date | null;
+            created_at: Date;
+            updated_at: Date;
+            original_id: string;
+            property_type: string | null;
             address: string;
+            ward: string | null;
             district: string;
             city: string;
             latitude: number | null;
@@ -39,13 +52,12 @@ export declare class UsersController {
             image_url_5: string | null;
             image_url_6: string | null;
             image_url_7: string | null;
-            image_url_8: string | null;
+            video_url_1: string | null;
+            video_url_2: string | null;
             description: string | null;
-            status: string | null;
             is_private_bathroom: boolean;
-            created_at: Date;
-            updated_at: Date;
-            deleted_at: Date | null;
+            contact_phone: string | null;
+            owner_id: string | null;
         };
     } & {
         id: string;
@@ -56,39 +68,69 @@ export declare class UsersController {
     toggleFavorite(req: any, toggleFavoriteDto: ToggleFavoriteDto): Promise<{
         message: string;
     }>;
-    getMessages(req: any): Promise<{
+    getConversations(req: any): Promise<any[]>;
+    getMessageThread(req: any, otherId: string): Promise<({
+        user: {
+            id: string;
+            name: string;
+            avatarUrl: string | null;
+        };
+        receiver: {
+            id: string;
+            name: string;
+            avatarUrl: string | null;
+        } | null;
+    } & {
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
+        receiverId: string | null;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
-    }[]>;
+        content: string;
+        seen_at: Date | null;
+        seen_by_role: import("@prisma/client").$Enums.Role | null;
+    })[]>;
+    markConversationSeen(req: any, otherId: string): Promise<{
+        updated: number;
+    }>;
     sendMessage(req: any, sendMessageDto: SendMessageDto): Promise<{
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
+        receiverId: string | null;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
+        seen_at: Date | null;
+        seen_by_role: import("@prisma/client").$Enums.Role | null;
     }>;
-    getViewerMessages(skip?: number, take?: number): Promise<{
+    getViewerMessages(req: any, skip?: number, take?: number): Promise<{
         items: ({
             user: {
                 id: string;
-                name: string;
                 username: string;
                 email: string;
+                name: string;
                 phone: string | null;
                 role: import("@prisma/client").$Enums.Role;
             };
+            receiver: {
+                id: string;
+                username: string;
+                name: string;
+                avatarUrl: string | null;
+            } | null;
         } & {
             id: string;
             created_at: Date;
             userId: string;
-            content: string;
+            receiverId: string | null;
             senderId: string | null;
             senderRole: import("@prisma/client").$Enums.Role;
+            content: string;
+            seen_at: Date | null;
+            seen_by_role: import("@prisma/client").$Enums.Role | null;
         })[];
         skip: number;
         take: number;
@@ -97,8 +139,108 @@ export declare class UsersController {
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
+        receiverId: string | null;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
+        seen_at: Date | null;
+        seen_by_role: import("@prisma/client").$Enums.Role | null;
+    }>;
+    markAdminConversationSeen(req: any, viewerId: string): Promise<{
+        updated: number;
+    }>;
+    updateAvatar(req: any, body: {
+        url: string;
+    }): Promise<{
+        id: string;
+        username: string;
+        email: string;
+        name: string;
+        firstName: string | null;
+        lastName: string | null;
+        phone: string | null;
+        password: string;
+        avatarUrl: string | null;
+        coverUrl: string | null;
+        role: import("@prisma/client").$Enums.Role;
+        status: string;
+        locked_until: Date | null;
+        name_updated_at: Date | null;
+        bio: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+    }>;
+    updateCover(req: any, body: {
+        url: string;
+    }): Promise<{
+        id: string;
+        username: string;
+        email: string;
+        name: string;
+        firstName: string | null;
+        lastName: string | null;
+        phone: string | null;
+        password: string;
+        avatarUrl: string | null;
+        coverUrl: string | null;
+        role: import("@prisma/client").$Enums.Role;
+        status: string;
+        locked_until: Date | null;
+        name_updated_at: Date | null;
+        bio: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+    }>;
+    getPublicProfile(id: string): Promise<{
+        id: string;
+        name: string;
+        avatarUrl: string | null;
+        coverUrl: string | null;
+        bio: string | null;
+        created_at: Date;
+        ownedHouses: {
+            id: string;
+            name: string;
+            status: string | null;
+            property_type: string | null;
+            address: string;
+            district: string;
+            city: string;
+            price: number | null;
+            bedrooms: number | null;
+            square: number | null;
+            image_url_1: string | null;
+            is_private_bathroom: boolean;
+        }[];
+    }>;
+    updateProfile(req: any, body: {
+        firstName?: string;
+        lastName?: string;
+        bio?: string;
+        email?: string;
+    }): Promise<{
+        id: string;
+        username: string;
+        email: string;
+        name: string;
+        firstName: string | null;
+        lastName: string | null;
+        phone: string | null;
+        password: string;
+        avatarUrl: string | null;
+        coverUrl: string | null;
+        role: import("@prisma/client").$Enums.Role;
+        status: string;
+        locked_until: Date | null;
+        name_updated_at: Date | null;
+        bio: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+    }>;
+    changePassword(req: any, changePasswordDto: ChangePasswordDto): Promise<{
+        message: string;
     }>;
 }

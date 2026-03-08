@@ -58,20 +58,34 @@ let AdminService = class AdminService {
     async getAllUsers(skip = 0, take = 50) {
         const [users, total] = await Promise.all([
             this.prisma.user.findMany({
-                where: { role: roles_enum_1.Role.VIEWER },
+                where: { role: roles_enum_1.Role.USER },
                 skip: Number(skip),
                 take: Number(take),
                 select: {
-                    id: true, name: true, email: true, phone: true, status: true, created_at: true, deleted_at: true, role: true
+                    id: true,
+                    name: true,
+                    username: true,
+                    email: true,
+                    phone: true,
+                    status: true,
+                    created_at: true,
+                    deleted_at: true,
+                    role: true,
+                    avatarUrl: true,
+                    coverUrl: true,
+                    bio: true,
+                    _count: {
+                        select: { ownedHouses: true }
+                    }
                 }
             }),
-            this.prisma.user.count({ where: { role: roles_enum_1.Role.VIEWER } })
+            this.prisma.user.count({ where: { role: roles_enum_1.Role.USER } })
         ]);
         return { users, total, skip: Number(skip), take: Number(take) };
     }
     async getAllAdmins(skip = 0, take = 50) {
         const where = {
-            role: { in: [roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN] },
+            role: roles_enum_1.Role.SUPER_ADMIN,
             deleted_at: null
         };
         const [admins, total] = await Promise.all([
@@ -260,8 +274,8 @@ let AdminService = class AdminService {
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
         sevenDaysAgo.setHours(0, 0, 0, 0);
         const [totalUsers, totalAdmins, totalProperties, deletedProperties, loginAttemptsToday] = await Promise.all([
-            this.prisma.user.count({ where: { role: roles_enum_1.Role.VIEWER } }),
-            this.prisma.user.count({ where: { role: { in: [roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN] } } }),
+            this.prisma.user.count({ where: { role: roles_enum_1.Role.USER } }),
+            this.prisma.user.count({ where: { role: roles_enum_1.Role.SUPER_ADMIN } }),
             this.prisma.house.count({ where: { deleted_at: null } }),
             this.prisma.house.count({ where: { deleted_at: { not: null } } }),
             this.prisma.loginLog.count({ where: { timestamp: { gte: todayStart } } })
@@ -335,7 +349,7 @@ let AdminService = class AdminService {
     async seedSuperAdmin() {
         await this.prisma.user.updateMany({
             where: { role: roles_enum_1.Role.SUPER_ADMIN },
-            data: { role: roles_enum_1.Role.ADMIN }
+            data: { role: roles_enum_1.Role.USER }
         });
         const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'ceo@rentalapp.com';
         const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
@@ -387,17 +401,44 @@ let AdminService = class AdminService {
                 email: data.email,
                 phone: data.phone,
                 password: hashedPassword,
-                role: roles_enum_1.Role.ADMIN,
+                role: roles_enum_1.Role.SUPER_ADMIN,
                 status: 'ACTIVE',
             },
             select: { id: true, name: true, username: true, email: true, role: true, status: true },
         });
         return admin;
     }
+    async createUser(data) {
+        const existing = await this.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { email: data.email },
+                    { username: data.username },
+                ],
+            },
+        });
+        if (existing) {
+            throw new common_1.ForbiddenException('Username or email already exists');
+        }
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const user = await this.prisma.user.create({
+            data: {
+                name: data.name,
+                username: data.username,
+                email: data.email,
+                phone: data.phone,
+                password: hashedPassword,
+                role: roles_enum_1.Role.USER,
+                status: 'ACTIVE',
+            },
+            select: { id: true, name: true, username: true, email: true, role: true, status: true },
+        });
+        return user;
+    }
     async getLiveSessions(skip = 0, take = 50, role) {
         const where = {
             role: {
-                in: [roles_enum_1.Role.VIEWER, roles_enum_1.Role.ADMIN, roles_enum_1.Role.SUPER_ADMIN]
+                in: [roles_enum_1.Role.USER, roles_enum_1.Role.SUPER_ADMIN]
             }
         };
         if (role) {

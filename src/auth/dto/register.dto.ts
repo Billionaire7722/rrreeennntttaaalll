@@ -3,7 +3,11 @@ import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional } from 'class-vali
 export class RegisterDto {
     @IsNotEmpty()
     @IsString()
-    name: string;
+    firstName: string;
+
+    @IsNotEmpty()
+    @IsString()
+    lastName: string;
 
     @IsNotEmpty()
     @IsString()
@@ -25,4 +29,8 @@ export class RegisterDto {
     @IsNotEmpty()
     @IsString()
     confirmPassword: string;
+
+    @IsOptional()
+    @IsString()
+    captchaToken?: string;
 }

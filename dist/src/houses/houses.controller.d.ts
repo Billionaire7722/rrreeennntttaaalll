@@ -1,8 +1,11 @@
 import { HousesService } from './houses.service';
+import { JwtService } from '@nestjs/jwt';
 export declare class HousesController {
     private readonly housesService;
-    constructor(housesService: HousesService);
-    getHouses(skip?: string, take?: string): Promise<{
+    private readonly jwtService;
+    constructor(housesService: HousesService, jwtService: JwtService);
+    private getUserFromRequest;
+    getHouses(skip?: string, take?: string, req?: any): Promise<{
         data: any;
         meta: {
             total: any;
@@ -11,14 +14,29 @@ export declare class HousesController {
             hasMore: boolean;
         };
     }>;
-    getHouseById(id: string): Promise<any>;
+    getMyHouses(req: any): Promise<{
+        data: any;
+        meta: {
+            total: any;
+            skip: number;
+            take: number;
+            hasMore: boolean;
+        };
+    }>;
+    getHouseById(id: string, req: any): Promise<any>;
     createHouse(data: any, req: any): Promise<any>;
     updateHouse(id: string, data: any, req: any): Promise<any>;
-    updateStatus(id: string, status: string): Promise<{
+    updateStatus(id: string, status: string, req: any): Promise<{
         id: string;
-        original_id: string;
         name: string;
+        status: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+        original_id: string;
+        property_type: string | null;
         address: string;
+        ward: string | null;
         district: string;
         city: string;
         latitude: number | null;
@@ -34,19 +52,24 @@ export declare class HousesController {
         image_url_5: string | null;
         image_url_6: string | null;
         image_url_7: string | null;
-        image_url_8: string | null;
+        video_url_1: string | null;
+        video_url_2: string | null;
         description: string | null;
-        status: string | null;
         is_private_bathroom: boolean;
-        created_at: Date;
-        updated_at: Date;
-        deleted_at: Date | null;
+        contact_phone: string | null;
+        owner_id: string | null;
     }>;
-    removeHouse(id: string): Promise<{
+    removeHouse(id: string, req: any): Promise<{
         id: string;
-        original_id: string;
         name: string;
+        status: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+        original_id: string;
+        property_type: string | null;
         address: string;
+        ward: string | null;
         district: string;
         city: string;
         latitude: number | null;
@@ -62,12 +85,11 @@ export declare class HousesController {
         image_url_5: string | null;
         image_url_6: string | null;
         image_url_7: string | null;
-        image_url_8: string | null;
+        video_url_1: string | null;
+        video_url_2: string | null;
         description: string | null;
-        status: string | null;
         is_private_bathroom: boolean;
-        created_at: Date;
-        updated_at: Date;
-        deleted_at: Date | null;
+        contact_phone: string | null;
+        owner_id: string | null;
     }>;
 }

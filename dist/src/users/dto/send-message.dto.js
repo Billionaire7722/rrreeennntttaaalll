@@ -13,6 +13,9 @@ exports.SendMessageDto = void 0;
 const class_validator_1 = require("class-validator");
 class SendMessageDto {
     content;
+    recipientId;
+    houseId;
+    houseTitle;
 }
 exports.SendMessageDto = SendMessageDto;
 __decorate([
@@ -20,4 +23,19 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], SendMessageDto.prototype, "content", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SendMessageDto.prototype, "recipientId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SendMessageDto.prototype, "houseId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SendMessageDto.prototype, "houseTitle", void 0);
 //# sourceMappingURL=send-message.dto.js.map

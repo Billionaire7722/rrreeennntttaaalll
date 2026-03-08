@@ -5,6 +5,12 @@ export const CLOUDINARY = 'Cloudinary';
 export const CloudinaryProvider = {
     provide: CLOUDINARY,
     useFactory: () => {
+        // Skip Cloudinary config in local development
+        if (process.env.SKIP_CLOUDINARY === 'true') {
+            console.log('Cloudinary skipped for local development');
+            return null;
+        }
+
         const cloudinaryUrl = process.env.CLOUDINARY_URL;
 
         if (cloudinaryUrl) {

@@ -1,8 +1,14 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../security/roles.enum';
 
-const prisma = new PrismaClient();
+// Initialize Prisma with adapter
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5433/rental?schema=public';
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
     console.log('Seed: Start isolating SUPER_ADMIN account...');
@@ -16,7 +22,7 @@ async function main() {
         console.log(`Found ${existingSuperAdmins.length} existing SUPER_ADMIN(s). Demoting to ADMIN...`);
         await prisma.user.updateMany({
             where: { role: Role.SUPER_ADMIN },
-            data: { role: Role.ADMIN }
+            data: { role: Role.USER }
         });
     }
 

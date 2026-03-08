@@ -3,9 +3,9 @@ export declare class HousesService {
     private prisma;
     constructor(prisma: PrismaService);
     private isAdminRole;
-    private formatPostedByAdmins;
-    private attachPoster;
-    getHouses(skip?: number, take?: number): Promise<{
+    private fetchCoordinatesFromAddress;
+    private assertUserCanManageHouse;
+    getHouses(skip?: number, take?: number, ownerId?: string): Promise<{
         data: any;
         meta: {
             total: any;
@@ -14,14 +14,20 @@ export declare class HousesService {
             hasMore: boolean;
         };
     }>;
-    getHouseById(id: string): Promise<any>;
+    getHouseById(id: string, ownerId?: string): Promise<any>;
     updateHouse(id: string, data: any, actorId?: string, actorRole?: string): Promise<any>;
     createHouse(data: any, actorId?: string, actorRole?: string): Promise<any>;
-    updateStatus(id: string, status: string): Promise<{
+    updateStatus(id: string, status: string, actorId?: string, actorRole?: string): Promise<{
         id: string;
-        original_id: string;
         name: string;
+        status: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+        original_id: string;
+        property_type: string | null;
         address: string;
+        ward: string | null;
         district: string;
         city: string;
         latitude: number | null;
@@ -37,19 +43,24 @@ export declare class HousesService {
         image_url_5: string | null;
         image_url_6: string | null;
         image_url_7: string | null;
-        image_url_8: string | null;
+        video_url_1: string | null;
+        video_url_2: string | null;
         description: string | null;
-        status: string | null;
         is_private_bathroom: boolean;
-        created_at: Date;
-        updated_at: Date;
-        deleted_at: Date | null;
+        contact_phone: string | null;
+        owner_id: string | null;
     }>;
-    removeHouse(id: string): Promise<{
+    removeHouse(id: string, actorId?: string, actorRole?: string): Promise<{
         id: string;
-        original_id: string;
         name: string;
+        status: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+        original_id: string;
+        property_type: string | null;
         address: string;
+        ward: string | null;
         district: string;
         city: string;
         latitude: number | null;
@@ -65,12 +76,11 @@ export declare class HousesService {
         image_url_5: string | null;
         image_url_6: string | null;
         image_url_7: string | null;
-        image_url_8: string | null;
+        video_url_1: string | null;
+        video_url_2: string | null;
         description: string | null;
-        status: string | null;
         is_private_bathroom: boolean;
-        created_at: Date;
-        updated_at: Date;
-        deleted_at: Date | null;
+        contact_phone: string | null;
+        owner_id: string | null;
     }>;
 }

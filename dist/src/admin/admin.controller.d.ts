@@ -8,13 +8,20 @@ export declare class AdminController {
     getUsers(skip?: number, take?: number): Promise<{
         users: {
             id: string;
-            name: string;
-            status: string;
-            created_at: Date;
-            deleted_at: Date | null;
+            username: string;
             email: string;
+            name: string;
             phone: string | null;
+            avatarUrl: string | null;
+            coverUrl: string | null;
             role: import("@prisma/client").$Enums.Role;
+            status: string;
+            bio: string | null;
+            deleted_at: Date | null;
+            created_at: Date;
+            _count: {
+                ownedHouses: number;
+            };
         }[];
         total: number;
         skip: number;
@@ -23,14 +30,14 @@ export declare class AdminController {
     getAdmins(skip?: number, take?: number): Promise<{
         admins: {
             id: string;
-            name: string;
-            status: string;
-            created_at: Date;
-            deleted_at: Date | null;
             username: string;
             email: string;
+            name: string;
             phone: string | null;
             role: import("@prisma/client").$Enums.Role;
+            status: string;
+            deleted_at: Date | null;
+            created_at: Date;
         }[];
         total: number;
         skip: number;
@@ -50,11 +57,25 @@ export declare class AdminController {
         password: string;
     }): Promise<{
         id: string;
-        name: string;
-        status: string;
         username: string;
         email: string;
+        name: string;
         role: import("@prisma/client").$Enums.Role;
+        status: string;
+    }>;
+    createUser(body: {
+        name: string;
+        username: string;
+        email: string;
+        phone?: string;
+        password: string;
+    }): Promise<{
+        id: string;
+        username: string;
+        email: string;
+        name: string;
+        role: import("@prisma/client").$Enums.Role;
+        status: string;
     }>;
     updateAdmin(id: string, body: {
         name?: string;
@@ -64,12 +85,12 @@ export declare class AdminController {
         password?: string;
     }): Promise<{
         id: string;
-        name: string;
-        status: string;
         username: string;
         email: string;
+        name: string;
         phone: string | null;
         role: import("@prisma/client").$Enums.Role;
+        status: string;
     }>;
     changeRole(id: string, role: Role): Promise<{
         id: string;
@@ -93,9 +114,15 @@ export declare class AdminController {
     }>;
     restoreHouse(id: string): Promise<{
         id: string;
-        original_id: string;
         name: string;
+        status: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+        original_id: string;
+        property_type: string | null;
         address: string;
+        ward: string | null;
         district: string;
         city: string;
         latitude: number | null;
@@ -111,13 +138,12 @@ export declare class AdminController {
         image_url_5: string | null;
         image_url_6: string | null;
         image_url_7: string | null;
-        image_url_8: string | null;
+        video_url_1: string | null;
+        video_url_2: string | null;
         description: string | null;
-        status: string | null;
         is_private_bathroom: boolean;
-        created_at: Date;
-        updated_at: Date;
-        deleted_at: Date | null;
+        contact_phone: string | null;
+        owner_id: string | null;
     }>;
     getAuditLogs(skip?: number, take?: number, adminId?: string, actionType?: string, startDate?: string, endDate?: string): Promise<{
         items: {
@@ -142,9 +168,9 @@ export declare class AdminController {
             id: string;
             role: string | null;
             userId: string | null;
+            success: boolean;
             ipAddress: string | null;
             userAgent: string | null;
-            success: boolean;
             timestamp: Date;
         }[];
         total: number;
