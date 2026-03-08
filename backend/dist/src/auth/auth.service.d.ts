@@ -17,6 +17,8 @@ export declare class AuthService {
         user: {
             id: any;
             name: any;
+            firstName: any;
+            lastName: any;
             username: any;
             email: any;
             phone: any;
@@ -29,6 +31,8 @@ export declare class AuthService {
         user: {
             id: any;
             name: any;
+            firstName: any;
+            lastName: any;
             username: any;
             email: any;
             phone: any;
@@ -41,6 +45,8 @@ export declare class AuthService {
         user: {
             id: any;
             name: any;
+            firstName: any;
+            lastName: any;
             username: any;
             email: any;
             phone: any;

@@ -177,10 +177,10 @@ export default function PropertyDetailsPage() {
     // Compute robust localized address
     const address = property.address || `${property.district ? property.district + ', ' : ''}${property.city}`;
     const postedByAdmins = Array.isArray(property.postedByAdmins) ? property.postedByAdmins : [];
-    const primaryAdmin = postedByAdmins[0];
+    const owner = property.owner;
     const handleContactNow = () => {
         const params = new URLSearchParams();
-        if (primaryAdmin?.id) params.set('adminId', primaryAdmin.id);
+        if (owner?.id) params.set('recipientId', owner.id);
         params.set('houseId', propertyId);
         params.set('houseTitle', property.name || property.title || '');
         router.push(`/chat?${params.toString()}`);
@@ -296,20 +296,18 @@ export default function PropertyDetailsPage() {
 
                 <div className="mb-6">
                     <h3 className="text-sm font-semibold text-gray-800 mb-2">{t('posted_by')}</h3>
-                    {postedByAdmins.length > 0 ? (
+                    {owner ? (
                         <div className="flex flex-wrap gap-2">
-                            {postedByAdmins.map((admin: any) => (
-                                <Link key={admin.id} href={admin.id === user?.id ? '/profile' : `/user/${admin.id}`} className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1.5 hover:bg-gray-100 transition-colors">
-                                    {admin.avatarUrl ? (
-                                        <img src={admin.avatarUrl} alt={admin.name} className="w-7 h-7 rounded-full object-cover" />
-                                    ) : (
-                                        <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[11px] font-bold">
-                                            {getInitials(admin.name)}
-                                        </div>
-                                    )}
-                                    <span className="text-xs font-medium text-gray-700">{admin.name}</span>
-                                </Link>
-                            ))}
+                            <Link href={owner.id === user?.id ? '/profile' : `/user/${owner.id}`} className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1.5 hover:bg-gray-100 transition-colors">
+                                {owner.avatarUrl ? (
+                                    <img src={owner.avatarUrl} alt={owner.name} className="w-7 h-7 rounded-full object-cover" />
+                                ) : (
+                                    <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[11px] font-bold">
+                                        {getInitials(owner.name)}
+                                    </div>
+                                )}
+                                <span className="text-xs font-medium text-gray-700">{owner.name}</span>
+                            </Link>
                         </div>
                     ) : (
                         <p className="text-sm text-gray-500">{t('no_poster_info')}</p>

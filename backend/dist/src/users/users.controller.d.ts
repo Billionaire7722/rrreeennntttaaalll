@@ -1,6 +1,7 @@
 import { UsersService } from './users.service';
 import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
 import { SendMessageDto } from './dto/send-message.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
@@ -9,6 +10,8 @@ export declare class UsersController {
         username: string;
         email: string;
         name: string;
+        firstName: string | null;
+        lastName: string | null;
         phone: string | null;
         password: string;
         avatarUrl: string | null;
@@ -33,6 +36,7 @@ export declare class UsersController {
             original_id: string;
             property_type: string | null;
             address: string;
+            ward: string | null;
             district: string;
             city: string;
             latitude: number | null;
@@ -64,16 +68,15 @@ export declare class UsersController {
     toggleFavorite(req: any, toggleFavoriteDto: ToggleFavoriteDto): Promise<{
         message: string;
     }>;
-    getMessages(req: any): Promise<({
+    getConversations(req: any): Promise<any[]>;
+    getMessageThread(req: any, otherId: string): Promise<({
         user: {
             id: string;
-            username: string;
             name: string;
             avatarUrl: string | null;
         };
         receiver: {
             id: string;
-            username: string;
             name: string;
             avatarUrl: string | null;
         } | null;
@@ -81,26 +84,26 @@ export declare class UsersController {
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
+        receiverId: string | null;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
-        receiverId: string | null;
     })[]>;
-    markViewerConversationSeen(req: any, adminId: string): Promise<{
+    markConversationSeen(req: any, otherId: string): Promise<{
         updated: number;
     }>;
     sendMessage(req: any, sendMessageDto: SendMessageDto): Promise<{
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
+        receiverId: string | null;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
-        receiverId: string | null;
     }>;
     getViewerMessages(req: any, skip?: number, take?: number): Promise<{
         items: ({
@@ -122,12 +125,12 @@ export declare class UsersController {
             id: string;
             created_at: Date;
             userId: string;
-            content: string;
+            receiverId: string | null;
             senderId: string | null;
             senderRole: import("@prisma/client").$Enums.Role;
+            content: string;
             seen_at: Date | null;
             seen_by_role: import("@prisma/client").$Enums.Role | null;
-            receiverId: string | null;
         })[];
         skip: number;
         take: number;
@@ -136,12 +139,12 @@ export declare class UsersController {
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
+        receiverId: string | null;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
-        receiverId: string | null;
     }>;
     markAdminConversationSeen(req: any, viewerId: string): Promise<{
         updated: number;
@@ -153,6 +156,8 @@ export declare class UsersController {
         username: string;
         email: string;
         name: string;
+        firstName: string | null;
+        lastName: string | null;
         phone: string | null;
         password: string;
         avatarUrl: string | null;
@@ -173,6 +178,8 @@ export declare class UsersController {
         username: string;
         email: string;
         name: string;
+        firstName: string | null;
+        lastName: string | null;
         phone: string | null;
         password: string;
         avatarUrl: string | null;
@@ -209,13 +216,17 @@ export declare class UsersController {
         }[];
     }>;
     updateProfile(req: any, body: {
-        name?: string;
+        firstName?: string;
+        lastName?: string;
         bio?: string;
+        email?: string;
     }): Promise<{
         id: string;
         username: string;
         email: string;
         name: string;
+        firstName: string | null;
+        lastName: string | null;
         phone: string | null;
         password: string;
         avatarUrl: string | null;
@@ -228,5 +239,8 @@ export declare class UsersController {
         deleted_at: Date | null;
         created_at: Date;
         updated_at: Date;
+    }>;
+    changePassword(req: any, changePasswordDto: ChangePasswordDto): Promise<{
+        message: string;
     }>;
 }

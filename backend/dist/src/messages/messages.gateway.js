@@ -133,13 +133,16 @@ let MessagesGateway = class MessagesGateway {
             });
         }
     }
-    async sendMessageToUser(userId, message) {
+    async emitToUser(userId, event, data) {
         const userSocketSet = this.userSockets.get(userId);
         if (userSocketSet) {
             userSocketSet.forEach(socketId => {
-                this.connectedClients.get(socketId)?.emit('new_message', message);
+                this.connectedClients.get(socketId)?.emit(event, data);
             });
         }
+    }
+    async sendMessageToUser(userId, message) {
+        return this.emitToUser(userId, 'new_message', message);
     }
     async notifySuperAdmins(message) {
         this.connectedClients.forEach((socket) => {

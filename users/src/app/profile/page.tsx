@@ -28,6 +28,15 @@ const FLAGS: Record<Language, { url: string, label: string }> = {
     id: { url: "https://flagcdn.com/w20/id.png", label: "Bahasa Indonesia" },
 };
 
+function getInitials(name: string): string {
+  return (name || '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('');
+}
+
 interface ViewerMessage {
   id: string;
   content: string;
@@ -102,7 +111,7 @@ export default function ProfilePage() {
   const { user, loading: authLoading, logout } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const [favorites, setFavorites] = useState<any[]>([]);
-  const [messages, setMessages] = useState<ViewerMessage[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
   const [myHouses, setMyHouses] = useState<MyHouse[]>([]);
   const [loadingFavs, setLoadingFavs] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -113,7 +122,8 @@ export default function ProfilePage() {
   
   // Profile Edit State
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [editName, setEditName] = useState("");
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
   const [editBio, setEditBio] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState({ type: '', text: '' });
@@ -127,22 +137,6 @@ export default function ProfilePage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLangExpanded, setIsLangExpanded] = useState(false);
 
-  const conversations = useMemo(() => {
-    const map = new Map<string, { adminId: string; adminName: string; adminAvatar?: string | null; latest: ViewerMessage; unread: number }>();
-    for (const msg of messages) {
-      const adminId = msg.adminId || msg.admin?.id;
-      if (!adminId) continue;
-      const adminName = msg.admin?.name || msg.admin?.username || "Admin";
-      const adminAvatar = msg.admin?.avatarUrl;
-      const current = map.get(adminId);
-      const msgTime = new Date(msg.created_at).getTime();
-      const unreadFromAdmin = (msg.senderRole === "ADMIN" || msg.senderRole === "SUPER_ADMIN") && msg.seen_by_role !== "VIEWER";
-      if (!current || msgTime > new Date(current.latest.created_at).getTime()) {
-        map.set(adminId, { adminId, adminName, adminAvatar, latest: msg, unread: (current?.unread || 0) + (unreadFromAdmin ? 1 : 0) });
-      } else if (unreadFromAdmin) { current.unread += 1; map.set(adminId, current); }
-    }
-    return Array.from(map.values()).sort((a, b) => new Date(b.latest.created_at).getTime() - new Date(a.latest.created_at).getTime());
-  }, [messages]);
 
   const fetchFavorites = async () => {
     try {
@@ -162,13 +156,12 @@ export default function ProfilePage() {
     } catch { } finally { setLoadingFavs(false); }
   };
 
-  const fetchMessages = async () => {
+  const fetchConversations = async () => {
     if (!user) return;
     setLoadingMessages(true);
     try {
-      const res = await api.get("/users/messages");
-      const items = Array.isArray(res.data) ? res.data : [];
-      setMessages(items.sort((a: ViewerMessage, b: ViewerMessage) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+      const res = await api.get("/users/conversations");
+      setConversations(res.data || []);
     } catch { } finally { setLoadingMessages(false); }
   };
 
@@ -207,7 +200,8 @@ export default function ProfilePage() {
           const savedCover = localStorage.getItem(`cover_${user.id}`);
           if (savedCover) setCoverUrl(savedCover);
         }
-        setEditName(res.data.name || "");
+        setEditFirstName(res.data.firstName || "");
+        setEditLastName(res.data.lastName || "");
         setEditBio(res.data.bio || "");
       }).catch(() => {
         const saved = localStorage.getItem(`avatar_${user.id}`);
@@ -220,7 +214,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return;
-    if (activeTab === "messages") fetchMessages();
+    if (activeTab === "messages") fetchConversations();
   }, [activeTab, user]);
 
   const handleRemoveFavorite = async (propertyId: string) => {
@@ -277,7 +271,11 @@ export default function ProfilePage() {
     setSavingSettings(true);
     setSettingsMessage({ type: '', text: '' });
     try {
-      await api.post("/users/profile", { name: editName, bio: editBio });
+      await api.post("/users/profile", { 
+        firstName: editFirstName, 
+        lastName: editLastName, 
+        bio: editBio 
+      });
       setSettingsMessage({ type: 'success', text: 'changed successful' });
       setIsEditingProfile(false);
       setTimeout(() => setSettingsMessage({ type: '', text: '' }), 3000);
@@ -343,7 +341,7 @@ export default function ProfilePage() {
   const tabs = [
     { key: "favorites" as const, label: t("saved"), icon: Heart, count: favorites.length },
     { key: "my-properties" as const, label: t("my_listings"), icon: Building2, count: myHouses.length },
-    { key: "messages" as const, label: t("chats"), icon: MessageCircle, count: conversations.length },
+    { key: "messages" as const, label: t("chats"), icon: MessageCircle, count: conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0) },
   ];
 
   // ─── Main layout ──────────────────────────────────────────────────────────
@@ -425,7 +423,9 @@ export default function ProfilePage() {
               {/* Name / email / bio / edit form */}
               <div className="flex-1 text-center sm:text-left min-w-0 flex flex-col items-center sm:items-start">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 justify-center sm:justify-start">
-                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{editName || user.name || "User"}</h1>
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+                    {editLastName || user.lastName || ""} {editFirstName || user.firstName || user.name || "User"}
+                  </h1>
                 </div>
                 <p className="text-sm text-gray-500 mt-0.5 truncate">{user.email}</p>
 
@@ -454,18 +454,31 @@ export default function ProfilePage() {
                       </div>
                     )}
                     <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-semibold text-gray-700">{t("display_name")}</label>
-                        <input
-                          type="text"
-                          className="w-full mt-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
-                          value={editName}
-                          onChange={e => setEditName(e.target.value)}
-                          placeholder="Your name"
-                          required
-                        />
-                        <p className="text-xs text-gray-500 mt-1">{t("change_limit")}</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-semibold text-gray-700">{t("last_name") || "Họ"}</label>
+                          <input
+                            type="text"
+                            className="w-full mt-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
+                            value={editLastName}
+                            onChange={e => setEditLastName(e.target.value)}
+                            placeholder="Last name"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-semibold text-gray-700">{t("first_name") || "Tên"}</label>
+                          <input
+                            type="text"
+                            className="w-full mt-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
+                            value={editFirstName}
+                            onChange={e => setEditFirstName(e.target.value)}
+                            placeholder="First name"
+                            required
+                          />
+                        </div>
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">{t("change_limit")}</p>
 
                       <div>
                         <div className="flex justify-between items-center mb-1.5">
@@ -655,48 +668,49 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <div className="space-y-3">
-                    {conversations.map(conversation => {
-                      const latest = conversation.latest;
-                      const query = new URLSearchParams({ adminId: conversation.adminId }).toString();
-                      const isFromAdmin = latest.senderRole === "ADMIN" || latest.senderRole === "SUPER_ADMIN";
-                      const prefix = isFromAdmin ? "" : "You: ";
+                    {conversations.map(conv => {
+                      const latest = conv.lastMessage;
+                      const other = conv.otherUser;
+                      const query = new URLSearchParams({ recipientId: other.id }).toString();
                       const timeStr = new Date(latest.created_at).toLocaleString("vi-VN", {
                         day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
                       });
 
                       return (
                         <Link
-                          key={conversation.adminId}
+                          key={other.id}
                           href={`/chat?${query}`}
                           className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 hover:border-teal-200 hover:shadow-md transition-all duration-200 group"
                         >
                           {/* Avatar */}
                           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-100 to-teal-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                            {conversation.adminAvatar ? (
-                              <img src={conversation.adminAvatar} alt={conversation.adminName} className="w-full h-full object-cover" />
+                            {other.avatarUrl ? (
+                              <img src={other.avatarUrl} alt={other.name} className="w-full h-full object-cover" />
                             ) : (
-                              <UserIcon className="w-6 h-6 text-teal-500" />
+                              <div className="w-full h-full flex items-center justify-center text-teal-600 font-bold bg-teal-50">
+                                {getInitials(other.name)}
+                              </div>
                             )}
                           </div>
 
                           {/* Content */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 mb-0.5">
-                              <p className="text-sm font-bold text-gray-900 truncate">{conversation.adminName}</p>
+                              <p className="text-sm font-bold text-gray-900 truncate">{other.name}</p>
                               <span className="text-xs text-gray-400 flex-shrink-0 flex items-center gap-1">
                                 <Clock className="w-3 h-3" />{timeStr}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-500 truncate">
-                              {prefix}{latest.content}
+                            <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'text-gray-900 font-bold' : 'text-gray-500'}`}>
+                              {latest.senderId === user.id ? "You: " : ""}{latest.content}
                             </p>
                           </div>
 
                           {/* Unread badge + chevron */}
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            {conversation.unread > 0 && (
+                            {conv.unreadCount > 0 && (
                               <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 text-xs font-bold text-white bg-teal-500 rounded-full">
-                                {conversation.unread}
+                                {conv.unreadCount}
                               </span>
                             )}
                             <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-teal-500 transition-colors" />
@@ -741,7 +755,7 @@ export default function ProfilePage() {
             {/* Drawer Links */}
             <div className="flex-1 overflow-y-auto py-2">
               <div className="px-4 space-y-1">
-                <Link href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
+                <Link href="/profile/accounts-center" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
                   <UserCog className="w-5 h-5 text-gray-400" />
                   {t("accounts_center")}
                 </Link>

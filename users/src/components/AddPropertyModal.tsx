@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
-import { X, Loader2, Upload, Image as ImageIcon, Video, Trash2, CheckCircle, XCircle, MapPin } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { X, Loader2, Upload, Image as ImageIcon, Video, Trash2, CheckCircle, XCircle, MapPin, Navigation } from 'lucide-react';
 import { useAuth } from '@/context/useAuth';
 import api from '@/api/axios';
 import dynamic from 'next/dynamic';
@@ -9,6 +9,22 @@ import dynamic from 'next/dynamic';
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+
+// We define a wrapper for useMap that only gets called inside MapContainer
+const MapViewUpdater = ({ center }: { center: [number, number] }) => {
+    // Import useMap inside the component to avoid SSR issues
+    const { useMap: useMapHook } = require('react-leaflet');
+    const map = useMapHook();
+    
+    useEffect(() => {
+        if (center) {
+            map.setView(center, 16);
+        }
+    }, [center, map]);
+    
+    return null;
+};
+
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useLanguage } from '@/context/LanguageContext';
@@ -27,11 +43,19 @@ interface AddPropertyModalProps {
 }
 
 const API_BASE = () => {
-    const env = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const env = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
     if (env) return env.replace(/\/+$/, '');
     if (typeof window !== 'undefined') return `${window.location.protocol}//${window.location.hostname}:3000`;
     return 'http://localhost:3000';
 };
+
+function removeVietnameseTones(str: string) {
+    return str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D");
+}
 
 async function uploadFile(file: File, type: 'image' | 'video'): Promise<string> {
     const formData = new FormData();
@@ -47,16 +71,21 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     const { t } = useLanguage();
     const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [uploadingMedia, setUploadingMedia] = useState(false);
+    const [isGeocoding, setIsGeocoding] = useState(false);
+    
     const [images, setImages] = useState<string[]>([]);   // up to 7 Cloudinary URLs
     const [videos, setVideos] = useState<string[]>([]);   // up to 2 Cloudinary URLs
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    
     const imageInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
+    const markerRef = useRef<any>(null);
 
     const [formData, setFormData] = useState({
         name: '',
         property_type: 'house',
-        address: '',
+        street_address: '',
+        ward: '',
         district: '',
         city: '',
         price: '',
@@ -64,11 +93,67 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
         bedrooms: '',
         description: '',
         contact_phone: '',
-        latitude: 10.762622, // Default HCMC
-        longitude: 106.660172
+        latitude: 21.0285, // Default Hanoi
+        longitude: 105.8542
     });
 
-    const markerRef = useRef<any>(null);
+    const [mapCenter, setMapCenter] = useState<[number, number]>([21.0285, 105.8542]);
+
+    // Handle geocoding with debounce
+    useEffect(() => {
+        if (!isOpen) return;
+        
+        const { street_address, ward, district, city } = formData;
+        if (!street_address && !ward && !district && !city) return;
+
+        const timer = setTimeout(async () => {
+            setIsGeocoding(true);
+            try {
+                const fullAddress = `${street_address}, ${ward}, ${district}, ${city}, Vietnam`;
+                const cleanAddress = removeVietnameseTones(fullAddress);
+                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddress)}&format=json&limit=1`;
+                
+                const response = await fetch(url, {
+                    headers: { 'User-Agent': 'RentalApp/1.0' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        setFormData(prev => ({ ...prev, latitude: lat, longitude: lon }));
+                        setMapCenter([lat, lon]);
+                    }
+                }
+            } catch (error) {
+                console.error('Geocoding error:', error);
+            } finally {
+                setIsGeocoding(false);
+            }
+        }, 800);
+
+        return () => clearTimeout(timer);
+    }, [formData.street_address, formData.ward, formData.district, formData.city, isOpen]);
+
+    const handleUseCurrentLocation = useCallback(() => {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                setFormData(prev => ({ ...prev, latitude, longitude }));
+                setMapCenter([latitude, longitude]);
+            },
+            (error) => {
+                console.error("Error getting location:", error);
+                alert("Unable to retrieve your location");
+            }
+        );
+    }, []);
 
     const handleDragEnd = () => {
         const marker = markerRef.current;
@@ -141,15 +226,18 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
         if (!user) { alert(t('login_to_add')); return; }
         setSubmitState('loading');
         try {
+            const fullAddressString = `${formData.street_address}, ${formData.ward}, ${formData.district}, ${formData.city}`.replace(/^, |, $/g, '');
             const payload: Record<string, any> = {
                 ...formData,
+                address: fullAddressString,
                 price: formData.price ? Number(String(formData.price).replace(/\./g, '')) : null,
                 square: formData.square ? Number(formData.square) : null,
                 bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
-                name: formData.property_type + ' at ' + formData.address,
+                name: formData.property_type.charAt(0).toUpperCase() + formData.property_type.slice(1) + ' at ' + formData.street_address,
             };
             images.forEach((url, i) => { payload[`image_url_${i + 1}`] = url; });
             videos.forEach((url, i) => { payload[`video_url_${i + 1}`] = url; });
+            
             await api.post('/houses', payload);
             setSubmitState('success');
             setTimeout(() => {
@@ -223,30 +311,60 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                         </div>
                     </div>
 
-                    {/* Address */}
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700">{t('address')} <span className="text-red-500">*</span></label>
-                        <input required name="address" value={formData.address} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder={t('address')} />
+                    {/* Ward + Street Address */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-gray-700">{t('ward')} <span className="text-red-500">*</span></label>
+                            <input required name="ward" value={formData.ward} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder={t('ward')} />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-gray-700">{t('street_address')} <span className="text-red-500">*</span></label>
+                            <input required name="street_address" value={formData.street_address} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12 ngo 34 Tran Phu" />
+                        </div>
                     </div>
 
                     {/* Map Pin Picker */}
                     <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700">{t('exact_location')} <span className="text-red-500">*</span></label>
-                        <p className="text-xs text-gray-500 mb-2">{t('drag_pin')}</p>
-                        <div className="h-[200px] w-full rounded-xl overflow-hidden border border-gray-200 z-10">
-                            {typeof window !== 'undefined' && (
-                                <MapContainer center={[formData.latitude, formData.longitude]} zoom={13} style={{ height: '100%', width: '100%' }}>
-                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
-                                    <Marker 
-                                        draggable={true}
-                                        eventHandlers={{ dragend: handleDragEnd }}
-                                        position={[formData.latitude, formData.longitude]}
-                                        ref={markerRef}
-                                        icon={customIcon}
-                                    />
-                                </MapContainer>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-sm font-medium text-gray-700">{t('exact_location')} <span className="text-red-500">*</span></label>
+                            <button 
+                                type="button" 
+                                onClick={handleUseCurrentLocation}
+                                className="flex items-center gap-1.5 text-xs text-blue-600 font-medium hover:text-blue-700 transition-colors"
+                            >
+                                <Navigation size={12} />
+                                {t('use_current_location')}
+                            </button>
+                        </div>
+                        <div className="relative">
+                            <div className="h-[200px] w-full rounded-xl overflow-hidden border border-gray-200 z-10">
+                                {typeof window !== 'undefined' && (
+                                    <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
+                                        <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+                                        <Marker 
+                                            draggable={true}
+                                            eventHandlers={{ dragend: handleDragEnd }}
+                                            position={[formData.latitude, formData.longitude]}
+                                            ref={markerRef}
+                                            icon={customIcon}
+                                        />
+                                        <MapViewUpdater center={mapCenter} />
+                                    </MapContainer>
+                                )}
+                            </div>
+                            {isGeocoding && (
+                                <div className="absolute inset-0 z-[1001] bg-white/40 backdrop-blur-[1px] flex items-center justify-center rounded-xl">
+                                    <div className="bg-white/90 px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 border border-blue-50/50">
+                                        <Loader2 size={14} className="animate-spin text-blue-600" />
+                                        <span className="text-[11px] font-medium text-blue-700 uppercase tracking-tight">{t('geocoding_loading')}</span>
+                                    </div>
+                                </div>
                             )}
                         </div>
+                        <p className="text-[10px] text-gray-400 mt-1.5 flex items-center gap-1">
+                            <MapPin size={10} className="text-gray-300" />
+                            {t('drag_pin')}
+                        </p>
                     </div>
 
                     {/* Price + Area */}

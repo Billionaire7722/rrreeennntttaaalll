@@ -155,7 +155,9 @@ let AuthService = class AuthService {
         const hashedPassword = await bcrypt.hash(registerDto.password, 10);
         const newUser = await this.prisma.user.create({
             data: {
-                name: registerDto.name,
+                firstName: registerDto.firstName,
+                lastName: registerDto.lastName,
+                name: `${registerDto.firstName} ${registerDto.lastName}`.trim(),
                 username: registerDto.username.toLowerCase(),
                 email: registerDto.email.toLowerCase(),
                 phone: registerDto.phone,
@@ -252,6 +254,8 @@ let AuthService = class AuthService {
             username: user.username,
             sub: user.id,
             name: user.name,
+            firstName: user.firstName,
+            lastName: user.lastName,
             role: user.role,
             email: user.email,
             phone: user.phone,
@@ -261,6 +265,8 @@ let AuthService = class AuthService {
             user: {
                 id: user.id,
                 name: user.name,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 username: user.username,
                 email: user.email,
                 phone: user.phone,

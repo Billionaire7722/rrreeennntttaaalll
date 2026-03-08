@@ -32,9 +32,9 @@ This section provides critical context for AI coding assistants working on this 
 
 ### 🔑 Key Concepts & Contexts
 -   **Localization**: Managed via `LanguageContext.tsx` and `useLanguage` hook. Supports 10 dialects with IP-based auto-detection.
--   **Authentication**: Handled by `AuthProvider.tsx` and `useAuth`. Backend uses JWT + Passport.
--   **Geospatial**: Powered by PostGIS. Use `ST_MakeEnvelope` for bounding box searches.
--   **Real-time**: Socket.io for messaging.
+-   **Authentication**: Handled by `AuthProvider.tsx` and `useAuth`. Backend uses JWT + Passport. Token includes `firstName` and `lastName`.
+-   **User Model**: Names are split into `firstName` and `lastName`. The `name` field is auto-generated for compatibility.
+-   **Real-time**: Socket.io for messaging. Private threads are filtered by `senderId` and `receiverId`.
 
 ---
 
@@ -89,7 +89,9 @@ npm run dev
 -   **Onboarding Tour**: Interactive step-by-step guide for first-time visitors.
 -   **Rich Profiles**: Custom banners, bios, and listing management.
 -   **Interactive Map**: Viewport-based property discovery using Leaflet.
--   **Real-time Chat**: Direct messaging between renters and landlords.
+-   **Real-time Chat**: Private messaging with unread indicators, thread history, and mobile-optimized UI.
+-   **Accounts Center**: Centralized management for personal info (First/Last Name, Email) and password security.
+-   **Name Splitting**: Support for separate First and Last Name fields during registration and in user profiles.
 
 ### 🛠️ Admin Dashboard (`/super-admin-dashboard`)
 -   **System Oversight**: Real-time metrics on users and properties.

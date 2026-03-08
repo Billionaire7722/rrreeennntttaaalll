@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
 import { SendMessageDto } from './dto/send-message.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { RolesGuard } from '../security/roles.guard';
 import { Roles } from '../security/roles.decorator';
 import { Role } from '../security/roles.enum';
@@ -30,16 +31,22 @@ export class UsersController {
         return this.usersService.toggleFavorite(req.user.userId, toggleFavoriteDto);
     }
 
-    @Get('messages')
+    @Get('conversations')
     @Roles(Role.USER)
-    getMessages(@Request() req) {
-        return this.usersService.getMessages(req.user.userId);
+    getConversations(@Request() req) {
+        return this.usersService.getConversations(req.user.userId);
     }
 
-    @Post('messages/:adminId/seen')
+    @Get('messages/:otherId')
     @Roles(Role.USER)
-    markViewerConversationSeen(@Request() req, @Param('adminId') adminId: string) {
-        return this.usersService.markViewerConversationSeen(req.user.userId, adminId);
+    getMessageThread(@Request() req, @Param('otherId') otherId: string) {
+        return this.usersService.getMessageThread(req.user.userId, otherId);
+    }
+
+    @Post('messages/:otherId/seen')
+    @Roles(Role.USER)
+    markConversationSeen(@Request() req, @Param('otherId') otherId: string) {
+        return this.usersService.markConversationSeen(req.user.userId, otherId);
     }
 
     @Post('messages')
@@ -89,7 +96,13 @@ export class UsersController {
 
     @Post('profile')
     @Roles(Role.USER)
-    updateProfile(@Request() req, @Body() body: { name?: string; bio?: string }) {
+    updateProfile(@Request() req, @Body() body: { firstName?: string; lastName?: string; bio?: string; email?: string }) {
         return this.usersService.updateProfile(req.user.userId, body);
+    }
+
+    @Post('change-password')
+    @Roles(Role.USER)
+    changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
+        return this.usersService.changePassword(req.user.userId, changePasswordDto);
     }
 }

@@ -169,14 +169,18 @@ export class MessagesGateway
         }
     }
 
-    // Helper method to send message to a specific user
-    async sendMessageToUser(userId: string, message: any) {
+    // Helper method to emit an event to all sockets of a specific user
+    async emitToUser(userId: string, event: string, data: any) {
         const userSocketSet = this.userSockets.get(userId);
         if (userSocketSet) {
             userSocketSet.forEach(socketId => {
-                this.connectedClients.get(socketId)?.emit('new_message', message);
+                this.connectedClients.get(socketId)?.emit(event, data);
             });
         }
+    }
+
+    async sendMessageToUser(userId: string, message: any) {
+        return this.emitToUser(userId, 'new_message', message);
     }
 
     async notifySuperAdmins(message: any) {

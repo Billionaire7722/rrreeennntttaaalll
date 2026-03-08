@@ -73,6 +73,7 @@ export class HousesService {
                     created_at: true,
                     updated_at: true,
                     address: true,
+                    ward: true,
                     district: true,
                     city: true,
                     price: true,
@@ -148,22 +149,22 @@ export class HousesService {
         let finalLon = data.longitude !== undefined ? Number(data.longitude) : undefined;
 
         const normalizedAddress = String(data.address || house.address || '').trim();
+        const normalizedWard = String(data.ward || house.ward || '').trim();
         const normalizedDistrict = String(data.district || house.district || '').trim();
         const normalizedCity = String(data.city || house.city || '').trim();
 
-        if (data.address !== undefined && data.address !== house.address) {
+        if ((data.latitude === undefined || data.longitude === undefined) && 
+            (data.address !== undefined || data.ward !== undefined || data.district !== undefined || data.city !== undefined)) {
+            
             const searchQueries: string[] = [];
+            if (normalizedAddress && normalizedWard && normalizedDistrict && normalizedCity) {
+                searchQueries.push(`${normalizedAddress}, ${normalizedWard}, ${normalizedDistrict}, ${normalizedCity}`);
+            }
             if (normalizedAddress && normalizedDistrict && normalizedCity) {
                 searchQueries.push(`${normalizedAddress}, ${normalizedDistrict}, ${normalizedCity}`);
             }
-            if (normalizedAddress && normalizedCity) {
-                searchQueries.push(`${normalizedAddress}, ${normalizedCity}`);
-            }
-            if (normalizedDistrict && normalizedCity) {
-                searchQueries.push(`${normalizedDistrict}, ${normalizedCity}`);
-            }
+            // ... more specific queries as needed
             if (normalizedCity) searchQueries.push(normalizedCity);
-            if (normalizedAddress) searchQueries.push(normalizedAddress);
 
             const coords = await this.fetchCoordinatesFromAddress(searchQueries);
             if (coords) {
@@ -177,6 +178,7 @@ export class HousesService {
             data: {
                 ...(data.name !== undefined && { name: data.name }),
                 ...(data.address !== undefined && { address: data.address }),
+                ...(data.ward !== undefined && { ward: data.ward }),
                 ...(data.city !== undefined && { city: data.city }),
                 ...(data.district !== undefined && { district: data.district }),
                 ...(data.price !== undefined && { price: Number(data.price) }),
@@ -231,22 +233,19 @@ export class HousesService {
         let finalLon = normalizeNumber(data.longitude);
 
         const normalizedAddress = String(data.address || '').trim();
+        const normalizedWard = String(data.ward || '').trim();
         const normalizedDistrict = String(data.district || '').trim();
         const normalizedCity = String(data.city || '').trim();
 
-        if (data.address) {
+        if (finalLat === null || finalLon === null) {
             const searchQueries: string[] = [];
-            if (normalizedAddress && normalizedDistrict && normalizedCity) {
+            if (normalizedAddress && normalizedWard && normalizedDistrict && normalizedCity) {
+                searchQueries.push(`${normalizedAddress}, ${normalizedWard}, ${normalizedDistrict}, ${normalizedCity}`);
+            } else if (normalizedAddress && normalizedDistrict && normalizedCity) {
                 searchQueries.push(`${normalizedAddress}, ${normalizedDistrict}, ${normalizedCity}`);
             }
-            if (normalizedAddress && normalizedCity) {
-                searchQueries.push(`${normalizedAddress}, ${normalizedCity}`);
-            }
-            if (normalizedDistrict && normalizedCity) {
-                searchQueries.push(`${normalizedDistrict}, ${normalizedCity}`);
-            }
+            
             if (normalizedCity) searchQueries.push(normalizedCity);
-            if (normalizedAddress) searchQueries.push(normalizedAddress);
 
             const coords = await this.fetchCoordinatesFromAddress(searchQueries);
             if (coords) {
@@ -255,15 +254,16 @@ export class HousesService {
             }
         }
 
-        const addressParts = normalizedAddress.split(',').map((part: string) => part.trim()).filter(Boolean);
-        const fallbackCity = normalizedCity || addressParts[addressParts.length - 1] || '';
-        const fallbackDistrict = normalizedDistrict || (addressParts.length >= 2 ? addressParts[addressParts.length - 2] : '');
+        const fallbackCity = normalizedCity || '';
+        const fallbackDistrict = normalizedDistrict || '';
+        const fallbackWard = normalizedWard || '';
 
         const createdHouse = await this.prisma.house.create({
             data: {
                 original_id: data.original_id || Math.random().toString(36).substring(7),
                 name: data.name,
                 address: normalizedAddress,
+                ward: fallbackWard,
                 latitude: finalLat,
                 longitude: finalLon,
                 price: data.price,

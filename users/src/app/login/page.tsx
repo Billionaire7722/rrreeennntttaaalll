@@ -95,12 +95,22 @@ export default function LoginPage() {
         setLoading(true);
         try {
             await login(loginId, password, submittedToken || "dummy_token");
-        } catch (err: unknown) {
-            const axiosError = err as { response?: { data?: { message?: string; error?: string } } };
-            const errorMessage =
-                axiosError.response?.data?.message ||
-                axiosError.response?.data?.error ||
-                t('err_login_failed');
+        } catch (err: any) {
+            let errorMessage = t('err_login_failed');
+            
+            const data = err.response?.data;
+            if (data) {
+                // Check if message is directly in data or inside an 'error' object (from HttpExceptionFilter)
+                const rawMessage = data.message || data.error?.message || data.error;
+                
+                if (typeof rawMessage === 'string') {
+                    errorMessage = rawMessage;
+                } else if (Array.isArray(rawMessage)) {
+                    errorMessage = rawMessage[0];
+                } else if (typeof rawMessage === 'object' && rawMessage !== null) {
+                    errorMessage = rawMessage.message || JSON.stringify(rawMessage);
+                }
+            }
 
             setError(errorMessage);
             setCaptchaToken(null);

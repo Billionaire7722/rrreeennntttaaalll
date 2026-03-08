@@ -18,6 +18,7 @@ const users_service_1 = require("./users.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const toggle_favorite_dto_1 = require("./dto/toggle-favorite.dto");
 const send_message_dto_1 = require("./dto/send-message.dto");
+const change_password_dto_1 = require("./dto/change-password.dto");
 const roles_guard_1 = require("../security/roles.guard");
 const roles_decorator_1 = require("../security/roles.decorator");
 const roles_enum_1 = require("../security/roles.enum");
@@ -35,11 +36,14 @@ let UsersController = class UsersController {
     toggleFavorite(req, toggleFavoriteDto) {
         return this.usersService.toggleFavorite(req.user.userId, toggleFavoriteDto);
     }
-    getMessages(req) {
-        return this.usersService.getMessages(req.user.userId);
+    getConversations(req) {
+        return this.usersService.getConversations(req.user.userId);
     }
-    markViewerConversationSeen(req, adminId) {
-        return this.usersService.markViewerConversationSeen(req.user.userId, adminId);
+    getMessageThread(req, otherId) {
+        return this.usersService.getMessageThread(req.user.userId, otherId);
+    }
+    markConversationSeen(req, otherId) {
+        return this.usersService.markConversationSeen(req.user.userId, otherId);
     }
     sendMessage(req, sendMessageDto) {
         return this.usersService.sendMessage(req.user.userId, sendMessageDto);
@@ -64,6 +68,9 @@ let UsersController = class UsersController {
     }
     updateProfile(req, body) {
         return this.usersService.updateProfile(req.user.userId, body);
+    }
+    changePassword(req, changePasswordDto) {
+        return this.usersService.changePassword(req.user.userId, changePasswordDto);
     }
 };
 exports.UsersController = UsersController;
@@ -93,22 +100,31 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "toggleFavorite", null);
 __decorate([
-    (0, common_1.Get)('messages'),
+    (0, common_1.Get)('conversations'),
     (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], UsersController.prototype, "getMessages", null);
+], UsersController.prototype, "getConversations", null);
 __decorate([
-    (0, common_1.Post)('messages/:adminId/seen'),
+    (0, common_1.Get)('messages/:otherId'),
     (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Param)('adminId')),
+    __param(1, (0, common_1.Param)('otherId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
-], UsersController.prototype, "markViewerConversationSeen", null);
+], UsersController.prototype, "getMessageThread", null);
+__decorate([
+    (0, common_1.Post)('messages/:otherId/seen'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('otherId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "markConversationSeen", null);
 __decorate([
     (0, common_1.Post)('messages'),
     (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
@@ -181,6 +197,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.Post)('change-password'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, change_password_dto_1.ChangePasswordDto]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "changePassword", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

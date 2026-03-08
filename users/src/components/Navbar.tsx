@@ -35,7 +35,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
             {/* Left: User Greeting */}
             <div className="flex-1 flex">
                 <span className="text-sm font-medium text-gray-800 truncate max-w-[80px] sm:max-w-[120px]">
-                    {t("hello")}, {user ? user.name || t("guest") : t("guest")}
+                    {t("hello")}, {user ? user.firstName || user.name || t("guest") : t("guest")}
                 </span>
             </div>
 

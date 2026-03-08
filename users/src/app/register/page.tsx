@@ -11,7 +11,8 @@ import { User, Mail, Lock, Phone } from 'lucide-react';
 import Captcha from '@/components/Captcha';
 
 interface FormErrors {
-    name?: string;
+    firstName?: string;
+    lastName?: string;
     username?: string;
     email?: string;
     phone?: string;
@@ -34,7 +35,8 @@ export default function RegisterPage() {
     const [formData, setFormData] = useState({
         username: '',
         email: '',
-        name: '',
+        firstName: '',
+        lastName: '',
         phone: '',
         password: '',
         confirmPassword: '',
@@ -55,8 +57,11 @@ export default function RegisterPage() {
 
     const validateField = (name: string, value: string): string | undefined => {
         switch (name) {
-            case 'name':
-                if (!value.trim()) return t('err_enter_full_name');
+            case 'firstName':
+                if (!value.trim()) return t('err_enter_first_name') || 'Vui lòng nhập Tên';
+                break;
+            case 'lastName':
+                if (!value.trim()) return t('err_enter_last_name') || 'Vui lòng nhập Họ';
                 break;
             case 'username':
                 if (!value.trim()) return t('err_enter_username');
@@ -71,7 +76,6 @@ export default function RegisterPage() {
                 break;
             case 'password':
                 if (!value) return t('err_enter_password');
-                // if (!isPasswordValid) return 'Password is not strong enough';
                 break;
             case 'confirmPassword':
                 if (!value) return t('err_confirm_password');
@@ -123,7 +127,8 @@ export default function RegisterPage() {
 
         setErrors(newErrors);
         setTouched({
-            name: true,
+            firstName: true,
+            lastName: true,
             username: true,
             email: true,
             phone: true,
@@ -139,24 +144,35 @@ export default function RegisterPage() {
             await register({
                 username: formData.username,
                 email: formData.email,
-                name: formData.name,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
                 phone: formData.phone,
                 password: formData.password,
                 confirmPassword: formData.confirmPassword,
                 captchaToken: submittedToken,
             });
-        } catch (err: unknown) {
-            const axiosError = err as { response?: { data?: { message?: string; error?: string } } };
-            const errorMessage =
-                axiosError.response?.data?.message ||
-                axiosError.response?.data?.error ||
-                t('err_login_failed'); // Reusing as generic failed registration for now or add specific one if preferred
+        } catch (err: any) {
+            let errorMessage = t('err_login_failed');
+            
+            const data = err.response?.data;
+            if (data) {
+                const rawMessage = data.message || data.error?.message || data.error;
+                
+                if (typeof rawMessage === 'string') {
+                    errorMessage = rawMessage;
+                } else if (Array.isArray(rawMessage)) {
+                    errorMessage = rawMessage.join(', ');
+                } else if (typeof rawMessage === 'object' && rawMessage !== null) {
+                    errorMessage = rawMessage.message || JSON.stringify(rawMessage);
+                }
+            }
 
-            if (errorMessage.toLowerCase().includes('email')) {
+            const lowerMsg = errorMessage.toLowerCase();
+            if (lowerMsg.includes('email')) {
                 setErrors((prev) => ({ ...prev, email: errorMessage }));
-            } else if (errorMessage.toLowerCase().includes('username')) {
+            } else if (lowerMsg.includes('username')) {
                 setErrors((prev) => ({ ...prev, username: errorMessage }));
-            } else if (errorMessage.toLowerCase().includes('password')) {
+            } else if (lowerMsg.includes('password')) {
                 setErrors((prev) => ({ ...prev, password: errorMessage }));
             } else {
                 setError(errorMessage);
@@ -291,23 +307,47 @@ export default function RegisterPage() {
                         )}
 
                         <div className="space-y-4">
-                            <div className="relative">
-                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                                    <User className="h-5 w-5 text-gray-400" />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <div className="relative">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                            <User className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                        <input
+                                            id="lastName"
+                                            name="lastName"
+                                            type="text"
+                                            required
+                                            value={formData.lastName}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            className={getInputClassName('lastName')}
+                                            placeholder={t('last_name_placeholder') || "Họ"}
+                                        />
+                                    </div>
+                                    {errors.lastName && touched.lastName && <p className="text-[10px] text-red-500">{errors.lastName}</p>}
                                 </div>
-                                <input
-                                    id="name"
-                                    name="name"
-                                    type="text"
-                                    required
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    className={getInputClassName('name')}
-                                    placeholder={t('full_name_placeholder')}
-                                />
+
+                                <div className="space-y-1">
+                                    <div className="relative">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                            <User className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                        <input
+                                            id="firstName"
+                                            name="firstName"
+                                            type="text"
+                                            required
+                                            value={formData.firstName}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            className={getInputClassName('firstName')}
+                                            placeholder={t('first_name_placeholder') || "Tên"}
+                                        />
+                                    </div>
+                                    {errors.firstName && touched.firstName && <p className="text-[10px] text-red-500">{errors.firstName}</p>}
+                                </div>
                             </div>
-                            {errors.name && touched.name && <p className="text-xs text-red-500">{errors.name}</p>}
 
                             <div className="relative">
                                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">

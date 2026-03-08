@@ -91,6 +91,7 @@ export declare class AdminService {
         original_id: string;
         property_type: string | null;
         address: string;
+        ward: string | null;
         district: string;
         city: string;
         latitude: number | null;

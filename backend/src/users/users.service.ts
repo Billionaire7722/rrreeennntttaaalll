@@ -1,9 +1,11 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
 import { SendMessageDto } from './dto/send-message.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { Role } from '../security/roles.enum';
 import { MessagesGateway } from '../messages/messages.gateway';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -59,8 +61,28 @@ export class UsersService {
         }
     }
 
-    async getMessages(userId: string) {
+    async getMessageThread(userId: string, otherId: string) {
         return this.prisma.message.findMany({
+            where: {
+                OR: [
+                    { userId: userId, receiverId: otherId },
+                    { userId: otherId, receiverId: userId }
+                ]
+            },
+            orderBy: { created_at: 'asc' },
+            include: {
+                user: {
+                    select: { id: true, name: true, avatarUrl: true }
+                },
+                receiver: {
+                    select: { id: true, name: true, avatarUrl: true }
+                }
+            }
+        });
+    }
+
+    async getConversations(userId: string) {
+        const messages = await this.prisma.message.findMany({
             where: {
                 OR: [
                     { userId: userId },
@@ -69,24 +91,36 @@ export class UsersService {
             },
             orderBy: { created_at: 'desc' },
             include: {
-                receiver: {
-                    select: {
-                        id: true,
-                        name: true,
-                        username: true,
-                        avatarUrl: true,
-                    },
-                },
                 user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        username: true,
-                        avatarUrl: true,
-                    },
+                    select: { id: true, name: true, avatarUrl: true }
+                },
+                receiver: {
+                    select: { id: true, name: true, avatarUrl: true }
                 }
-            },
+            }
         });
+
+        const conversationsMap = new Map<string, any>();
+
+        for (const msg of messages) {
+            const otherUser = msg.userId === userId ? msg.receiver : msg.user;
+            if (!otherUser) continue;
+
+            if (!conversationsMap.has(otherUser.id)) {
+                conversationsMap.set(otherUser.id, {
+                    otherUser,
+                    lastMessage: msg,
+                    unreadCount: 0
+                });
+            }
+
+            const conv = conversationsMap.get(otherUser.id);
+            if (msg.receiverId === userId && !msg.seen_at) {
+                conv.unreadCount++;
+            }
+        }
+
+        return Array.from(conversationsMap.values());
     }
 
     async sendMessage(userId: string, sendMessageDto: SendMessageDto) {
@@ -113,12 +147,21 @@ export class UsersService {
             }
         });
 
+        const senderInfo = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true, name: true, avatarUrl: true }
+        });
+
         const realtimePayload = {
             ...message,
+            user: senderInfo,
             recipientId: receiverId,
             houseId: sendMessageDto.houseId || null,
             houseTitle: sendMessageDto.houseTitle || null,
         };
+
+        // Notify sender (for multi-tab sync and local update)
+        await this.messagesGateway.emitToUser(userId, 'message_sent', realtimePayload);
 
         if (receiverId) {
             await this.messagesGateway.sendMessageToUser(receiverId, realtimePayload);
@@ -189,22 +232,21 @@ export class UsersService {
             },
         });
 
+        await this.messagesGateway.emitToUser(adminId, 'message_sent', message);
         await this.messagesGateway.sendMessageToUser(viewerId, message);
 
         return message;
     }
 
-    async markViewerConversationSeen(viewerId: string, adminId: string) {
-        // Simplified
+    async markConversationSeen(userId: string, otherId: string) {
         const result = await this.prisma.message.updateMany({
             where: {
-                userId: viewerId,
-                receiverId: adminId,
+                userId: otherId,
+                receiverId: userId,
                 seen_at: null,
             },
             data: {
                 seen_at: new Date(),
-                seen_by_role: Role.USER,
             },
         });
 
@@ -297,7 +339,7 @@ export class UsersService {
         return user;
     }
 
-    async updateProfile(userId: string, data: { name?: string; bio?: string }) {
+    async updateProfile(userId: string, data: { firstName?: string; lastName?: string; bio?: string; email?: string }) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new NotFoundException('User not found');
 
@@ -307,12 +349,28 @@ export class UsersService {
             updateData.bio = data.bio;
         }
 
-        if (data.name !== undefined && data.name !== user.name) {
+        if (data.email !== undefined && data.email.toLowerCase() !== user.email.toLowerCase()) {
+            const existing = await this.prisma.user.findUnique({
+                where: { email: data.email.toLowerCase() }
+            });
+            if (existing) {
+                throw new ConflictException('Email is already in use');
+            }
+            updateData.email = data.email.toLowerCase();
+        }
+
+        const newFirstName = data.firstName !== undefined ? data.firstName : user.firstName;
+        const newLastName = data.lastName !== undefined ? data.lastName : user.lastName;
+        const newFullName = `${newFirstName || ''} ${newLastName || ''}`.trim();
+
+        if (newFullName !== user.name) {
             const ONE_MONTH_IN_MS = 30 * 24 * 60 * 60 * 1000;
             if (user.name_updated_at && (Date.now() - user.name_updated_at.getTime() < ONE_MONTH_IN_MS)) {
                 throw new ForbiddenException('You can only change your name once every 30 days');
             }
-            updateData.name = data.name;
+            updateData.firstName = newFirstName;
+            updateData.lastName = newLastName;
+            updateData.name = newFullName;
             updateData.name_updated_at = new Date();
         }
 
@@ -328,5 +386,27 @@ export class UsersService {
 
         delete (updatedUser as any).password;
         return updatedUser;
+    }
+
+    async changePassword(userId: string, data: ChangePasswordDto) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        const isMatch = await bcrypt.compare(data.oldPassword, user.password);
+        if (!isMatch) {
+            throw new UnauthorizedException('Incorrect old password');
+        }
+
+        if (data.newPassword !== data.confirmPassword) {
+            throw new ConflictException('Passwords do not match');
+        }
+
+        const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword }
+        });
+
+        return { message: 'Password changed successfully' };
     }
 }

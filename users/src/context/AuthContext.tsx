@@ -11,6 +11,8 @@ interface User {
     email: string;
     phone: string;
     name: string;
+    firstName?: string;
+    lastName?: string;
     role: string;
 }
 
@@ -26,7 +28,8 @@ interface AuthContextType {
 interface RegisterPayload {
     username: string;
     email: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     phone: string;
     password: string;
     confirmPassword: string;
@@ -54,6 +57,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         email: decoded.email,
                         phone: decoded.phone,
                         name: decoded.name,
+                        firstName: decoded.firstName,
+                        lastName: decoded.lastName,
                         role: decoded.role,
                     });
                 } else {
@@ -116,6 +121,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email: decoded.email,
             phone: decoded.phone,
             name: decoded.name,
+            firstName: decoded.firstName,
+            lastName: decoded.lastName,
             role: decoded.role,
         });
         router.push('/');
@@ -137,6 +144,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email: decoded.email,
             phone: decoded.phone,
             name: decoded.name,
+            firstName: decoded.firstName,
+            lastName: decoded.lastName,
             role: decoded.role,
         });
         router.push('/');
