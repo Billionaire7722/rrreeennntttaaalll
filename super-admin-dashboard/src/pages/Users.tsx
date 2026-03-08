@@ -12,6 +12,10 @@ interface User {
     role: string;
     status: string;
     created_at: string;
+    avatarUrl?: string | null;
+    coverUrl?: string | null;
+    bio?: string | null;
+    _count?: { ownedHouses?: number };
 }
 
 export const Users: React.FC = () => {
@@ -158,8 +162,10 @@ export const Users: React.FC = () => {
                 <table className="data-table">
                     <thead>
                         <tr>
-                            <th>Name</th>
+                            <th>User</th>
                             <th>Contact</th>
+                            <th>Bio</th>
+                            <th>Listings</th>
                             <th>Role</th>
                             <th>Status</th>
                             <th>Joined</th>
@@ -168,19 +174,37 @@ export const Users: React.FC = () => {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={6} style={{ textAlign: 'center' }}>Loading...</td></tr>
+                            <tr><td colSpan={8} style={{ textAlign: 'center' }}>Loading...</td></tr>
                         ) : users.length === 0 ? (
-                            <tr><td colSpan={6} style={{ textAlign: 'center' }}>No users found.</td></tr>
+                            <tr><td colSpan={8} style={{ textAlign: 'center' }}>No users found.</td></tr>
                         ) : (
                             users.map(u => (
                                 <tr key={u.id}>
                                     <td>
-                                        <div style={{ fontWeight: 600 }}>{u.name}</div>
-                                        <div style={{ fontSize: '0.8rem', color: '#666' }}>@{u.username}</div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            {u.avatarUrl
+                                                ? <img src={u.avatarUrl} alt={u.name} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0', flexShrink: 0 }} />
+                                                : <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#0284c7', fontSize: '0.85rem', flexShrink: 0 }}>
+                                                    {(u.name || 'U')[0].toUpperCase()}
+                                                  </div>
+                                            }
+                                            <div>
+                                                <div style={{ fontWeight: 600 }}>{u.name}</div>
+                                                <div style={{ fontSize: '0.8rem', color: '#666' }}>@{u.username}</div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td>
                                         <div>{u.email}</div>
                                         {u.phone && <div style={{ fontSize: '0.8rem', color: '#666' }}>{u.phone}</div>}
+                                    </td>
+                                    <td>
+                                        <div style={{ maxWidth: 160, fontSize: '0.8rem', color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={u.bio || ''}>
+                                            {u.bio || <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>No bio</span>}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span style={{ fontWeight: 700, color: '#0ea5e9', fontSize: '1rem' }}>{u._count?.ownedHouses ?? 0}</span>
                                     </td>
                                     <td><span className={`badge badge-user`}>{u.role}</span></td>
                                     <td>

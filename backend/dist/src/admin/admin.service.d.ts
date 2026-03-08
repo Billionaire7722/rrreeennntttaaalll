@@ -12,10 +12,16 @@ export declare class AdminService {
             email: string;
             name: string;
             phone: string | null;
+            avatarUrl: string | null;
+            coverUrl: string | null;
             role: import("@prisma/client").$Enums.Role;
             status: string;
+            bio: string | null;
             deleted_at: Date | null;
             created_at: Date;
+            _count: {
+                ownedHouses: number;
+            };
         }[];
         total: number;
         skip: number;

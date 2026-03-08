@@ -86,10 +86,13 @@ model User {
   email      String     @unique
   phone        String?
   password     String
-  avatarUrl    String?
+  avatarUrl    String?    @map("avatar_url")
+  coverUrl     String?    @map("cover_url")
   role         Role       @default(USER)
   status       String     @default("ACTIVE")
   locked_until DateTime?
+  name_updated_at DateTime?
+  bio          String?
   deleted_at   DateTime?
   created_at   DateTime   @default(now())
   updated_at   DateTime   @updatedAt

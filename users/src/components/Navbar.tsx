@@ -41,7 +41,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
 
             {/* Center: Search Bar & Filter */}
             <div className="flex flex-row items-center gap-2 w-[200px] sm:w-[280px] md:w-[360px]">
-                <div className="flex-1 flex flex-row items-center bg-gray-100 rounded-lg px-2.5 h-9 min-w-0">
+                <div id="tour-search" className="flex-1 flex flex-row items-center bg-gray-100 rounded-lg px-2.5 h-9 min-w-0">
                     <Search size={16} className="text-gray-500 flex-shrink-0" />
                     <input
                         className="flex-1 ml-2 text-sm text-gray-800 bg-transparent outline-none placeholder-gray-500 min-w-0"
@@ -51,6 +51,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
                     />
                 </div>
                 <button
+                    id="tour-filter"
                     onClick={() => setIsFilterOpen(true)}
                     className="bg-teal-600 w-9 h-9 rounded-lg flex justify-center items-center flex-shrink-0 hover:bg-teal-700 transition"
                 >

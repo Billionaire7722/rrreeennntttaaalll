@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import { useRouter } from 'next/navigation';
 import { Bed, Square, MapPin, Locate } from 'lucide-react';
 import { useAuth } from '@/context/useAuth';
+import { useLanguage } from '@/context/LanguageContext';
 
 // Dynamic SVG Icons for Available (Green) and Rented (Red)
 const getMarkerIcon = (status?: string | null) => {
@@ -94,6 +95,7 @@ function MapEvents({ onBoundsChange, setUserLocation }: { onBoundsChange?: (boun
 export default function InteractiveMap({ properties, center = [21.0285, 105.8542], zoom = 12, onBoundsChange }: MapProps) {
     const router = useRouter();
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
@@ -123,7 +125,7 @@ export default function InteractiveMap({ properties, center = [21.0285, 105.8542
 
                     const isAvailable = property.status?.toLowerCase() === 'available';
                     const statusColor = isAvailable ? 'bg-emerald-500' : 'bg-red-500';
-                    const statusText = isAvailable ? 'Cho thuê' : 'Đã thuê';
+                    const statusText = isAvailable ? t('available') : t('rented');
 
                     // Safely extract multiple images whether it came from raw backend format or mapped frontend format
                     const images = (property.images?.length ? property.images : [
@@ -164,7 +166,7 @@ export default function InteractiveMap({ properties, center = [21.0285, 105.8542
                                     <div className="p-3">
                                         {/* Price and Title */}
                                         <h4 className="font-bold text-[15px] truncate text-gray-900 leading-tight mb-1">{property.title}</h4>
-                                        <p className="text-blue-600 font-extrabold text-sm mb-2">{property.price?.toLocaleString()} VND/tháng</p>
+                                        <p className="text-blue-600 font-extrabold text-sm mb-2">{property.price?.toLocaleString('vi-VN')} VND{t('month_abbr')}</p>
 
                                         {/* Tag Metrics */}
                                         <div className="flex flex-row items-center gap-3 mb-2">
@@ -174,7 +176,7 @@ export default function InteractiveMap({ properties, center = [21.0285, 105.8542
                                             </div>
                                             <div className="flex items-center text-xs font-semibold text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
                                                 <Bed size={12} className="mr-1.5 text-gray-400" />
-                                                {property.bedrooms || 1} PN
+                                                {property.bedrooms || 1} {t('bedrooms')}
                                             </div>
                                         </div>
 
@@ -196,7 +198,7 @@ export default function InteractiveMap({ properties, center = [21.0285, 105.8542
                                                 router.push(`/properties/${property.id}`);
                                             }}
                                         >
-                                            Xem chi tiết &rarr;
+                                            {t('view_details')}
                                         </button>
                                     </div>
                                 </div>

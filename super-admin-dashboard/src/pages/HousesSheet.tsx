@@ -11,6 +11,7 @@ type PostedByAdmin = {
 type HouseRow = {
     id: string;
     name: string;
+    property_type?: string | null;
     created_at: string;
     updated_at?: string;
     status?: string | null;
@@ -23,6 +24,7 @@ type HouseRow = {
     description?: string | null;
     contact_phone?: string | null;
     postedByAdmins?: PostedByAdmin[];
+    user?: { id: string; name: string; avatarUrl?: string | null } | null;
 };
 
 const normalizeNumber = (value: string) => {
@@ -144,15 +146,15 @@ export const HousesSheet: React.FC = () => {
                 <table className="data-table" style={{ minWidth: 1400 }}>
                     <thead>
                         <tr>
-                            <th>Name</th>
+                            <th>Type</th>
                             <th>Owner</th>
                             <th>Created</th>
                             <th>Status</th>
                             <th>Address</th>
                             <th>City</th>
                             <th>District</th>
-                            <th>Price</th>
-                            <th>Area</th>
+                            <th>Price (VND)</th>
+                            <th>Area (m²)</th>
                             <th>Bedrooms</th>
                             <th>Phone</th>
                             <th>Description</th>
@@ -170,8 +172,23 @@ export const HousesSheet: React.FC = () => {
                                 const dirty = hasChanges[house.id];
                                 return (
                                     <tr key={house.id}>
-                                        <td><input className="input-field" value={draft.name || ''} onChange={(e) => updateDraft(house.id, 'name', e.target.value)} /></td>
-                                        <td>{(house.postedByAdmins || []).map((o) => o.name).join(', ') || 'Unknown'}</td>
+                                        <td>
+                                            <div style={{ fontWeight: 600, textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
+                                                {house.property_type ||
+                                                 (house.name?.indexOf(' at ') > 0 ? house.name.slice(0, house.name.indexOf(' at ')) : house.name)}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                {house.user?.avatarUrl
+                                                    ? <img src={house.user.avatarUrl} alt={house.user.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0' }} />
+                                                    : <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#0284c7', fontSize: '0.75rem' }}>
+                                                        {(house.user?.name || '?')[0].toUpperCase()}
+                                                      </div>
+                                                }
+                                                <span style={{ fontSize: '0.85rem' }}>{house.user?.name || (house.postedByAdmins || []).map((o) => o.name).join(', ') || 'Unknown'}</span>
+                                            </div>
+                                        </td>
                                         <td>{new Date(house.created_at).toLocaleString()}</td>
                                         <td>
                                             <select className="input-field" value={draft.status || 'available'} onChange={(e) => updateDraft(house.id, 'status', e.target.value)}>

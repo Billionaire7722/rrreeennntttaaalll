@@ -9,7 +9,9 @@ import { useAuth } from '@/context/useAuth';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { FilterOptions } from '@/components/FilterModal';
+import { useLanguage } from '@/context/LanguageContext';
 import { Info, X } from 'lucide-react';
+import OnboardingTour from '@/components/OnboardingTour';
 
 const InteractiveMap = loadDynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -34,7 +36,8 @@ const normalizeLocationName = (str: string) =>
   removeVietnameseTones(str).replace(/^(thanh pho|tinh|quan|huyen|thi xa|phuong|xa)\s+/, '');
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [properties, setProperties] = useState<any[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -257,9 +260,10 @@ export default function HomePage() {
 
   return (
     <div className="w-full h-[calc(100vh-60px)] relative bg-gray-100 flex flex-col">
-      <Navbar onFilterChange={setFilters} />
+        <OnboardingTour userId={user?.id} authLoading={loading} />
+        <Navbar onFilterChange={setFilters} />
 
-      <div className="flex-1 relative">
+      <div id="tour-map" className="flex-1 relative">
         <InteractiveMap
           properties={filteredProperties}
           onBoundsChange={() => { }}
@@ -268,14 +272,14 @@ export default function HomePage() {
         <div className="absolute top-4 left-4 sm:left-[60px] z-[40] flex gap-2">
           <div className="bg-white/95 px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 border border-gray-100">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-            <span className="text-xs font-semibold text-gray-800">Cho thuê</span>
+            <span className="text-xs font-semibold text-gray-800">{t('available')}</span>
           </div>
           <div className="bg-white/95 px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 border border-gray-100">
             <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-            <span className="text-xs font-semibold text-gray-800">Đã thuê</span>
+            <span className="text-xs font-semibold text-gray-800">{t('rented')}</span>
           </div>
           <div className="bg-blue-600 px-3 py-1.5 rounded-full shadow-sm flex items-center border border-blue-500">
-            <span className="text-xs font-bold text-white">{filteredProperties.length} nhà</span>
+            <span className="text-xs font-bold text-white">{filteredProperties.length} {t('houses')}</span>
           </div>
         </div>
 

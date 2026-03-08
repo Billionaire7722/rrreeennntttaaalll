@@ -2,19 +2,17 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/api/axios';
-import { ChevronLeft, MapPin, BedDouble, Bath, Share2, Heart, X, Square } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, BedDouble, Bath, Share2, Heart, X, Square } from 'lucide-react';
 import { useAuth } from '@/context/useAuth';
 import { useLanguage } from '@/context/LanguageContext';
+import Link from 'next/link';
 
 
-function formatPrice(price: number, t: (key: string) => string): string {
-    if (price >= 1000000) {
-        const millions = price / 1000000;
-        return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)} ${t('million')}`;
-    }
+function formatPrice(price: number): string {
+    if (!price) return '0';
     return price.toLocaleString('vi-VN');
 }
 
@@ -42,11 +40,13 @@ export default function PropertyDetailsPage() {
     // Carousel State
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const carouselRef = useRef<HTMLDivElement>(null);
+    const touchStartX = useRef<number | null>(null);
 
     // Lightbox State
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [fullScreenIndex, setFullScreenIndex] = useState(0);
     const fullscreenCarouselRef = useRef<HTMLDivElement>(null);
+    const fsTouch = useRef<number | null>(null);
 
     useEffect(() => {
         if (!user) {
@@ -60,13 +60,12 @@ export default function PropertyDetailsPage() {
                 const data = res.data;
                 setProperty(data);
 
-                // Safely extract multiple images whether it came from backend format
-                const rawImgs = ([
-                    data.image_url_1,
-                    data.image_url_2,
-                    data.image_url_3,
-                    data.image_url
-                ]).filter(Boolean) as string[];
+                // Extract all 7 possible image URLs
+                const rawImgs = [
+                    data.image_url_1, data.image_url_2, data.image_url_3,
+                    data.image_url_4, data.image_url_5, data.image_url_6,
+                    data.image_url_7, data.image_url
+                ].filter(Boolean) as string[];
                 setImages(rawImgs.length > 0 ? rawImgs : ['/images/defaultimage.jpg']);
 
                 if (user) {
@@ -97,11 +96,31 @@ export default function PropertyDetailsPage() {
         }
     };
 
+    // Scroll the main carousel to a specific index
+    const scrollToIndex = useCallback((idx: number) => {
+        if (!carouselRef.current) return;
+        const clamped = Math.max(0, Math.min(idx, images.length - 1));
+        carouselRef.current.scrollTo({ left: clamped * carouselRef.current.clientWidth, behavior: 'smooth' });
+        setActiveImageIndex(clamped);
+    }, [images.length]);
+
+    const goNext = (e: React.MouseEvent) => { e.stopPropagation(); scrollToIndex(activeImageIndex + 1); };
+    const goPrev = (e: React.MouseEvent) => { e.stopPropagation(); scrollToIndex(activeImageIndex - 1); };
+
     // Handle Scroll for standard Carousel
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         if (!carouselRef.current) return;
         const index = Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth);
         setActiveImageIndex(index);
+    };
+
+    // Touch swipe for main carousel
+    const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+    const onTouchEnd = (e: React.TouchEvent) => {
+        if (touchStartX.current === null) return;
+        const diff = touchStartX.current - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 40) scrollToIndex(activeImageIndex + (diff > 0 ? 1 : -1));
+        touchStartX.current = null;
     };
 
     // Handle Scroll for Lightbox Carousel  
@@ -169,60 +188,105 @@ export default function PropertyDetailsPage() {
 
     return (
         <div className="flex flex-col min-h-[calc(100vh-60px)] bg-white pb-[90px]">
-            {/* Base Image Container perfectly matching React Native layout */}
-            <div className="relative w-full h-[280px]">
+            {/* ── Image Swiper ───────────────────────────────────────────── */}
+            <div className="relative w-full h-[420px] overflow-hidden group">
+                {/* Scrollable strip */}
                 <div
                     ref={carouselRef}
                     onScroll={handleScroll}
-                    className="flex w-full h-[280px] overflow-x-auto snap-x snap-mandatory hide-scrollbar"
+                    onTouchStart={onTouchStart}
+                    onTouchEnd={onTouchEnd}
+                    className="flex w-full h-full overflow-x-auto snap-x snap-mandatory"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                     {images.map((img, idx) => (
-                        <div key={idx} onClick={() => openFullScreen(idx)} className="w-full h-[280px] flex-shrink-0 snap-center relative cursor-pointer">
-                            <img src={img} alt={`Property ${idx}`} className="w-full h-full object-cover" />
+                        <div
+                            key={idx}
+                            onClick={() => openFullScreen(idx)}
+                            className="w-full h-full flex-shrink-0 snap-center cursor-pointer"
+                        >
+                            <img src={img} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" draggable={false} />
                         </div>
                     ))}
                 </div>
 
-                {/* Overlaid Header Actions (Back Button + Social/Heart) */}
-                <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10 pointer-events-none">
-                    <button onClick={(e) => { e.stopPropagation(); router.back() }} className="pointer-events-auto shadow-md w-10 h-10 bg-white/90 rounded-full flex justify-center items-center hover:bg-white transition-colors">
+                {/* Dark gradient top + bottom */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40 pointer-events-none" />
+
+                {/* Back / Share / Heart — top bar */}
+                <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+                    <button onClick={(e) => { e.stopPropagation(); router.back(); }} className="shadow-md w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex justify-center items-center hover:bg-white transition-colors">
                         <ChevronLeft size={24} className="text-gray-800 pr-0.5" />
                     </button>
-                    <div className="flex gap-3 pointer-events-auto">
-                        <button className="shadow-md w-10 h-10 bg-white/90 rounded-full flex justify-center items-center hover:bg-white transition-colors">
+                    <div className="flex gap-3">
+                        <button className="shadow-md w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex justify-center items-center hover:bg-white transition-colors">
                             <Share2 size={20} className="text-gray-800" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); handleToggleFavorite(); }} className="shadow-md w-10 h-10 bg-white/90 rounded-full flex justify-center items-center hover:bg-white transition-colors">
+                        <button onClick={(e) => { e.stopPropagation(); handleToggleFavorite(); }} className="shadow-md w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex justify-center items-center hover:bg-white transition-colors">
                             <Heart size={20} className={isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-800'} />
                         </button>
                     </div>
                 </div>
 
-                {/* Overlaid Status Badge */}
-                <div className={`absolute bottom-5 left-4 px-3 py-1.5 rounded-lg shadow-sm text-white text-xs font-bold tracking-wide z-10 ${statusColor}`}>
-                    {statusLabel}
-                </div>
-
-                {/* Overlaid Pagination Dots */}
-                {images.length > 1 && (
-                    <div className="absolute bottom-5 right-4 flex gap-1.5 bg-black/30 px-2.5 py-1.5 rounded-full z-10">
-                        {images.map((_, idx) => (
-                            <div key={idx} className={`h-1.5 rounded-full transition-all ${idx === activeImageIndex ? 'w-3.5 bg-white' : 'w-1.5 bg-white/50'}`} />
-                        ))}
-                    </div>
+                {/* Left arrow */}
+                {images.length > 1 && activeImageIndex > 0 && (
+                    <button
+                        onClick={goPrev}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-black/40 hover:bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100 active:opacity-100"
+                    >
+                        <ChevronLeft size={22} />
+                    </button>
                 )}
+
+                {/* Right arrow */}
+                {images.length > 1 && activeImageIndex < images.length - 1 && (
+                    <button
+                        onClick={goNext}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-black/40 hover:bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100 active:opacity-100"
+                    >
+                        <ChevronRight size={22} />
+                    </button>
+                )}
+
+                {/* Bottom bar: status badge + dots + counter */}
+                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10">
+                    <span className={`px-3 py-1.5 rounded-lg shadow-sm text-white text-xs font-bold tracking-wide ${statusColor}`}>
+                        {statusLabel}
+                    </span>
+
+                    {images.length > 1 && (
+                        <div className="flex items-center gap-3">
+                            {/* Dots */}
+                            <div className="flex gap-1.5">
+                                {images.map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={(e) => { e.stopPropagation(); scrollToIndex(idx); }}
+                                        className={`h-2 rounded-full transition-all duration-200 ${
+                                            idx === activeImageIndex ? 'w-5 bg-white' : 'w-2 bg-white/50 hover:bg-white/75'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                            {/* Counter */}
+                            <span className="text-xs text-white/90 font-semibold bg-black/30 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                                {activeImageIndex + 1}/{images.length}
+                            </span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Content Body Container */}
             <div className="p-5">
                 {/* Price Row */}
                 <div className="flex flex-row items-baseline mb-2 text-blue-600">
-                    <span className="text-[26px] font-[800]">{formatPrice(property.price, t as any)} </span>
-                    <span className="text-sm font-medium text-gray-500 ml-1">/ {t('vnd_per_month').split('/')[1]?.trim() || 'tháng'}</span>
+                    <span className="text-[26px] font-[800]">{formatPrice(property.price)} VND</span>
+                    <span className="text-sm font-medium text-gray-500 ml-1">{t('month_abbr')}</span>
                 </div>
 
-                {/* Title */}
-                <h1 className="text-[22px] font-bold text-gray-900 leading-8 mb-3">{property.name || property.title}</h1>
+                {/* Title using Property Type */}
+                <h1 className="text-[22px] font-bold text-gray-900 leading-8 mb-3 capitalize">{property.property_type || property.name || property.title}</h1>
 
                 {/* Address Row */}
                 <div className="flex items-start gap-1.5 mb-6 text-gray-500">
@@ -235,7 +299,7 @@ export default function PropertyDetailsPage() {
                     {postedByAdmins.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                             {postedByAdmins.map((admin: any) => (
-                                <div key={admin.id} className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1.5">
+                                <Link key={admin.id} href={admin.id === user?.id ? '/profile' : `/user/${admin.id}`} className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1.5 hover:bg-gray-100 transition-colors">
                                     {admin.avatarUrl ? (
                                         <img src={admin.avatarUrl} alt={admin.name} className="w-7 h-7 rounded-full object-cover" />
                                     ) : (
@@ -244,7 +308,7 @@ export default function PropertyDetailsPage() {
                                         </div>
                                     )}
                                     <span className="text-xs font-medium text-gray-700">{admin.name}</span>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     ) : (

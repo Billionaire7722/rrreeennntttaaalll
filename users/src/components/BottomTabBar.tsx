@@ -40,6 +40,7 @@ export default function BottomTabBar() {
                 {/* Center Add Button */}
                 <div className="flex-1 flex items-center justify-center relative">
                     <button
+                        id="tour-add-btn"
                         className="absolute -top-6 bg-teal-600 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg shadow-teal-500/30 hover:bg-teal-700 hover:scale-105 active:scale-95 transition-all outline-none"
                         onClick={() => {
                             if (!user) {

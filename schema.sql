@@ -30,9 +30,12 @@ CREATE TABLE users (
     phone           TEXT,
     password        TEXT        NOT NULL,   -- bcrypt hashed
     avatar_url      TEXT,
+    cover_url       TEXT,
     role            role        NOT NULL DEFAULT 'USER',
     status          TEXT        NOT NULL DEFAULT 'ACTIVE',  -- ACTIVE | BANNED
     locked_until    TIMESTAMPTZ,            -- temporary lock timestamp
+    name_updated_at TIMESTAMPTZ,            -- timestamp of last name change
+    bio             TEXT,                   -- user bio
     deleted_at      TIMESTAMPTZ,            -- soft delete
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -42,6 +45,8 @@ COMMENT ON TABLE  users                IS 'All registered platform users';
 COMMENT ON COLUMN users.role           IS 'SUPER_ADMIN or USER';
 COMMENT ON COLUMN users.status         IS 'ACTIVE or BANNED';
 COMMENT ON COLUMN users.locked_until   IS 'Non-null means the account is temporarily locked until this timestamp';
+COMMENT ON COLUMN users.name_updated_at IS 'Timestamp of the last time the user changed their name';
+COMMENT ON COLUMN users.bio            IS 'Short biography of the user';
 COMMENT ON COLUMN users.deleted_at     IS 'Soft-delete timestamp; NULL means the record is active';
 
 CREATE INDEX idx_users_email    ON users (email);

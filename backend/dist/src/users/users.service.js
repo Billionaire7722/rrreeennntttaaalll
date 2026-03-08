@@ -229,6 +229,76 @@ let UsersService = class UsersService {
         delete user.password;
         return user;
     }
+    async updateCover(userId, coverUrl) {
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: { coverUrl },
+        });
+        delete user.password;
+        return user;
+    }
+    async getPublicProfile(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId, deleted_at: null },
+            select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+                coverUrl: true,
+                bio: true,
+                created_at: true,
+                ownedHouses: {
+                    where: { deleted_at: null },
+                    orderBy: { created_at: 'desc' },
+                    select: {
+                        id: true,
+                        name: true,
+                        property_type: true,
+                        address: true,
+                        district: true,
+                        city: true,
+                        price: true,
+                        bedrooms: true,
+                        square: true,
+                        image_url_1: true,
+                        status: true,
+                        is_private_bathroom: true,
+                    }
+                }
+            }
+        });
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        return user;
+    }
+    async updateProfile(userId, data) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        const updateData = {};
+        if (data.bio !== undefined) {
+            updateData.bio = data.bio;
+        }
+        if (data.name !== undefined && data.name !== user.name) {
+            const ONE_MONTH_IN_MS = 30 * 24 * 60 * 60 * 1000;
+            if (user.name_updated_at && (Date.now() - user.name_updated_at.getTime() < ONE_MONTH_IN_MS)) {
+                throw new common_1.ForbiddenException('You can only change your name once every 30 days');
+            }
+            updateData.name = data.name;
+            updateData.name_updated_at = new Date();
+        }
+        if (Object.keys(updateData).length === 0) {
+            delete user.password;
+            return user;
+        }
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
+            data: updateData,
+        });
+        delete updatedUser.password;
+        return updatedUser;
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

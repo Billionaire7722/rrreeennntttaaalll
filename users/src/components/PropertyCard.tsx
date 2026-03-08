@@ -1,10 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
 import { MapPin, Bed, Bath, Square, Heart } from 'lucide-react';
 
 interface Property {
     id: string;
     title: string;
+    property_type?: string;
     description: string;
     price: number;
     address: string;
@@ -27,6 +29,7 @@ interface PropertyCardProps {
 
 export default function PropertyCard({ property, isFavorite, onToggleFavorite }: PropertyCardProps) {
     const defaultImage = '/images/defaultimage.jpg';
+    const { t } = useLanguage();
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group relative">
@@ -38,7 +41,7 @@ export default function PropertyCard({ property, isFavorite, onToggleFavorite }:
                 />
                 <div className="absolute top-4 left-4">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-md shadow-sm ${property.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {property.status}
+                        {property.status === 'AVAILABLE' ? t('available') : t('rented')}
                     </span>
                 </div>
             </Link>
@@ -57,12 +60,14 @@ export default function PropertyCard({ property, isFavorite, onToggleFavorite }:
 
             <div className="p-5">
                 <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-bold text-gray-900 truncate pr-4">
+                    <h3 className="text-lg font-bold text-gray-900 truncate pr-4 capitalize">
                         <Link href={`/properties/${property.id}`} className="hover:text-blue-600">
-                            {property.title}
+                            {property.property_type || property.title}
                         </Link>
                     </h3>
-                    <p className="text-xl font-bold text-blue-600">${property.price.toLocaleString()}<span className="text-sm font-normal text-gray-500">/mo</span></p>
+                    <p className="text-xl font-bold text-blue-600">
+                        {property.price ? property.price.toLocaleString('vi-VN') : 0} VND<span className="text-sm font-normal text-gray-500">{t('month_abbr')}</span>
+                    </p>
                 </div>
 
                 <div className="flex items-center text-gray-500 text-sm mb-4">
@@ -73,15 +78,15 @@ export default function PropertyCard({ property, isFavorite, onToggleFavorite }:
                 <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
                     <div className="flex items-center text-gray-600 text-sm">
                         <Bed className="h-4 w-4 mr-1.5 text-blue-500" />
-                        {property.bedrooms} Ngủ
+                        {property.bedrooms} {t('bedrooms')}
                     </div>
                     <div className="flex items-center text-gray-600 text-sm">
                         <Bath className="h-4 w-4 mr-1.5 text-blue-500" />
-                        {property.hasPrivateBathroom ? 'Khép kín' : 'Chung'}
+                        {property.hasPrivateBathroom ? t('private_bath') : t('shared_bath')}
                     </div>
                     <div className="flex items-center text-gray-600 text-sm col-span-2">
                         <Square className="h-4 w-4 mr-1.5 text-blue-500" />
-                        {property.area} m² Diện tích
+                        {property.area} m² {t('area')}
                     </div>
                 </div>
             </div>

@@ -70,7 +70,13 @@ let AdminService = class AdminService {
                     status: true,
                     created_at: true,
                     deleted_at: true,
-                    role: true
+                    role: true,
+                    avatarUrl: true,
+                    coverUrl: true,
+                    bio: true,
+                    _count: {
+                        select: { ownedHouses: true }
+                    }
                 }
             }),
             this.prisma.user.count({ where: { role: roles_enum_1.Role.USER } })

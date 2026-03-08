@@ -12,9 +12,12 @@ export declare class UsersController {
         phone: string | null;
         password: string;
         avatarUrl: string | null;
+        coverUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
         locked_until: Date | null;
+        name_updated_at: Date | null;
+        bio: string | null;
         deleted_at: Date | null;
         created_at: Date;
         updated_at: Date;
@@ -153,9 +156,75 @@ export declare class UsersController {
         phone: string | null;
         password: string;
         avatarUrl: string | null;
+        coverUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
         locked_until: Date | null;
+        name_updated_at: Date | null;
+        bio: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+    }>;
+    updateCover(req: any, body: {
+        url: string;
+    }): Promise<{
+        id: string;
+        username: string;
+        email: string;
+        name: string;
+        phone: string | null;
+        password: string;
+        avatarUrl: string | null;
+        coverUrl: string | null;
+        role: import("@prisma/client").$Enums.Role;
+        status: string;
+        locked_until: Date | null;
+        name_updated_at: Date | null;
+        bio: string | null;
+        deleted_at: Date | null;
+        created_at: Date;
+        updated_at: Date;
+    }>;
+    getPublicProfile(id: string): Promise<{
+        id: string;
+        name: string;
+        avatarUrl: string | null;
+        coverUrl: string | null;
+        bio: string | null;
+        created_at: Date;
+        ownedHouses: {
+            id: string;
+            name: string;
+            status: string | null;
+            property_type: string | null;
+            address: string;
+            district: string;
+            city: string;
+            price: number | null;
+            bedrooms: number | null;
+            square: number | null;
+            image_url_1: string | null;
+            is_private_bathroom: boolean;
+        }[];
+    }>;
+    updateProfile(req: any, body: {
+        name?: string;
+        bio?: string;
+    }): Promise<{
+        id: string;
+        username: string;
+        email: string;
+        name: string;
+        phone: string | null;
+        password: string;
+        avatarUrl: string | null;
+        coverUrl: string | null;
+        role: import("@prisma/client").$Enums.Role;
+        status: string;
+        locked_until: Date | null;
+        name_updated_at: Date | null;
+        bio: string | null;
         deleted_at: Date | null;
         created_at: Date;
         updated_at: Date;

@@ -75,4 +75,21 @@ export class UsersController {
     updateAvatar(@Request() req, @Body() body: { url: string }) {
         return this.usersService.updateAvatar(req.user.userId, body.url);
     }
+
+    @Post('cover')
+    @Roles(Role.USER)
+    updateCover(@Request() req, @Body() body: { url: string }) {
+        return this.usersService.updateCover(req.user.userId, body.url);
+    }
+
+    @Get('public/:id')
+    getPublicProfile(@Param('id') id: string) {
+        return this.usersService.getPublicProfile(id);
+    }
+
+    @Post('profile')
+    @Roles(Role.USER)
+    updateProfile(@Request() req, @Body() body: { name?: string; bio?: string }) {
+        return this.usersService.updateProfile(req.user.userId, body);
+    }
 }

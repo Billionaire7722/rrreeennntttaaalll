@@ -56,6 +56,15 @@ let UsersController = class UsersController {
     updateAvatar(req, body) {
         return this.usersService.updateAvatar(req.user.userId, body.url);
     }
+    updateCover(req, body) {
+        return this.usersService.updateCover(req.user.userId, body.url);
+    }
+    getPublicProfile(id) {
+        return this.usersService.getPublicProfile(id);
+    }
+    updateProfile(req, body) {
+        return this.usersService.updateProfile(req.user.userId, body);
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -147,6 +156,31 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "updateAvatar", null);
+__decorate([
+    (0, common_1.Post)('cover'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "updateCover", null);
+__decorate([
+    (0, common_1.Get)('public/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "getPublicProfile", null);
+__decorate([
+    (0, common_1.Post)('profile'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.USER),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "updateProfile", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

@@ -4,11 +4,29 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Camera, Heart, MessageCircle, User as UserIcon, Home, Pencil, Trash2, MapPin, DollarSign, BedDouble } from "lucide-react";
+import {
+  Camera, Heart, MessageCircle, User as UserIcon, Home, Pencil, Trash2,
+  MapPin, DollarSign, BedDouble, ChevronRight,
+  Clock, Building2, Settings, Menu, UserCog, Globe, HelpCircle, Info, X
+} from "lucide-react";
 import api from "@/api/axios";
 import PropertyCard from "@/components/PropertyCard";
 import { useAuth } from "@/context/useAuth";
+import { useLanguage, Language } from "@/context/LanguageContext";
 import EditPropertyModal from "@/components/EditPropertyModal";
+
+const FLAGS: Record<Language, { url: string, label: string }> = {
+    vi: { url: "https://flagcdn.com/w20/vn.png", label: "Tiếng Việt" },
+    en: { url: "https://flagcdn.com/w20/gb.png", label: "English" },
+    es: { url: "https://flagcdn.com/w20/es.png", label: "Español" },
+    fr: { url: "https://flagcdn.com/w20/fr.png", label: "Français" },
+    zh: { url: "https://flagcdn.com/w20/cn.png", label: "简体中文" },
+    "zh-TW": { url: "https://flagcdn.com/w20/tw.png", label: "繁體中文" },
+    ko: { url: "https://flagcdn.com/w20/kr.png", label: "한국어" },
+    ja: { url: "https://flagcdn.com/w20/jp.png", label: "日本語" },
+    th: { url: "https://flagcdn.com/w20/th.png", label: "ไทย" },
+    id: { url: "https://flagcdn.com/w20/id.png", label: "Bahasa Indonesia" },
+};
 
 interface ViewerMessage {
   id: string;
@@ -63,8 +81,26 @@ function formatPrice(price?: number) {
   return `${price} VND`;
 }
 
+function resolvePropertyLabel(house: { property_type?: string | null; name: string }) {
+  if (house.property_type) return house.property_type;
+  // Fallback: extract type from auto-generated name like "house at ..."
+  const atIndex = house.name?.indexOf(' at ');
+  if (atIndex > 0) return house.name.slice(0, atIndex);
+  return house.name;
+}
+
+function getStatusColor(status?: string) {
+  switch (status?.toUpperCase()) {
+    case "AVAILABLE": return "bg-emerald-100 text-emerald-700";
+    case "RENTED": return "bg-rose-100 text-rose-700";
+    case "PENDING": return "bg-amber-100 text-amber-700";
+    default: return "bg-gray-100 text-gray-600";
+  }
+}
+
 export default function ProfilePage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
   const [favorites, setFavorites] = useState<any[]>([]);
   const [messages, setMessages] = useState<ViewerMessage[]>([]);
   const [myHouses, setMyHouses] = useState<MyHouse[]>([]);
@@ -73,21 +109,36 @@ export default function ProfilePage() {
   const [loadingMyHouses, setLoadingMyHouses] = useState(false);
   const [activeTab, setActiveTab] = useState<"favorites" | "messages" | "my-properties">("favorites");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  
+  // Profile Edit State
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState({ type: '', text: '' });
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [editingHouse, setEditingHouse] = useState<MyHouse | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  
+  // Drawer State
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isLangExpanded, setIsLangExpanded] = useState(false);
 
   const conversations = useMemo(() => {
-    const map = new Map<string, { adminId: string; adminName: string; latest: ViewerMessage; unread: number }>();
+    const map = new Map<string, { adminId: string; adminName: string; adminAvatar?: string | null; latest: ViewerMessage; unread: number }>();
     for (const msg of messages) {
       const adminId = msg.adminId || msg.admin?.id;
       if (!adminId) continue;
       const adminName = msg.admin?.name || msg.admin?.username || "Admin";
+      const adminAvatar = msg.admin?.avatarUrl;
       const current = map.get(adminId);
       const msgTime = new Date(msg.created_at).getTime();
       const unreadFromAdmin = (msg.senderRole === "ADMIN" || msg.senderRole === "SUPER_ADMIN") && msg.seen_by_role !== "VIEWER";
       if (!current || msgTime > new Date(current.latest.created_at).getTime()) {
-        map.set(adminId, { adminId, adminName, latest: msg, unread: (current?.unread || 0) + (unreadFromAdmin ? 1 : 0) });
+        map.set(adminId, { adminId, adminName, adminAvatar, latest: msg, unread: (current?.unread || 0) + (unreadFromAdmin ? 1 : 0) });
       } else if (unreadFromAdmin) { current.unread += 1; map.set(adminId, current); }
     }
     return Array.from(map.values()).sort((a, b) => new Date(b.latest.created_at).getTime() - new Date(a.latest.created_at).getTime());
@@ -98,8 +149,9 @@ export default function ProfilePage() {
       const res = await api.get("/users/favorites");
       const formatted = res.data.map((fav: any) => {
         const h = fav.house;
+        const propertyLabel = h.property_type || (h.name?.indexOf(' at ') > 0 ? h.name.slice(0, h.name.indexOf(' at ')) : h.name);
         return {
-          id: h.id, title: h.name, address: `${h.district ? `${h.district}, ` : ""}${h.city}`,
+          id: h.id, title: propertyLabel, address: `${h.district ? `${h.district}, ` : ""}${h.city}`,
           city: h.city, latitude: h.latitude, longitude: h.longitude, price: h.price,
           bedrooms: h.bedrooms, bathrooms: h.bathrooms || 1, hasPrivateBathroom: h.is_private_bathroom,
           area: h.square, description: h.description, status: h.status || "AVAILABLE",
@@ -139,6 +191,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!authLoading && user) {
       fetchFavorites();
+      fetchMyHouses();
       api.get("/users/profile").then(res => {
         if (res.data.avatarUrl) {
           setAvatarUrl(res.data.avatarUrl);
@@ -147,9 +200,20 @@ export default function ProfilePage() {
           const saved = localStorage.getItem(`avatar_${user.id}`);
           if (saved) setAvatarUrl(saved);
         }
+        if (res.data.coverUrl) {
+          setCoverUrl(res.data.coverUrl);
+          localStorage.setItem(`cover_${user.id}`, res.data.coverUrl);
+        } else {
+          const savedCover = localStorage.getItem(`cover_${user.id}`);
+          if (savedCover) setCoverUrl(savedCover);
+        }
+        setEditName(res.data.name || "");
+        setEditBio(res.data.bio || "");
       }).catch(() => {
         const saved = localStorage.getItem(`avatar_${user.id}`);
         if (saved) setAvatarUrl(saved);
+        const savedCover = localStorage.getItem(`cover_${user.id}`);
+        if (savedCover) setCoverUrl(savedCover);
       });
     }
   }, [user, authLoading]);
@@ -157,7 +221,6 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!user) return;
     if (activeTab === "messages") fetchMessages();
-    if (activeTab === "my-properties") fetchMyHouses();
   }, [activeTab, user]);
 
   const handleRemoveFavorite = async (propertyId: string) => {
@@ -174,248 +237,478 @@ export default function ProfilePage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch(resolveUploadImageUrl(), { method: "POST", body: formData });
-      if (!response.ok) throw new Error("Upload failed");
-      const data = await response.json();
-      if (data.url) {
-        setAvatarUrl(data.url);
+      const response = await api.post("/upload/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      if (response.data && response.data.url) {
+        setAvatarUrl(response.data.url);
         if (user) {
-          localStorage.setItem(`avatar_${user.id}`, data.url);
-          try { await api.post("/users/avatar", { url: data.url }); } catch { }
+          localStorage.setItem(`avatar_${user.id}`, response.data.url);
+          try { await api.post("/users/avatar", { url: response.data.url }); } catch { }
         }
       }
     } catch { } finally { setIsUploading(false); }
   };
 
-  if (authLoading) return <div className="p-12 text-center animate-pulse">Loading...</div>;
+  const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingCover(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await api.post("/upload/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      if (response.data && response.data.url) {
+        setCoverUrl(response.data.url);
+        if (user) {
+          localStorage.setItem(`cover_${user.id}`, response.data.url);
+          try { await api.post("/users/cover", { url: response.data.url }); } catch { }
+        }
+      }
+    } catch { } finally { setIsUploadingCover(false); }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    setSettingsMessage({ type: '', text: '' });
+    try {
+      await api.post("/users/profile", { name: editName, bio: editBio });
+      setSettingsMessage({ type: 'success', text: 'changed successful' });
+      setIsEditingProfile(false);
+      setTimeout(() => setSettingsMessage({ type: '', text: '' }), 3000);
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setSettingsMessage({ type: 'error', text: err.response.data.message || 'You can only change your name once every 30 days.' });
+      } else {
+        setSettingsMessage({ type: 'error', text: 'Failed to update profile.' });
+      }
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+
+  // ─── Not logged in ────────────────────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <div className="min-h-[calc(100vh-60px)] flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-teal-100 animate-pulse" />
+          <div className="h-4 w-32 bg-gray-200 rounded-full animate-pulse" />
+          <div className="h-3 w-24 bg-gray-100 rounded-full animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
-      <div className="min-h-[calc(100vh-120px)] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
+      <div className="min-h-[calc(100vh-60px)] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
         <div className="max-w-sm w-full">
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
             <div className="w-20 h-20 bg-gradient-to-br from-teal-100 to-teal-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <UserIcon className="h-10 w-10 text-teal-600" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome to Your Home</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">{t("welcome_home")}</h2>
             <p className="text-slate-500 text-sm leading-relaxed mb-8">
               Sign in to save your favorite properties, track your listings, and connect with landlords.
             </p>
             <div className="space-y-3">
-              <Link 
-                href="/login" 
+              <Link
+                href="/login"
                 className="flex w-full items-center justify-center px-6 py-3 text-base font-semibold rounded-xl text-white bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-600/20 transition-all hover:-translate-y-0.5"
               >
                 Sign In
               </Link>
-              <Link 
-                href="/register" 
+              <Link
+                href="/register"
                 className="flex w-full items-center justify-center px-6 py-3 text-base font-semibold rounded-xl text-teal-600 bg-teal-50 hover:bg-teal-100 transition-colors"
               >
                 Create Account
               </Link>
             </div>
           </div>
-          <p className="text-center text-xs text-slate-400 mt-6">
-            Find your perfect rental home with Your Home
-          </p>
+          <p className="text-center text-xs text-slate-400 mt-6">Find your perfect rental home with Your Home</p>
         </div>
       </div>
     );
   }
 
+  // ─── Tabs config ──────────────────────────────────────────────────────────
+  const tabs = [
+    { key: "favorites" as const, label: t("saved"), icon: Heart, count: favorites.length },
+    { key: "my-properties" as const, label: t("my_listings"), icon: Building2, count: myHouses.length },
+    { key: "messages" as const, label: t("chats"), icon: MessageCircle, count: conversations.length },
+  ];
+
+  // ─── Main layout ──────────────────────────────────────────────────────────
   return (
-    <div className="w-full bg-gray-50 min-h-[calc(100vh-60px)] py-8 pb-28">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Sidebar */}
-          <div className="lg:col-span-4 lg:max-w-[320px] w-full mx-auto">
-            <div className="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 flex flex-col items-center relative overflow-hidden">
-                              <div className="w-full h-[220px] bg-gradient-to-br from-teal-600 to-teal-400 relative">
-                <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" className="w-full h-full object-cover opacity-90 mix-blend-overlay" alt="Cover" />
+    <div className="min-h-[calc(100vh-60px)] bg-gray-50 pb-28">
+
+      {/* ── Hero / Cover ─────────────────────────────────────────────────── */}
+      <div className="relative w-full h-44 sm:h-56 md:h-64 overflow-hidden group">
+        <img
+          src={coverUrl || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80"}
+          alt="Cover"
+          className={`w-full h-full object-cover transition-opacity ${isUploadingCover ? "opacity-60" : ""}`}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-teal-900/30 via-teal-800/20 to-gray-900/60" />
+        
+        {/* Navigation Drawer Trigger */}
+        <div className="absolute top-4 right-4 z-10">
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="p-2 text-white/90 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-sm rounded-full transition-all focus:outline-none shadow-sm"
+            aria-label="Open menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Edit Cover Overlay — always available on hover */}
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          onClick={() => coverInputRef.current?.click()}
+        >
+          {isUploadingCover ? (
+            <span className="text-white text-sm font-bold">{t("uploading")}</span>
+          ) : (
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg text-white font-medium">
+              <Camera className="w-5 h-5" />
+              <span className="text-sm">{t("edit_cover")}</span>
+            </div>
+          )}
+        </div>
+        <input type="file" accept="image/*" ref={coverInputRef} className="hidden" onChange={handleCoverFileChange} />
+      </div>
+
+      {/* ── Profile card (overlapping hero) ──────────────────────────────── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative -mt-16 sm:-mt-20 mb-6">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+
+            {/* Avatar + name row */}
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4 px-5 sm:px-8 pt-5 sm:pt-6 pb-5 sm:pb-6">
+              {/* Avatar */}
+              <div
+                className="relative cursor-pointer group flex-shrink-0 self-center sm:self-auto"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-4 border-white shadow-lg overflow-hidden bg-gradient-to-br from-teal-100 to-teal-50 flex items-center justify-center">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Avatar"
+                      className={`w-full h-full object-cover transition-opacity ${isUploading ? "opacity-40" : ""}`}
+                    />
+                  ) : (
+                    <UserIcon className={`w-12 h-12 text-teal-400 ${isUploading ? "opacity-40" : ""}`} />
+                  )}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
+                    {isUploading
+                      ? <span className="text-white text-xs font-bold">{t("uploading")}</span>
+                      : <Camera className="text-white w-6 h-6" />
+                    }
+                  </div>
+                </div>
+                <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center shadow-md border-2 border-white">
+                  <Camera className="w-3.5 h-3.5 text-white" />
+                </div>
+                <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
               </div>
-              <div className="relative -mt-[56px] flex justify-center w-full z-10 px-6">
-                <div className="relative cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
-                  <div className="w-[112px] h-[112px] rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 flex items-center justify-center relative">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="Avatar" className={`w-full h-full object-cover ${isUploading ? "opacity-50" : ""}`} />
-                    ) : (
-                      <UserIcon className={`w-12 h-12 text-gray-400 ${isUploading ? "opacity-50" : ""}`} />
+
+              {/* Name / email / bio / edit form */}
+              <div className="flex-1 text-center sm:text-left min-w-0 flex flex-col items-center sm:items-start">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 justify-center sm:justify-start">
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{editName || user.name || "User"}</h1>
+                </div>
+                <p className="text-sm text-gray-500 mt-0.5 truncate">{user.email}</p>
+
+                {!isEditingProfile ? (
+                  <>
+                    {editBio && (
+                      <p className="mt-4 text-sm text-gray-700 leading-relaxed max-w-lg break-words whitespace-pre-wrap">
+                        {editBio}
+                      </p>
                     )}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      {isUploading ? <span className="text-white text-xs font-bold">Uploading...</span> : <Camera className="text-white w-6 h-6" />}
+                    <button
+                      onClick={() => { setIsEditingProfile(true); setSettingsMessage({type:'', text:''}); }}
+                      className="mt-4 px-4 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-100 rounded-lg transition-colors inline-block"
+                    >
+                      <div className="flex items-center gap-1.5 justify-center"><Pencil className="w-3.5 h-3.5" /> {t("edit_profile")}</div>
+                    </button>
+                    {settingsMessage.text && settingsMessage.type === 'success' && (
+                        <p className="mt-3 text-xs text-emerald-600 font-medium">{settingsMessage.text}</p>
+                    )}
+                  </>
+                ) : (
+                  <form onSubmit={handleSaveSettings} className="mt-5 w-full max-w-lg bg-gray-50 p-4 rounded-xl border border-gray-100/50 text-left">
+                    {settingsMessage.text && (
+                      <div className={`mb-4 p-3 rounded-lg text-sm font-medium ${settingsMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
+                        {settingsMessage.text}
+                      </div>
+                    )}
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">{t("display_name")}</label>
+                        <input
+                          type="text"
+                          className="w-full mt-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
+                          value={editName}
+                          onChange={e => setEditName(e.target.value)}
+                          placeholder="Your name"
+                          required
+                        />
+                        <p className="text-xs text-gray-500 mt-1">{t("change_limit")}</p>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-1.5">
+                            <label className="text-sm font-semibold text-gray-700">{t("bio")}</label>
+                            <span className={`text-xs ${editBio.length > 200 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+                                {editBio.length}/200
+                            </span>
+                        </div>
+                        <textarea
+                          maxLength={200}
+                          rows={3}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm resize-none"
+                          value={editBio}
+                          onChange={e => setEditBio(e.target.value)}
+                          placeholder={t("bio_placeholder")}
+                        />
+                      </div>
+                      
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => { setIsEditingProfile(false); setSettingsMessage({type:'', text:''}); }}
+                          className="flex-1 sm:flex-none px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors text-sm"
+                        >
+                          {t("cancel")}
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={savingSettings || editBio.length > 200}
+                          className="flex-1 sm:flex-none px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed text-sm"
+                        >
+                          {savingSettings ? t("uploading") : t("save_changes")}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-                </div>
+                  </form>
+                )}
               </div>
-              <div className="p-6 w-full text-center">
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{user.name || "User"}</h1>
-                <p className="text-sm text-gray-500 mt-1 mb-6">{user.email}</p>
-                <div className="w-full pt-6 border-t border-gray-100 grid grid-cols-3 gap-2 divide-x divide-gray-100 mb-6">
-                  <div className="text-center">
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Saved</p>
-                    <p className="text-xl font-bold text-gray-900 mt-1">{favorites.length}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Chats</p>
-                    <p className="text-xl font-bold text-gray-900 mt-1">{conversations.length}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Listed</p>
-                    <p className="text-xl font-bold text-gray-900 mt-1">{myHouses.length}</p>
-                  </div>
+
+              {/* Actions */}
+              {/* Removed the extra action div since Menu moved to the cover */}
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-2 border-t border-gray-100">
+              {[
+                { label: t("saved"), value: favorites.length, icon: Heart, color: "text-rose-500" },
+                { label: t("my_listings"), value: myHouses.length, icon: Building2, color: "text-teal-500" },
+              ].map((stat, i) => (
+                <div key={i} className={`flex flex-col items-center py-4 gap-1 ${i === 0 ? "border-r border-gray-100" : ""}`}>
+                  <stat.icon className={`w-4 h-4 ${stat.color}`} />
+                  <p className="text-xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{stat.label}</p>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
+        </div>
 
-          {/* Main content */}
-          <div className="lg:col-span-8">
-            <div className="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden min-h-[600px] flex flex-col">
-              {/* Tabs */}
-              <div className="flex border-b border-gray-100 bg-white px-8 pt-6 gap-8 overflow-x-auto">
-                <button onClick={() => setActiveTab("favorites")} className={`pb-4 text-[15px] font-semibold transition-all relative whitespace-nowrap ${activeTab === "favorites" ? "text-blue-600" : "text-gray-500 hover:text-gray-800"}`}>
-                  <span className="flex items-center gap-2"><Heart className="w-4 h-4" /> Saved properties</span>
-                  {activeTab === "favorites" && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full" />}
-                </button>
-                <button onClick={() => setActiveTab("my-properties")} className={`pb-4 text-[15px] font-semibold transition-all relative whitespace-nowrap ${activeTab === "my-properties" ? "text-blue-600" : "text-gray-500 hover:text-gray-800"}`}>
-                  <span className="flex items-center gap-2"><Home className="w-4 h-4" /> My Properties</span>
-                  {activeTab === "my-properties" && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full" />}
-                </button>
-                <button onClick={() => setActiveTab("messages")} className={`pb-4 text-[15px] font-semibold transition-all relative whitespace-nowrap ${activeTab === "messages" ? "text-blue-600" : "text-gray-500 hover:text-gray-800"}`}>
-                  <span className="flex items-center gap-2"><MessageCircle className="w-4 h-4" /> Conversations</span>
-                  {activeTab === "messages" && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full" />}
-                </button>
-              </div>
+        {/* ── Tab navigation ──────────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* Tab bar */}
+          <div className="flex border-b border-gray-100 overflow-x-auto scrollbar-hide">
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 px-4 py-4 text-sm font-semibold transition-all relative whitespace-nowrap
+                  ${activeTab === tab.key
+                    ? "text-teal-600 bg-teal-50/50"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                  }`}
+              >
+                <tab.icon className="w-4 h-4 flex-shrink-0" />
+                <span>{tab.label}</span>
+                {tab.count > 0 && (
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center
+                    ${activeTab === tab.key ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-500"}`}>
+                    {tab.count}
+                  </span>
+                )}
+                {activeTab === tab.key && (
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-500 rounded-t-full" />
+                )}
+              </button>
+            ))}
+          </div>
 
-              <div className="p-8 flex-1 bg-gray-50/30">
-                {/* Favorites */}
-                {activeTab === "favorites" && (
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-lg font-bold text-gray-900">Saved properties</h3>
-                      <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">{favorites.length} items</span>
-                    </div>
-                    {loadingFavs ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{[1, 2].map(i => <div key={i} className="h-[280px] bg-gray-100 rounded-xl animate-pulse" />)}</div>
-                    ) : favorites.length === 0 ? (
-                      <div className="text-center py-20 px-4 bg-white rounded-xl border border-dashed border-gray-200">
-                        <Heart className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">No saved properties</h3>
-                        <p className="text-gray-500 text-sm">Tap the heart icon on a property to save it here.</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {favorites.map(property => (
-                          <PropertyCard key={property.id} property={property} isFavorite onToggleFavorite={handleRemoveFavorite} />
-                        ))}
-                      </div>
-                    )}
+          {/* Tab content */}
+          <div className="p-4 sm:p-6">
+
+            {/* ── Favorites ─────────────────────────────────────────────── */}
+            {activeTab === "favorites" && (
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-base font-bold text-gray-900">Saved Properties</h2>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+                    {favorites.length} {favorites.length === 1 ? "item" : "items"}
+                  </span>
+                </div>
+
+                {loadingFavs ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-64 bg-gray-100 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : favorites.length === 0 ? (
+                  <EmptyState
+                    icon={<Heart className="w-10 h-10 text-gray-300" />}
+                    title="No saved properties"
+                    description="Tap the heart icon on any property to save it here."
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {favorites.map(property => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        isFavorite
+                        onToggleFavorite={handleRemoveFavorite}
+                      />
+                    ))}
                   </div>
                 )}
+              </div>
+            )}
 
-                {/* My Properties */}
-                {activeTab === "my-properties" && (
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-lg font-bold text-gray-900">My Properties</h3>
-                      <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">{myHouses.length} listed</span>
-                    </div>
-                    {loadingMyHouses ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1, 2].map(i => <div key={i} className="h-[200px] bg-gray-100 rounded-xl animate-pulse" />)}</div>
-                    ) : myHouses.length === 0 ? (
-                      <div className="text-center py-20 px-4 bg-white rounded-xl border border-dashed border-gray-200">
-                        <Home className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">No properties listed yet</h3>
-                        <p className="text-gray-500 text-sm">Use the + button at the bottom to add your first property.</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {myHouses.map(house => (
-                          <div key={house.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                            <div className="relative h-40 bg-gray-100">
-                              {house.image_url_1 ? (
-                                <img src={house.image_url_1} alt={house.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                  <Home size={40} />
-                                </div>
-                              )}
-                              <div className="absolute top-2 right-2 flex gap-1.5">
-                                <button onClick={() => setEditingHouse(house)} className="p-1.5 bg-white rounded-lg shadow-sm text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
-                                  <Pencil size={15} />
-                                </button>
-                                <button onClick={() => handleDeleteHouse(house.id)} className="p-1.5 bg-white rounded-lg shadow-sm text-red-500 hover:bg-red-50 transition-colors" title="Delete">
-                                  <Trash2 size={15} />
-                                </button>
-                              </div>
-                              {house.status && (
-                                <span className="absolute top-2 left-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full capitalize">{house.status}</span>
-                              )}
-                            </div>
-                            <div className="p-4">
-                              <h4 className="font-semibold text-gray-900 truncate">{house.name}</h4>
-                              <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                                <MapPin size={11} /> {house.district ? `${house.district}, ` : ""}{house.city}
-                              </p>
-                              <div className="flex items-center gap-4 mt-3 text-sm text-gray-700">
-                                {house.price && <span className="flex items-center gap-1 text-blue-600 font-medium"><DollarSign size={13} /> {formatPrice(house.price)}</span>}
-                                {house.bedrooms && <span className="flex items-center gap-1"><BedDouble size={13} /> {house.bedrooms} BR</span>}
-                              </div>
-                            </div>
+            {/* ── My Properties ─────────────────────────────────────────── */}
+            {activeTab === "my-properties" && (
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-base font-bold text-gray-900">My Listings</h2>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+                    {myHouses.length} {myHouses.length === 1 ? "listing" : "listings"}
+                  </span>
+                </div>
+
+                {loadingMyHouses ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[1, 2].map(i => (
+                      <div key={i} className="h-52 bg-gray-100 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : myHouses.length === 0 ? (
+                  <EmptyState
+                    icon={<Building2 className="w-10 h-10 text-gray-300" />}
+                    title="No listings yet"
+                    description="Use the + button at the bottom to add your first property."
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {myHouses.map(house => (
+                      <MyHouseCard
+                        key={house.id}
+                        house={house}
+                        onEdit={() => setEditingHouse(house)}
+                        onDelete={() => handleDeleteHouse(house.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Messages ──────────────────────────────────────────────── */}
+            {activeTab === "messages" && (
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-base font-bold text-gray-900">Conversations</h2>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+                    {conversations.length} {conversations.length === 1 ? "chat" : "chats"}
+                  </span>
+                </div>
+
+                {loadingMessages ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : conversations.length === 0 ? (
+                  <EmptyState
+                    icon={<MessageCircle className="w-10 h-10 text-gray-300" />}
+                    title="No conversations yet"
+                    description="Your chat history with admins will appear here."
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {conversations.map(conversation => {
+                      const latest = conversation.latest;
+                      const query = new URLSearchParams({ adminId: conversation.adminId }).toString();
+                      const isFromAdmin = latest.senderRole === "ADMIN" || latest.senderRole === "SUPER_ADMIN";
+                      const prefix = isFromAdmin ? "" : "You: ";
+                      const timeStr = new Date(latest.created_at).toLocaleString("vi-VN", {
+                        day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
+                      });
+
+                      return (
+                        <Link
+                          key={conversation.adminId}
+                          href={`/chat?${query}`}
+                          className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 hover:border-teal-200 hover:shadow-md transition-all duration-200 group"
+                        >
+                          {/* Avatar */}
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-100 to-teal-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {conversation.adminAvatar ? (
+                              <img src={conversation.adminAvatar} alt={conversation.adminName} className="w-full h-full object-cover" />
+                            ) : (
+                              <UserIcon className="w-6 h-6 text-teal-500" />
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
 
-                {/* Messages */}
-                {activeTab === "messages" && (
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-lg font-bold text-gray-900">Conversations</h3>
-                      <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">{conversations.length} conversations</span>
-                    </div>
-                    {loadingMessages ? (
-                      <div className="text-center py-20 text-gray-500 animate-pulse">Loading messages...</div>
-                    ) : conversations.length === 0 ? (
-                      <div className="text-center py-20 px-4 bg-white rounded-xl border border-dashed border-gray-200">
-                        <MessageCircle className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">No conversations yet</h3>
-                        <p className="text-gray-500 text-sm">Your chat history will appear here.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {conversations.map(conversation => {
-                          const latest = conversation.latest;
-                          const query = new URLSearchParams({ adminId: conversation.adminId }).toString();
-                          const prefix = latest.senderRole === "VIEWER" ? "You: " : "Admin: ";
-                          return (
-                            <Link key={conversation.adminId} href={`/chat?${query}`} className="block rounded-xl border border-gray-100 bg-white p-5 transition-all hover:shadow-md hover:-translate-y-1 duration-300">
-                              <div className="mb-3 flex items-center justify-between gap-4">
-                                <div className="min-w-0">
-                                  <p className="text-sm font-bold text-gray-900 truncate">{conversation.adminName}</p>
-                                  <p className="text-xs text-gray-500">Support</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs text-gray-500 font-medium">{new Date(latest.created_at).toLocaleString("vi-VN")}</span>
-                                  {conversation.unread > 0 && (
-                                    <span className="inline-flex items-center justify-center min-w-6 h-6 px-2 text-xs font-bold text-white bg-blue-600 rounded-full">{conversation.unread}</span>
-                                  )}
-                                </div>
-                              </div>
-                              <p className="text-[15px] text-gray-700 whitespace-pre-wrap leading-relaxed line-clamp-2">{prefix}{latest.content}</p>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                              <p className="text-sm font-bold text-gray-900 truncate">{conversation.adminName}</p>
+                              <span className="text-xs text-gray-400 flex-shrink-0 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />{timeStr}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-500 truncate">
+                              {prefix}{latest.content}
+                            </p>
+                          </div>
+
+                          {/* Unread badge + chevron */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {conversation.unread > 0 && (
+                              <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 text-xs font-bold text-white bg-teal-500 rounded-full">
+                                {conversation.unread}
+                              </span>
+                            )}
+                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-teal-500 transition-colors" />
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>
-            </div>
+            )}
+
           </div>
         </div>
       </div>
@@ -428,6 +721,165 @@ export default function ProfilePage() {
           onSuccess={() => { setEditingHouse(null); fetchMyHouses(); }}
         />
       )}
+
+      {/* Navigation Drawer Overlay */}
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={() => setIsDrawerOpen(false)} />
+          <div className="w-80 bg-white h-full shadow-2xl relative z-50 flex flex-col pt-16 animate-in slide-in-from-right duration-300">
+            {/* Drawer Header Layout */}
+            <div className="absolute top-4 right-4">
+              <button onClick={() => setIsDrawerOpen(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="px-6 pb-4 border-b border-gray-100">
+              <h2 className="text-xl font-bold flex items-center gap-2"><Settings className="w-5 h-5 text-gray-500" /> {t("settings")}</h2>
+            </div>
+            
+            {/* Drawer Links */}
+            <div className="flex-1 overflow-y-auto py-2">
+              <div className="px-4 space-y-1">
+                <Link href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
+                  <UserCog className="w-5 h-5 text-gray-400" />
+                  {t("accounts_center")}
+                </Link>
+
+                <div className="rounded-xl overflow-hidden transition-all">
+                  <button 
+                    onClick={() => setIsLangExpanded(!isLangExpanded)}
+                    className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Globe className="w-5 h-5 text-gray-400" />
+                      {t("app_language")}
+                    </div>
+                    <ChevronRight className={`w-4 h-4 text-gray-300 transition-transform ${isLangExpanded ? 'rotate-90' : ''}`} />
+                  </button>
+                  {isLangExpanded && (
+                    <div className="bg-gray-50/50 pt-1 pb-2">
+                      {(Object.entries(FLAGS) as [Language, { url: string, label: string }][]).map(([key, flag]) => (
+                          <button
+                              key={key}
+                              onClick={() => { setLanguage(key); setIsDrawerOpen(false); setIsLangExpanded(false); }}
+                              className={`w-full flex items-center gap-3 px-11 py-2.5 text-sm hover:bg-teal-50 hover:text-teal-700 transition-colors ${language === key ? 'text-teal-600 font-semibold' : 'text-gray-600'}`}
+                          >
+                              <img src={flag.url} alt={key} className="w-5 h-auto rounded-sm shadow-sm" />
+                              <span>{flag.label}</span>
+                          </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Link href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
+                  <HelpCircle className="w-5 h-5 text-gray-400" />
+                  {t("help_support")}
+                </Link>
+                
+                <Link href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
+                  <Info className="w-5 h-5 text-gray-400" />
+                  {t("about")}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Sub-components ────────────────────────────────────────────────────────────
+
+function EmptyState({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+      <div className="mb-4">{icon}</div>
+      <h3 className="text-base font-bold text-gray-800 mb-1">{title}</h3>
+      <p className="text-sm text-gray-400 max-w-xs">{description}</p>
+    </div>
+  );
+}
+
+function MyHouseCard({
+  house,
+  onEdit,
+  onDelete,
+}: {
+  house: MyHouse;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md hover:border-teal-100 transition-all duration-200 group">
+      {/* Image */}
+      <div className="relative h-44 bg-gray-100 overflow-hidden">
+        {house.image_url_1 ? (
+          <img
+            src={house.image_url_1}
+            alt={resolvePropertyLabel(house)}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-300">
+            <Home size={36} />
+            <span className="text-xs text-gray-400">No image</span>
+          </div>
+        )}
+
+        {/* Overlay actions */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+        {/* Status badge */}
+        {house.status && (
+          <span className={`absolute top-3 left-3 px-2.5 py-1 text-xs font-semibold rounded-full capitalize ${getStatusColor(house.status)}`}>
+            {house.status.toLowerCase()}
+          </span>
+        )}
+
+        {/* Action buttons */}
+        <div className="absolute top-3 right-3 flex gap-1.5">
+          <button
+            onClick={onEdit}
+            className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg shadow flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors"
+            title="Edit"
+          >
+            <Pencil size={14} />
+          </button>
+          <button
+            onClick={onDelete}
+            className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg shadow flex items-center justify-center text-rose-500 hover:bg-rose-50 transition-colors"
+            title="Delete"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-4">
+        <h4 className="font-semibold text-gray-900 truncate text-sm mb-3 capitalize">{resolvePropertyLabel(house)}</h4>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          {house.price && (
+            <span className="flex items-center gap-1 text-xs font-semibold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full">
+              <DollarSign size={11} />{formatPrice(house.price)}
+            </span>
+          )}
+          {house.bedrooms && (
+            <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full">
+              <BedDouble size={11} />{house.bedrooms} BR
+            </span>
+          )}
+          {house.square && (
+            <span className="text-xs text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full">
+              {house.square} m²
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
