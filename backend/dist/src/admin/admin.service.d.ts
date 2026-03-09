@@ -5,12 +5,14 @@ export declare class AdminService {
     private prisma;
     private presenceService;
     constructor(prisma: PrismaService, presenceService: PresenceService);
-    getAllUsers(skip?: number, take?: number): Promise<{
+    getAllUsers(skip?: number, take?: number, search?: string, status?: string): Promise<{
         users: {
             id: string;
+            name: string;
+            firstName: string | null;
+            lastName: string | null;
             username: string;
             email: string;
-            name: string;
             phone: string | null;
             avatarUrl: string | null;
             coverUrl: string | null;
@@ -30,9 +32,9 @@ export declare class AdminService {
     getAllAdmins(skip?: number, take?: number): Promise<{
         admins: {
             id: string;
+            name: string;
             username: string;
             email: string;
-            name: string;
             phone: string | null;
             role: import("@prisma/client").$Enums.Role;
             status: string;
@@ -51,9 +53,9 @@ export declare class AdminService {
         password?: string;
     }): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
-        name: string;
         phone: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
@@ -115,15 +117,17 @@ export declare class AdminService {
         owner_id: string | null;
     }>;
     getLoginLogs(skip?: number, take?: number, status?: string): Promise<{
-        items: {
+        items: ({
+            user: never;
+        } & {
             id: string;
             role: string | null;
             userId: string | null;
-            success: boolean;
             ipAddress: string | null;
             userAgent: string | null;
+            success: boolean;
             timestamp: Date;
-        }[];
+        })[];
         total: number;
         skip: number;
         take: number;
@@ -163,9 +167,9 @@ export declare class AdminService {
         password: string;
     }): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
-        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
@@ -177,9 +181,9 @@ export declare class AdminService {
         password: string;
     }): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
-        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
@@ -201,4 +205,24 @@ export declare class AdminService {
         skip: number;
         take: number;
     }>;
+    getUserReports(skip?: number, take?: number): Promise<{
+        items: any;
+        total: any;
+        skip: number;
+        take: number;
+    }>;
+    getPropertyReports(skip?: number, take?: number): Promise<{
+        items: any;
+        total: any;
+        skip: number;
+        take: number;
+    }>;
+    getSupportRequests(skip?: number, take?: number): Promise<{
+        items: any;
+        total: any;
+        skip: number;
+        take: number;
+    }>;
+    updateReportStatus(type: 'user' | 'property', id: string, status: string): Promise<any>;
+    updateTicketStatus(id: string, status: string): Promise<any>;
 }

@@ -11,15 +11,32 @@ export class AdminService {
         private presenceService: PresenceService
     ) { }
 
-    async getAllUsers(skip = 0, take = 50) {
+    async getAllUsers(skip = 0, take = 50, search?: string, status?: string) {
+        const where: any = { role: Role.USER };
+        
+        if (status) {
+            where.status = status;
+        }
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { username: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+
         const [users, total] = await Promise.all([
             this.prisma.user.findMany({
-                where: { role: Role.USER },
+                where,
                 skip: Number(skip),
                 take: Number(take),
+                orderBy: { created_at: 'desc' },
                 select: {
                     id: true,
                     name: true,
+                    firstName: true,
+                    lastName: true,
                     username: true,
                     email: true,
                     phone: true,
@@ -35,7 +52,7 @@ export class AdminService {
                     }
                 }
             }),
-            this.prisma.user.count({ where: { role: Role.USER } })
+            this.prisma.user.count({ where })
         ]);
         return { users, total, skip: Number(skip), take: Number(take) };
     }
@@ -166,7 +183,6 @@ export class AdminService {
         const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
         if (!admin) throw new NotFoundException('User not found');
 
-        // Prevent modifying a SUPER_ADMIN's role
         if (admin.role === Role.SUPER_ADMIN) {
             throw new ForbiddenException('Cannot modify SUPER_ADMIN role');
         }
@@ -238,11 +254,21 @@ export class AdminService {
         }
 
         const [items, total] = await Promise.all([
-            this.prisma.loginLog.findMany({
+            this.prisma.loginLog. findMany({
                 where,
                 skip: Number(skip),
                 take: Number(take),
-                orderBy: { timestamp: 'desc' }
+                orderBy: { timestamp: 'desc' },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            role: true,
+                        }
+                    }
+                }
             }),
             this.prisma.loginLog.count({ where })
         ]);
@@ -251,11 +277,9 @@ export class AdminService {
     }
 
     async getSystemMetrics() {
-        // Today's boundaries
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
-        // 7 days ago boundary
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
         sevenDaysAgo.setHours(0, 0, 0, 0);
@@ -274,13 +298,11 @@ export class AdminService {
             this.prisma.loginLog.count({ where: { timestamp: { gte: todayStart } } })
         ]);
 
-        // Fetch last 7 days of login logs
         const recentLogins = await this.prisma.loginLog.findMany({
             where: { timestamp: { gte: sevenDaysAgo } },
             select: { success: true, timestamp: true }
         });
 
-        // Group by day for login charts
         const loginDataMap: Record<string, { logins: number; failed: number }> = {};
         for (let i = 0; i <= 6; i++) {
             const d = new Date(sevenDaysAgo);
@@ -302,7 +324,6 @@ export class AdminService {
             failed: loginDataMap[dateStr].failed
         }));
 
-        // Fetch last 7 days of audit logs for mutative actions
         const recentAudits = await this.prisma.auditLog.findMany({
             where: { createdAt: { gte: sevenDaysAgo } },
             select: { actionType: true, createdAt: true }
@@ -321,7 +342,7 @@ export class AdminService {
                 const type = log.actionType.toUpperCase();
                 if (type.includes('CREATE')) actionDataMap[dateStr].creates++;
                 else if (type.includes('DELETE')) actionDataMap[dateStr].deletes++;
-                else actionDataMap[dateStr].updates++; // Assuming everything else is an update/patch
+                else actionDataMap[dateStr].updates++;
             }
         }
 
@@ -348,13 +369,11 @@ export class AdminService {
     }
 
     async seedSuperAdmin() {
-        // Demote existing SUPER_ADMINs
         await this.prisma.user.updateMany({
             where: { role: Role.SUPER_ADMIN },
             data: { role: Role.USER }
         });
 
-        // Add exact credentials
         const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'ceo@rentalapp.com';
         const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
         if (!superAdminPassword) {
@@ -529,5 +548,64 @@ export class AdminService {
             skip: Number(skip),
             take: Number(take),
         };
+    }
+
+    async getUserReports(skip = 0, take = 50) {
+        const [items, total] = await Promise.all([
+            this.prisma.userReport.findMany({
+                skip: Number(skip),
+                take: Number(take),
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    reporter: { select: { id: true, name: true, email: true } },
+                    target: { select: { id: true, name: true, email: true, status: true } },
+                }
+            }),
+            this.prisma.userReport.count()
+        ]);
+        return { items, total, skip: Number(skip), take: Number(take) };
+    }
+
+    async getPropertyReports(skip = 0, take = 50) {
+        const [items, total] = await Promise.all([
+            this.prisma.propertyReport.findMany({
+                skip: Number(skip),
+                take: Number(take),
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    reporter: { select: { id: true, name: true, email: true } },
+                    house: { select: { id: true, name: true, status: true, address: true } },
+                }
+            }),
+            this.prisma.propertyReport.count()
+        ]);
+        return { items, total, skip: Number(skip), take: Number(take) };
+    }
+
+    async getSupportRequests(skip = 0, take = 50) {
+        const [items, total] = await Promise.all([
+            this.prisma.supportTicket.findMany({
+                skip: Number(skip),
+                take: Number(take),
+                orderBy: { updatedAt: 'desc' },
+                include: {
+                    user: { select: { id: true, name: true, email: true, role: true } },
+                    _count: { select: { messages: true } }
+                }
+            }),
+            this.prisma.supportTicket.count()
+        ]);
+        return { items, total, skip: Number(skip), take: Number(take) };
+    }
+
+    async updateReportStatus(type: 'user' | 'property', id: string, status: string) {
+        if (type === 'user') {
+            return this.prisma.userReport.update({ where: { id }, data: { status } });
+        }
+        return this.prisma.propertyReport.update({ where: { id }, data: { status } });
+    }
+
+    async updateTicketStatus(id: string, status: string) {
+        return this.prisma.supportTicket.update({ where: { id }, data: { status } });
     }
 }

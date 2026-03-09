@@ -37,6 +37,8 @@ export class HousesController {
     async getHouses(
         @Query('skip') skip?: string,
         @Query('take') take?: string,
+        @Query('search') search?: string,
+        @Query('status') status?: string,
         @Request() req?: any
     ) {
         try {
@@ -49,7 +51,9 @@ export class HousesController {
             const result = await this.housesService.getHouses(
                 Number.isNaN(skipNum) ? 0 : skipNum,
                 Number.isNaN(takeNum) ? 10 : takeNum,
-                undefined
+                undefined,
+                search,
+                status
             );
 
             if (!isAdmin && result && result.data) {

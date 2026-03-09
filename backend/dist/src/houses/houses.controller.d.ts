@@ -5,7 +5,7 @@ export declare class HousesController {
     private readonly jwtService;
     constructor(housesService: HousesService, jwtService: JwtService);
     private getUserFromRequest;
-    getHouses(skip?: string, take?: string, req?: any): Promise<{
+    getHouses(skip?: string, take?: string, search?: string, status?: string, req?: any): Promise<{
         data: any;
         meta: {
             total: any;
@@ -27,13 +27,10 @@ export declare class HousesController {
     createHouse(data: any, req: any): Promise<any>;
     updateHouse(id: string, data: any, req: any): Promise<any>;
     updateStatus(id: string, status: string, req: any): Promise<{
+        owner_id: string | null;
         id: string;
-        name: string;
-        status: string | null;
-        deleted_at: Date | null;
-        created_at: Date;
-        updated_at: Date;
         original_id: string;
+        name: string;
         property_type: string | null;
         address: string;
         ward: string | null;
@@ -55,18 +52,18 @@ export declare class HousesController {
         video_url_1: string | null;
         video_url_2: string | null;
         description: string | null;
+        status: string | null;
         is_private_bathroom: boolean;
         contact_phone: string | null;
-        owner_id: string | null;
+        created_at: Date;
+        updated_at: Date;
+        deleted_at: Date | null;
     }>;
     removeHouse(id: string, req: any): Promise<{
+        owner_id: string | null;
         id: string;
-        name: string;
-        status: string | null;
-        deleted_at: Date | null;
-        created_at: Date;
-        updated_at: Date;
         original_id: string;
+        name: string;
         property_type: string | null;
         address: string;
         ward: string | null;
@@ -88,8 +85,11 @@ export declare class HousesController {
         video_url_1: string | null;
         video_url_2: string | null;
         description: string | null;
+        status: string | null;
         is_private_bathroom: boolean;
         contact_phone: string | null;
-        owner_id: string | null;
+        created_at: Date;
+        updated_at: Date;
+        deleted_at: Date | null;
     }>;
 }

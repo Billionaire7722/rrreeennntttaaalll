@@ -1,50 +1,41 @@
 import React, { useEffect, useState } from 'react';
-import { Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { 
+    Search, 
+    Filter, 
+    Download,
+    Activity,
+    User,
+    Clock
+} from 'lucide-react';
 import api from '../api/axios';
 import css from './Table.module.css';
 
 interface AuditLog {
     id: string;
-    actorId: string;
-    actorRole: string;
-    actionType: string;
-    entityType: string;
-    entityId: string;
-    beforeData: unknown;
-    afterData: unknown;
-    ipAddress: string | null;
+    action: string;
+    description: string;
+    targetModel: string;
+    targetId: string;
     createdAt: string;
+    admin: {
+        name: string;
+        email: string;
+    };
 }
 
 export const AuditLogs: React.FC = () => {
     const [logs, setLogs] = useState<AuditLog[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
     const [total, setTotal] = useState(0);
     const [skip, setSkip] = useState(0);
-    const take = 10;
-    const [loading, setLoading] = useState(true);
-
-    // Filters
-    const [actorId, setActorId] = useState('');
-    const [actionType, setActionType] = useState('');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-
-    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+    const take = 15;
 
     const fetchLogs = async () => {
         setLoading(true);
         try {
-            const params = new URLSearchParams({
-                skip: skip.toString(),
-                take: take.toString(),
-            });
-            if (actorId) params.append('adminId', actorId);
-            if (actionType) params.append('actionType', actionType);
-            if (startDate) params.append('startDate', startDate);
-            if (endDate) params.append('endDate', endDate);
-
-            const res = await api.get(`/admin/audit-logs?${params.toString()}`);
-            setLogs(res.data.items || []);
+            const res = await api.get(`/admin/audit-logs?skip=${skip}&take=${take}&search=${searchQuery}`);
+            setLogs(res.data.logs || []);
             setTotal(res.data.total || 0);
         } catch (err) {
             console.error('Failed to fetch audit logs', err);
@@ -54,144 +45,116 @@ export const AuditLogs: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchLogs();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [skip]); // Fetch when page changes
+        const timer = setTimeout(fetchLogs, 300);
+        return () => clearTimeout(timer);
+    }, [skip, searchQuery]);
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        setSkip(0); // Reset to first page
-        fetchLogs();
-    };
-
-    const toggleRow = (id: string) => {
-        const newSet = new Set(expandedRows);
-        if (newSet.has(id)) newSet.delete(id);
-        else newSet.add(id);
-        setExpandedRows(newSet);
+    const getActionColor = (action: string) => {
+        if (action.includes('CREATE')) return 'var(--success-color)';
+        if (action.includes('DELETE')) return 'var(--danger-color)';
+        if (action.includes('UPDATE')) return 'var(--accent-color)';
+        return 'var(--text-secondary)';
     };
 
     return (
-        <div className={`glass-panel ${css.tableContainer}`} style={{ overflow: 'visible' }}>
+        <div className={css.tableContainer}>
             <div className={css.tableHeader}>
-                <h2>Audit Trail</h2>
-                <span className={css.totalBadge}>Total Records: {total}</span>
+                <div>
+                    <h2>Audit Logs</h2>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Track all administrative actions across the platform</p>
+                </div>
+                <div className={css.headerActions}>
+                    <button className="btn btn-outline"><Download size={16} /> Export Logs</button>
+                </div>
             </div>
 
-            <form onSubmit={handleSearch} style={{ display: 'flex', gap: '12px', padding: '16px 24px', flexWrap: 'wrap' }}>
-                <input
-                    className="input-field"
-                    placeholder="Actor ID"
-                    value={actorId}
-                    onChange={e => setActorId(e.target.value)}
-                    style={{ width: '150px' }}
-                />
-                <input
-                    className="input-field"
-                    placeholder="Action Type (e.g. DELETE)"
-                    value={actionType}
-                    onChange={e => setActionType(e.target.value)}
-                    style={{ width: '180px' }}
-                />
-                <input
-                    type="date"
-                    className="input-field"
-                    value={startDate}
-                    onChange={e => setStartDate(e.target.value)}
-                    style={{ width: '150px' }}
-                />
-                <input
-                    type="date"
-                    className="input-field"
-                    value={endDate}
-                    onChange={e => setEndDate(e.target.value)}
-                    style={{ width: '150px' }}
-                />
-                <button type="submit" className="btn btn-primary"><Search size={16} /> Filter</button>
-            </form>
+            <div className={css.tableControls}>
+                <div className={css.searchWrapper}>
+                    <Search className={css.searchIcon} size={16} />
+                    <input 
+                        type="text" 
+                        placeholder="Search by action or admin..." 
+                        className={`input-field ${css.searchInput}`}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+                <div className={css.filterGroup}>
+                    <button className="btn btn-outline"><Filter size={14} /> All Actions</button>
+                </div>
+            </div>
 
-            <div className={css.tableScroll}>
-                <table className="data-table">
-                    <thead>
-                        <tr>
-                            <th style={{ width: '40px' }}></th>
-                            <th>Date</th>
-                            <th>Actor</th>
-                            <th>Action</th>
-                            <th>Entity</th>
-                            <th>IP Address</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr><td colSpan={6} style={{ textAlign: 'center' }}>Loading...</td></tr>
-                        ) : logs.length === 0 ? (
-                            <tr><td colSpan={6} style={{ textAlign: 'center' }}>No audit records found.</td></tr>
-                        ) : (
-                            logs.map(log => (
-                                <React.Fragment key={log.id}>
-                                    <tr>
-                                        <td>
-                                            <button
-                                                onClick={() => toggleRow(log.id)}
-                                                style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}
-                                            >
-                                                {expandedRows.has(log.id) ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                                            </button>
+            <div className={css.tableWrapper}>
+                <div className={css.tableScroll}>
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Admin</th>
+                                <th>Action</th>
+                                <th>Description</th>
+                                <th>Target</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading && logs.length === 0 ? (
+                                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '40px' }}>Loading logs...</td></tr>
+                            ) : logs.length === 0 ? (
+                                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '40px' }}>No audit logs found.</td></tr>
+                            ) : (
+                                logs.map(log => (
+                                    <tr key={log.id}>
+                                        <td style={{ whiteSpace: 'nowrap', width: '180px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                <Clock size={14} />
+                                                {new Date(log.createdAt).toLocaleString()}
+                                            </div>
                                         </td>
-                                        <td>{new Date(log.createdAt).toLocaleString()}</td>
-                                        <td><span className="badge badge-admin" title={`ID: ${log.actorId}`}>{log.actorRole}</span></td>
-                                        <td><span className="badge" style={{ background: 'rgba(255,255,255,0.1)' }}>{log.actionType}</span></td>
-                                        <td>{log.entityType} ({log.entityId.slice(-6)})</td>
-                                        <td style={{ color: 'var(--text-secondary)' }}>{log.ipAddress || 'Unknown'}</td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <User size={14} style={{ color: 'var(--text-muted)' }} />
+                                                <div style={{ fontSize: '0.875rem' }}>{log.admin?.name}</div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style={{ 
+                                                fontSize: '0.75rem', 
+                                                fontWeight: 700, 
+                                                color: getActionColor(log.action),
+                                                padding: '2px 6px',
+                                                borderRadius: '4px',
+                                                background: `${getActionColor(log.action)}15`
+                                            }}>
+                                                {log.action}
+                                            </span>
+                                        </td>
+                                        <td style={{ maxWidth: '300px' }}>
+                                            <div style={{ fontSize: '0.875rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {log.description}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                <Activity size={12} />
+                                                {log.targetModel} ({log.targetId ? log.targetId.slice(-6) : 'N/A'})
+                                            </div>
+                                        </td>
                                     </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
 
-                                    {expandedRows.has(log.id) && (
-                                        <tr style={{ background: 'rgba(0,0,0,0.2)' }}>
-                                            <td></td>
-                                            <td colSpan={5} style={{ padding: '16px' }}>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                                    <div>
-                                                        <h4 style={{ marginBottom: '8px', color: 'var(--text-secondary)' }}>Before Data:</h4>
-                                                        <pre style={{ background: '#0d1117', padding: '12px', borderRadius: '6px', fontSize: '0.8rem', overflowX: 'auto' }}>
-                                                            {log.beforeData ? JSON.stringify(log.beforeData, null, 2) : 'null'}
-                                                        </pre>
-                                                    </div>
-                                                    <div>
-                                                        <h4 style={{ marginBottom: '8px', color: 'var(--text-secondary)' }}>After Data:</h4>
-                                                        <pre style={{ background: '#0d1117', padding: '12px', borderRadius: '6px', fontSize: '0.8rem', overflowX: 'auto' }}>
-                                                            {log.afterData ? JSON.stringify(log.afterData, null, 2) : 'null'}
-                                                        </pre>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )}
-                                </React.Fragment>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            <div className={css.pagination}>
-                <button
-                    className="btn btn-outline"
-                    disabled={skip === 0}
-                    onClick={() => { setSkip(s => Math.max(0, s - take)); setTimeout(fetchLogs, 0); }}
-                >
-                    Previous
-                </button>
-                <span className={css.pageText}>
-                    Page {Math.floor(skip / take) + 1} of {Math.ceil(total / take) || 1}
-                </span>
-                <button
-                    className="btn btn-outline"
-                    disabled={skip + take >= total}
-                    onClick={() => { setSkip(s => s + take); setTimeout(fetchLogs, 0); }}
-                >
-                    Next
-                </button>
+                <div className={css.pagination}>
+                    <span className={css.pageText}>
+                        Showing {skip + 1} to {Math.min(skip + take, total)} of {total} events
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="btn btn-outline" disabled={skip === 0} onClick={() => setSkip(s => Math.max(0, s - take))}>Previous</button>
+                        <button className="btn btn-outline" disabled={skip + take >= total} onClick={() => setSkip(s => s + take)}>Next</button>
+                    </div>
+                </div>
             </div>
         </div>
     );

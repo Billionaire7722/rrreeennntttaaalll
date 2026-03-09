@@ -55,15 +55,29 @@ let AdminService = class AdminService {
         this.prisma = prisma;
         this.presenceService = presenceService;
     }
-    async getAllUsers(skip = 0, take = 50) {
+    async getAllUsers(skip = 0, take = 50, search, status) {
+        const where = { role: roles_enum_1.Role.USER };
+        if (status) {
+            where.status = status;
+        }
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { username: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+            ];
+        }
         const [users, total] = await Promise.all([
             this.prisma.user.findMany({
-                where: { role: roles_enum_1.Role.USER },
+                where,
                 skip: Number(skip),
                 take: Number(take),
+                orderBy: { created_at: 'desc' },
                 select: {
                     id: true,
                     name: true,
+                    firstName: true,
+                    lastName: true,
                     username: true,
                     email: true,
                     phone: true,
@@ -79,7 +93,7 @@ let AdminService = class AdminService {
                     }
                 }
             }),
-            this.prisma.user.count({ where: { role: roles_enum_1.Role.USER } })
+            this.prisma.user.count({ where })
         ]);
         return { users, total, skip: Number(skip), take: Number(take) };
     }
@@ -261,7 +275,17 @@ let AdminService = class AdminService {
                 where,
                 skip: Number(skip),
                 take: Number(take),
-                orderBy: { timestamp: 'desc' }
+                orderBy: { timestamp: 'desc' },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            role: true,
+                        }
+                    }
+                }
             }),
             this.prisma.loginLog.count({ where })
         ]);
@@ -511,6 +535,60 @@ let AdminService = class AdminService {
             skip: Number(skip),
             take: Number(take),
         };
+    }
+    async getUserReports(skip = 0, take = 50) {
+        const [items, total] = await Promise.all([
+            this.prisma.userReport.findMany({
+                skip: Number(skip),
+                take: Number(take),
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    reporter: { select: { id: true, name: true, email: true } },
+                    target: { select: { id: true, name: true, email: true, status: true } },
+                }
+            }),
+            this.prisma.userReport.count()
+        ]);
+        return { items, total, skip: Number(skip), take: Number(take) };
+    }
+    async getPropertyReports(skip = 0, take = 50) {
+        const [items, total] = await Promise.all([
+            this.prisma.propertyReport.findMany({
+                skip: Number(skip),
+                take: Number(take),
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    reporter: { select: { id: true, name: true, email: true } },
+                    house: { select: { id: true, name: true, status: true, address: true } },
+                }
+            }),
+            this.prisma.propertyReport.count()
+        ]);
+        return { items, total, skip: Number(skip), take: Number(take) };
+    }
+    async getSupportRequests(skip = 0, take = 50) {
+        const [items, total] = await Promise.all([
+            this.prisma.supportTicket.findMany({
+                skip: Number(skip),
+                take: Number(take),
+                orderBy: { updatedAt: 'desc' },
+                include: {
+                    user: { select: { id: true, name: true, email: true, role: true } },
+                    _count: { select: { messages: true } }
+                }
+            }),
+            this.prisma.supportTicket.count()
+        ]);
+        return { items, total, skip: Number(skip), take: Number(take) };
+    }
+    async updateReportStatus(type, id, status) {
+        if (type === 'user') {
+            return this.prisma.userReport.update({ where: { id }, data: { status } });
+        }
+        return this.prisma.propertyReport.update({ where: { id }, data: { status } });
+    }
+    async updateTicketStatus(id, status) {
+        return this.prisma.supportTicket.update({ where: { id }, data: { status } });
     }
 };
 exports.AdminService = AdminService;

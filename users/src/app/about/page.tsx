@@ -3,10 +3,9 @@
 export const dynamic = 'force-dynamic';
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Mail, Users, Briefcase, Target, Building2 } from "lucide-react";
-
-type Lang = "vi" | "en" | "zh" | "es";
+import { useMemo } from "react";
+import { Mail, Users, Briefcase, Target, Building2, ChevronLeft } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 type AboutCopy = {
     aboutUs: string;
@@ -29,9 +28,9 @@ type AboutCopy = {
     homeBtn: string;
 };
 
-const COPY: Record<Lang, AboutCopy> = {
+const COPY: Record<string, AboutCopy> = {
     vi: {
-        aboutUs: "About Us",
+        aboutUs: "Về chúng tôi",
         title: "Giới thiệu về người sáng lập và dự án Rental Platform",
         intro:
             "Đây là phần giới thiệu chính thức về người tạo dự án và định hướng phát triển sản phẩm. Mục tiêu của nền tảng là giúp người thuê nhà và đội ngũ vận hành có trải nghiệm minh bạch, cập nhật nhanh và quản lý tập trung.",
@@ -84,7 +83,7 @@ const COPY: Record<Lang, AboutCopy> = {
             "Admins can create, update, and soft-delete property posts.",
             "Viewers can browse maps, view details, save favorites, and send messages.",
             "The dashboard supports system monitoring, live sessions, and audit logs.",
-            "The system is deployed in production on VPS with separated backend, database, and frontends.",
+            "The system is deployed in production on VPS with separated backend, database and frontends.",
         ],
         missionTitle: "Project Mission",
         missionDesc1:
@@ -164,35 +163,26 @@ const COPY: Record<Lang, AboutCopy> = {
     },
 };
 
-const LANGS: Array<{ key: Lang; label: string }> = [
-    { key: "vi", label: "VI" },
-    { key: "en", label: "EN" },
-    { key: "zh", label: "中文" },
-    { key: "es", label: "ES" },
-];
-
 export default function AboutPage() {
-    const [lang, setLang] = useState<Lang>("vi");
-    const text = useMemo(() => COPY[lang], [lang]);
+    const { language } = useLanguage();
+    
+    const text = useMemo(() => {
+        // Fallback to English if the current language isn't explicitly supported in COPY
+        const supportedLang = ['vi', 'en', 'zh', 'es'].includes(language) ? language : 'en';
+        return COPY[supportedLang];
+    }, [language]);
 
     return (
         <div className="h-full overflow-y-auto bg-slate-100 text-slate-900 pb-28">
             <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
-                <div className="flex justify-end mb-3">
-                    <div className="inline-flex rounded-xl border border-slate-300 bg-white p-1 shadow-sm">
-                        {LANGS.map((item) => (
-                            <button
-                                key={item.key}
-                                onClick={() => setLang(item.key)}
-                                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${lang === item.key
-                                        ? "bg-slate-900 text-white"
-                                        : "text-slate-700 hover:bg-slate-100"
-                                    }`}
-                            >
-                                {item.label}
-                            </button>
-                        ))}
-                    </div>
+                <div className="mb-6">
+                    <Link 
+                        href="/profile" 
+                        className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors text-sm font-medium"
+                    >
+                        <ChevronLeft size={16} />
+                        <span>Trở lại Hồ sơ</span>
+                    </Link>
                 </div>
 
                 <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-10">
@@ -230,8 +220,8 @@ export default function AboutPage() {
                             <h2>{text.productTitle}</h2>
                         </div>
                         <ul className="mt-4 space-y-2 text-slate-700">
-                            {text.productItems.map((item) => (
-                                <li key={item}>- {item}</li>
+                            {text.productItems.map((item, idx) => (
+                                <li key={idx}>- {item}</li>
                             ))}
                         </ul>
                     </section>

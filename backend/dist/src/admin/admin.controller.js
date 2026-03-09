@@ -27,8 +27,8 @@ let AdminController = class AdminController {
         this.adminService = adminService;
         this.auditService = auditService;
     }
-    async getUsers(skip, take) {
-        return this.adminService.getAllUsers(skip, take);
+    async getUsers(skip, take, search, status) {
+        return this.adminService.getAllUsers(skip, take, search, status);
     }
     async getAdmins(skip, take) {
         return this.adminService.getAllAdmins(skip, take);
@@ -42,16 +42,16 @@ let AdminController = class AdminController {
     async createUser(body) {
         return this.adminService.createUser(body);
     }
-    async updateAdmin(id, body) {
+    async updateAdminInfo(id, body) {
         return this.adminService.updateAdmin(id, body);
     }
-    async changeRole(id, role) {
+    async changeAdminRole(id, role) {
         return this.adminService.changeRole(id, role);
     }
-    async changeStatus(id, status) {
+    async changeAdminStatus(id, status) {
         return this.adminService.changeStatus(id, status);
     }
-    async softDeleteAdmin(id) {
+    async deleteAdmin(id) {
         return this.adminService.softDeleteAdmin(id);
     }
     async restoreUser(id) {
@@ -60,8 +60,8 @@ let AdminController = class AdminController {
     async restoreHouse(id) {
         return this.adminService.restoreHouse(id);
     }
-    async getAuditLogs(skip, take, adminId, actionType, startDate, endDate) {
-        return this.auditService.getLogs({ skip, take, adminId, actionType, startDate, endDate });
+    async getAuditLogs(skip, take, adminId, actionType) {
+        return this.auditService.getLogs({ skip, take, adminId, actionType });
     }
     async getLoginLogs(skip, take, status) {
         return this.adminService.getLoginLogs(skip, take, status);
@@ -76,14 +76,18 @@ let AdminController = class AdminController {
 exports.AdminController = AdminController;
 __decorate([
     (0, common_1.Get)('users'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Query)('skip')),
     __param(1, (0, common_1.Query)('take')),
+    __param(2, (0, common_1.Query)('search')),
+    __param(3, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:paramtypes", [Number, Number, String, String]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "getUsers", null);
 __decorate([
     (0, common_1.Get)('admins'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Query)('skip')),
     __param(1, (0, common_1.Query)('take')),
     __metadata("design:type", Function),
@@ -100,6 +104,7 @@ __decorate([
 ], AdminController.prototype, "changeMyPassword", null);
 __decorate([
     (0, common_1.Post)('admins'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -107,6 +112,7 @@ __decorate([
 ], AdminController.prototype, "createAdmin", null);
 __decorate([
     (0, common_1.Post)('users'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -114,37 +120,42 @@ __decorate([
 ], AdminController.prototype, "createUser", null);
 __decorate([
     (0, common_1.Patch)('admins/:id'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
-], AdminController.prototype, "updateAdmin", null);
+], AdminController.prototype, "updateAdminInfo", null);
 __decorate([
     (0, common_1.Patch)('admins/:id/role'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)('role')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
-], AdminController.prototype, "changeRole", null);
+], AdminController.prototype, "changeAdminRole", null);
 __decorate([
     (0, common_1.Patch)('admins/:id/status'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)('status')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
-], AdminController.prototype, "changeStatus", null);
+], AdminController.prototype, "changeAdminStatus", null);
 __decorate([
     (0, common_1.Delete)('admins/:id'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], AdminController.prototype, "softDeleteAdmin", null);
+], AdminController.prototype, "deleteAdmin", null);
 __decorate([
     (0, common_1.Post)('users/:id/restore'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -152,6 +163,7 @@ __decorate([
 ], AdminController.prototype, "restoreUser", null);
 __decorate([
     (0, common_1.Post)('houses/:id/restore'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -159,14 +171,13 @@ __decorate([
 ], AdminController.prototype, "restoreHouse", null);
 __decorate([
     (0, common_1.Get)('audit-logs'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Query)('skip')),
     __param(1, (0, common_1.Query)('take')),
     __param(2, (0, common_1.Query)('adminId')),
     __param(3, (0, common_1.Query)('actionType')),
-    __param(4, (0, common_1.Query)('startDate')),
-    __param(5, (0, common_1.Query)('endDate')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number, String, String, String, String]),
+    __metadata("design:paramtypes", [Number, Number, String, String]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "getAuditLogs", null);
 __decorate([

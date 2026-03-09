@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import api from "@/api/axios";
 import PropertyCard from "@/components/PropertyCard";
+import PropertyList from "@/components/PropertyList";
 import { useAuth } from "@/context/useAuth";
 import { useLanguage, Language } from "@/context/LanguageContext";
 import EditPropertyModal from "@/components/EditPropertyModal";
@@ -574,35 +575,25 @@ export default function ProfilePage() {
             {activeTab === "favorites" && (
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-base font-bold text-gray-900">Saved Properties</h2>
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
-                    {favorites.length} {favorites.length === 1 ? "item" : "items"}
-                  </span>
+                  <h2 className="text-base font-bold text-gray-900">{t("saved_properties") || "Saved Properties"}</h2>
                 </div>
 
                 {loadingFavs ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {[1, 2, 3].map(i => (
-                      <div key={i} className="h-64 bg-gray-100 rounded-xl animate-pulse" />
+                      <div key={i} className="h-64 bg-gray-100 rounded-2xl animate-pulse" />
                     ))}
                   </div>
-                ) : favorites.length === 0 ? (
-                  <EmptyState
-                    icon={<Heart className="w-10 h-10 text-gray-300" />}
-                    title="No saved properties"
-                    description="Tap the heart icon on any property to save it here."
-                  />
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {favorites.map(property => (
-                      <PropertyCard
-                        key={property.id}
-                        property={property}
-                        isFavorite
-                        onToggleFavorite={handleRemoveFavorite}
-                      />
-                    ))}
-                  </div>
+                  <PropertyList
+                    properties={favorites}
+                    onToggleFavorite={handleRemoveFavorite}
+                    favorites={new Set(favorites.map(f => f.id))}
+                    emptyIcon={<Heart className="w-10 h-10" />}
+                    emptyTitle={t("no_saved_properties") || "No saved properties"}
+                    emptyDescription={t("save_properties_hint") || "Tap the heart icon on any property to save it here."}
+                    storageKey="saved_properties_view_mode"
+                  />
                 )}
               </div>
             )}
@@ -611,35 +602,33 @@ export default function ProfilePage() {
             {activeTab === "my-properties" && (
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-base font-bold text-gray-900">My Listings</h2>
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
-                    {myHouses.length} {myHouses.length === 1 ? "listing" : "listings"}
-                  </span>
+                  <h2 className="text-base font-bold text-gray-900">{t("my_listings_title") || "My Listings"}</h2>
                 </div>
 
                 {loadingMyHouses ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[1, 2].map(i => (
-                      <div key={i} className="h-52 bg-gray-100 rounded-xl animate-pulse" />
+                      <div key={i} className="h-52 bg-gray-100 rounded-2xl animate-pulse" />
                     ))}
                   </div>
-                ) : myHouses.length === 0 ? (
-                  <EmptyState
-                    icon={<Building2 className="w-10 h-10 text-gray-300" />}
-                    title="No listings yet"
-                    description="Use the + button at the bottom to add your first property."
-                  />
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {myHouses.map(house => (
-                      <MyHouseCard
-                        key={house.id}
-                        house={house}
-                        onEdit={() => setEditingHouse(house)}
-                        onDelete={() => handleDeleteHouse(house.id)}
-                      />
-                    ))}
-                  </div>
+                  <PropertyList
+                    properties={myHouses.map(h => ({
+                        ...h,
+                        title: h.name,
+                        image_url: h.image_url_1 || '',
+                        area: h.square || 0,
+                        bedrooms: h.bedrooms || 0,
+                        price: h.price || 0,
+                        status: h.status || 'AVAILABLE'
+                    }))}
+                    onEdit={(property) => setEditingHouse(property as any)}
+                    onDelete={(id) => handleDeleteHouse(id)}
+                    emptyIcon={<Building2 className="w-10 h-10" />}
+                    emptyTitle={t("no_listings_yet") || "No listings yet"}
+                    emptyDescription={t("add_listing_hint") || "Use the + button at the bottom to add your first property."}
+                    storageKey="my_listings_view_mode"
+                  />
                 )}
               </div>
             )}
@@ -787,12 +776,12 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                <Link href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
+                <Link href="/profile/help-support" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
                   <HelpCircle className="w-5 h-5 text-gray-400" />
                   {t("help_support")}
                 </Link>
                 
-                <Link href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
+                <Link href="/about" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
                   <Info className="w-5 h-5 text-gray-400" />
                   {t("about")}
                 </Link>
@@ -810,90 +799,9 @@ export default function ProfilePage() {
 function EmptyState({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-      <div className="mb-4">{icon}</div>
+      <div className="mb-4 text-gray-300">{icon}</div>
       <h3 className="text-base font-bold text-gray-800 mb-1">{title}</h3>
       <p className="text-sm text-gray-400 max-w-xs">{description}</p>
-    </div>
-  );
-}
-
-function MyHouseCard({
-  house,
-  onEdit,
-  onDelete,
-}: {
-  house: MyHouse;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md hover:border-teal-100 transition-all duration-200 group">
-      {/* Image */}
-      <div className="relative h-44 bg-gray-100 overflow-hidden">
-        {house.image_url_1 ? (
-          <img
-            src={house.image_url_1}
-            alt={resolvePropertyLabel(house)}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-300">
-            <Home size={36} />
-            <span className="text-xs text-gray-400">No image</span>
-          </div>
-        )}
-
-        {/* Overlay actions */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-        {/* Status badge */}
-        {house.status && (
-          <span className={`absolute top-3 left-3 px-2.5 py-1 text-xs font-semibold rounded-full capitalize ${getStatusColor(house.status)}`}>
-            {house.status.toLowerCase()}
-          </span>
-        )}
-
-        {/* Action buttons */}
-        <div className="absolute top-3 right-3 flex gap-1.5">
-          <button
-            onClick={onEdit}
-            className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg shadow flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors"
-            title="Edit"
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            onClick={onDelete}
-            className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg shadow flex items-center justify-center text-rose-500 hover:bg-rose-50 transition-colors"
-            title="Delete"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      </div>
-
-      {/* Info */}
-      <div className="p-4">
-        <h4 className="font-semibold text-gray-900 truncate text-sm mb-3 capitalize">{resolvePropertyLabel(house)}</h4>
-
-        <div className="flex items-center gap-3 flex-wrap">
-          {house.price && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full">
-              <DollarSign size={11} />{formatPrice(house.price)}
-            </span>
-          )}
-          {house.bedrooms && (
-            <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full">
-              <BedDouble size={11} />{house.bedrooms} BR
-            </span>
-          )}
-          {house.square && (
-            <span className="text-xs text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full">
-              {house.square} m²
-            </span>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

@@ -56,10 +56,32 @@ export class HousesService {
         }
     }
 
-    async getHouses(skip: number = 0, take: number = 10, ownerId?: string) {
+    async getHouses(skip: number = 0, take: number = 10, ownerId?: string, search?: string, status?: string) {
         const prismaAny = this.prisma as any;
-        const whereClause: any = { deleted_at: null };
-        if (ownerId) { whereClause.owner_id = ownerId; }
+        const whereClause: any = {};
+
+        if (status === 'deleted') {
+            whereClause.deleted_at = { not: null };
+        } else {
+            whereClause.deleted_at = null;
+            if (status) {
+                whereClause.status = status;
+            }
+        }
+
+        if (ownerId) { 
+            whereClause.owner_id = ownerId; 
+        }
+
+        if (search) {
+            whereClause.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { address: { contains: search, mode: 'insensitive' } },
+                { district: { contains: search, mode: 'insensitive' } },
+                { city: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+
         const [data, total] = await Promise.all([
             prismaAny.house.findMany({
                 where: whereClause,
@@ -86,6 +108,7 @@ export class HousesService {
                     is_private_bathroom: true,
                     latitude: true,
                     longitude: true,
+                    deleted_at: true,
                     owner: {
                         select: {
                             id: true,

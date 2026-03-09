@@ -1,25 +1,39 @@
-.overviewGrid {
+.overview {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.kpiGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
 }
 
 .statCard {
     padding: 24px;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 16px;
-    transition: transform 0.2s;
+    position: relative;
+    overflow: hidden;
 }
 
 .statCard:hover {
-    transform: translateY(-2px);
+    border-color: var(--border-strong);
+    background: var(--card-hover);
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .iconBox {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -32,14 +46,56 @@
 
 .statLabel {
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     font-weight: 500;
-    margin-bottom: 4px;
 }
 
 .statValue {
     color: var(--text-primary);
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.2;
+    margin-top: 4px;
+}
+
+.statTrend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.trendUp { color: var(--success-color); }
+.trendDown { color: var(--danger-color); }
+
+.chartsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    gap: 24px;
+}
+
+.chartCard {
+    padding: 24px;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.chartHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chartTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.chartActions {
+    display: flex;
+    gap: 8px;
 }

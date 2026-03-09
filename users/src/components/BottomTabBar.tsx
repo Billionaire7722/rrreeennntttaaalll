@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Map, User, Plus } from 'lucide-react';
+import { Home, User, Plus } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/useAuth';
 import api from '@/api/axios';
@@ -25,13 +25,15 @@ export default function BottomTabBar() {
             <div className="h-[75px]" />
             <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-100 flex items-center h-[70px] z-[1200] shadow-[0_-8px_20px_rgba(0,0,0,0.05)] px-2">
 
-                {/* Map tab */}
+                {/* Homepage tab */}
                 <Link
                     href="/"
                     className="flex-1 flex flex-col items-center justify-center gap-1 transition-all hover:opacity-70"
                 >
-                    <Map size={22} className={pathname === '/map' ? 'text-teal-600' : 'text-gray-400'} />
-                    <span className={`text-[10px] font-bold uppercase tracking-tighter ${pathname === '/map' ? 'text-teal-600' : 'text-gray-400'}`}>Map</span>
+                    <Home size={22} className={pathname === '/' ? 'text-teal-600' : 'text-gray-400'} />
+                    <span className={`text-[10px] font-bold uppercase tracking-tighter ${pathname === '/' ? 'text-teal-600' : 'text-gray-400'}`}>
+                        {t('homepage')}
+                    </span>
                 </Link>
 
                 {/* Center Add Button */}
@@ -51,7 +53,9 @@ export default function BottomTabBar() {
                             <Plus size={30} strokeWidth={3} />
                         </div>
                     </button>
-                    <span className="mt-8 text-[10px] font-black text-teal-600 uppercase tracking-widest">Đăng tin</span>
+                    <span className="mt-8 text-[10px] font-black text-teal-600 uppercase tracking-widest">
+                        {t('post_listing_tab')}
+                    </span>
                 </div>
 
 
@@ -61,7 +65,9 @@ export default function BottomTabBar() {
                     className="flex-1 flex flex-col items-center justify-center gap-1 transition-all hover:opacity-70"
                 >
                     <User size={22} className={pathname === '/profile' ? 'text-teal-600' : 'text-gray-400'} />
-                    <span className={`text-[10px] font-bold uppercase tracking-tighter ${pathname === '/profile' ? 'text-teal-600' : 'text-gray-400'}`}>Tôi</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-tighter ${pathname === '/profile' ? 'text-teal-600' : 'text-gray-400'}`}>
+                        {t('profile_tab')}
+                    </span>
                 </Link>
             </div>
 

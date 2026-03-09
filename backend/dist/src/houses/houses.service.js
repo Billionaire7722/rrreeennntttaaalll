@@ -65,11 +65,28 @@ let HousesService = class HousesService {
             throw new common_1.ForbiddenException('You cannot manage houses created by others');
         }
     }
-    async getHouses(skip = 0, take = 10, ownerId) {
+    async getHouses(skip = 0, take = 10, ownerId, search, status) {
         const prismaAny = this.prisma;
-        const whereClause = { deleted_at: null };
+        const whereClause = {};
+        if (status === 'deleted') {
+            whereClause.deleted_at = { not: null };
+        }
+        else {
+            whereClause.deleted_at = null;
+            if (status) {
+                whereClause.status = status;
+            }
+        }
         if (ownerId) {
             whereClause.owner_id = ownerId;
+        }
+        if (search) {
+            whereClause.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { address: { contains: search, mode: 'insensitive' } },
+                { district: { contains: search, mode: 'insensitive' } },
+                { city: { contains: search, mode: 'insensitive' } },
+            ];
         }
         const [data, total] = await Promise.all([
             prismaAny.house.findMany({
@@ -97,6 +114,7 @@ let HousesService = class HousesService {
                     is_private_bathroom: true,
                     latitude: true,
                     longitude: true,
+                    deleted_at: true,
                     owner: {
                         select: {
                             id: true,

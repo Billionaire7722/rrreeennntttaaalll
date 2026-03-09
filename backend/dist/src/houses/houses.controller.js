@@ -45,13 +45,13 @@ let HousesController = class HousesController {
         }
         return { role: null, userId: null };
     }
-    async getHouses(skip, take, req) {
+    async getHouses(skip, take, search, status, req) {
         try {
             const skipNum = skip ? parseInt(skip, 10) : 0;
             const takeNum = take ? parseInt(take, 10) : 10;
             const { role, userId } = this.getUserFromRequest(req);
             const isAdmin = role === roles_enum_1.Role.SUPER_ADMIN;
-            const result = await this.housesService.getHouses(Number.isNaN(skipNum) ? 0 : skipNum, Number.isNaN(takeNum) ? 10 : takeNum, undefined);
+            const result = await this.housesService.getHouses(Number.isNaN(skipNum) ? 0 : skipNum, Number.isNaN(takeNum) ? 10 : takeNum, undefined, search, status);
             if (!isAdmin && result && result.data) {
                 result.data.forEach((h) => delete h.contact_phone);
             }
@@ -94,9 +94,11 @@ __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)('skip')),
     __param(1, (0, common_1.Query)('take')),
-    __param(2, (0, common_1.Request)()),
+    __param(2, (0, common_1.Query)('search')),
+    __param(3, (0, common_1.Query)('status')),
+    __param(4, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [String, String, String, String, Object]),
     __metadata("design:returntype", Promise)
 ], HousesController.prototype, "getHouses", null);
 __decorate([

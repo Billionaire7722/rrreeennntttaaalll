@@ -5,12 +5,14 @@ export declare class AdminController {
     private readonly adminService;
     private readonly auditService;
     constructor(adminService: AdminService, auditService: AuditService);
-    getUsers(skip?: number, take?: number): Promise<{
+    getUsers(skip?: number, take?: number, search?: string, status?: string): Promise<{
         users: {
             id: string;
+            name: string;
+            firstName: string | null;
+            lastName: string | null;
             username: string;
             email: string;
-            name: string;
             phone: string | null;
             avatarUrl: string | null;
             coverUrl: string | null;
@@ -30,9 +32,9 @@ export declare class AdminController {
     getAdmins(skip?: number, take?: number): Promise<{
         admins: {
             id: string;
+            name: string;
             username: string;
             email: string;
-            name: string;
             phone: string | null;
             role: import("@prisma/client").$Enums.Role;
             status: string;
@@ -49,60 +51,42 @@ export declare class AdminController {
     }): Promise<{
         message: string;
     }>;
-    createAdmin(body: {
-        name: string;
-        username: string;
-        email: string;
-        phone?: string;
-        password: string;
-    }): Promise<{
+    createAdmin(body: any): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
-        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
-    createUser(body: {
-        name: string;
-        username: string;
-        email: string;
-        phone?: string;
-        password: string;
-    }): Promise<{
+    createUser(body: any): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
-        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
-    updateAdmin(id: string, body: {
-        name?: string;
-        username?: string;
-        email?: string;
-        phone?: string;
-        password?: string;
-    }): Promise<{
+    updateAdminInfo(id: string, body: any): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
-        name: string;
         phone: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
-    changeRole(id: string, role: Role): Promise<{
+    changeAdminRole(id: string, role: Role): Promise<{
         id: string;
         name: string;
         role: import("@prisma/client").$Enums.Role;
     }>;
-    changeStatus(id: string, status: string): Promise<{
+    changeAdminStatus(id: string, status: string): Promise<{
         id: string;
         name: string;
         status: string;
     }>;
-    softDeleteAdmin(id: string): Promise<{
+    deleteAdmin(id: string): Promise<{
         id: string;
         name: string;
         deleted_at: Date | null;
@@ -145,11 +129,11 @@ export declare class AdminController {
         contact_phone: string | null;
         owner_id: string | null;
     }>;
-    getAuditLogs(skip?: number, take?: number, adminId?: string, actionType?: string, startDate?: string, endDate?: string): Promise<{
-        items: {
+    getAuditLogs(skip?: number, take?: number, adminId?: string, actionType?: string): Promise<{
+        items: ({
+            actor: never;
+        } & {
             id: string;
-            ipAddress: string | null;
-            userAgent: string | null;
             actorId: string | null;
             actorRole: string | null;
             actionType: string;
@@ -157,22 +141,26 @@ export declare class AdminController {
             entityId: string;
             beforeData: import("@prisma/client/runtime/client").JsonValue | null;
             afterData: import("@prisma/client/runtime/client").JsonValue | null;
+            ipAddress: string | null;
+            userAgent: string | null;
             createdAt: Date;
-        }[];
+        })[];
         total: number;
         skip: number;
         take: number;
     }>;
     getLoginLogs(skip?: number, take?: number, status?: string): Promise<{
-        items: {
+        items: ({
+            user: never;
+        } & {
             id: string;
             role: string | null;
-            userId: string | null;
-            success: boolean;
             ipAddress: string | null;
             userAgent: string | null;
+            userId: string | null;
+            success: boolean;
             timestamp: Date;
-        }[];
+        })[];
         total: number;
         skip: number;
         take: number;

@@ -17,18 +17,19 @@ export class AdminController {
     ) { }
 
     @Get('users')
+    @Roles(Role.SUPER_ADMIN)
     async getUsers(
         @Query('skip') skip?: number,
-        @Query('take') take?: number
+        @Query('take') take?: number,
+        @Query('search') search?: string,
+        @Query('status') status?: string,
     ) {
-        return this.adminService.getAllUsers(skip, take);
+        return this.adminService.getAllUsers(skip, take, search, status);
     }
 
     @Get('admins')
-    async getAdmins(
-        @Query('skip') skip?: number,
-        @Query('take') take?: number
-    ) {
+    @Roles(Role.SUPER_ADMIN)
+    async getAdmins(@Query('skip') skip?: number, @Query('take') take?: number) {
         return this.adminService.getAllAdmins(skip, take);
     }
 
@@ -41,29 +42,26 @@ export class AdminController {
     }
 
     @Post('admins')
-    async createAdmin(
-        @Body() body: { name: string; username: string; email: string; phone?: string; password: string }
-    ) {
+    @Roles(Role.SUPER_ADMIN)
+    async createAdmin(@Body() body: any) {
         return this.adminService.createAdmin(body);
     }
 
     @Post('users')
-    async createUser(
-        @Body() body: { name: string; username: string; email: string; phone?: string; password: string }
-    ) {
+    @Roles(Role.SUPER_ADMIN)
+    async createUser(@Body() body: any) {
         return this.adminService.createUser(body);
     }
 
     @Patch('admins/:id')
-    async updateAdmin(
-        @Param('id') id: string,
-        @Body() body: { name?: string; username?: string; email?: string; phone?: string; password?: string }
-    ) {
+    @Roles(Role.SUPER_ADMIN)
+    async updateAdminInfo(@Param('id') id: string, @Body() body: any) {
         return this.adminService.updateAdmin(id, body);
     }
 
     @Patch('admins/:id/role')
-    async changeRole(
+    @Roles(Role.SUPER_ADMIN)
+    async changeAdminRole(
         @Param('id') id: string,
         @Body('role') role: Role
     ) {
@@ -71,7 +69,8 @@ export class AdminController {
     }
 
     @Patch('admins/:id/status')
-    async changeStatus(
+    @Roles(Role.SUPER_ADMIN)
+    async changeAdminStatus(
         @Param('id') id: string,
         @Body('status') status: string
     ) {
@@ -79,30 +78,32 @@ export class AdminController {
     }
 
     @Delete('admins/:id')
-    async softDeleteAdmin(@Param('id') id: string) {
+    @Roles(Role.SUPER_ADMIN)
+    async deleteAdmin(@Param('id') id: string) {
         return this.adminService.softDeleteAdmin(id);
     }
 
     @Post('users/:id/restore')
+    @Roles(Role.SUPER_ADMIN)
     async restoreUser(@Param('id') id: string) {
         return this.adminService.restoreUser(id);
     }
 
     @Post('houses/:id/restore')
+    @Roles(Role.SUPER_ADMIN)
     async restoreHouse(@Param('id') id: string) {
         return this.adminService.restoreHouse(id);
     }
 
     @Get('audit-logs')
+    @Roles(Role.SUPER_ADMIN)
     async getAuditLogs(
         @Query('skip') skip?: number,
         @Query('take') take?: number,
         @Query('adminId') adminId?: string,
         @Query('actionType') actionType?: string,
-        @Query('startDate') startDate?: string,
-        @Query('endDate') endDate?: string
     ) {
-        return this.auditService.getLogs({ skip, take, adminId, actionType, startDate, endDate });
+        return this.auditService.getLogs({ skip, take, adminId, actionType });
     }
 
     @Get('login-logs')

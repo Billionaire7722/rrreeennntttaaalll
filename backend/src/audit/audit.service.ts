@@ -61,7 +61,16 @@ export class AuditService {
                 where,
                 skip: Number(skip),
                 take: Number(take),
-                orderBy: { createdAt: 'desc' }
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    actor: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true
+                        }
+                    }
+                }
             }),
             this.prisma.auditLog.count({ where })
         ]);

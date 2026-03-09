@@ -1,15 +1,16 @@
 .tableContainer {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    height: 100%;
+    gap: 16px;
 }
 
 .tableHeader {
-    padding: 20px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--border-color);
+    gap: 24px;
+    margin-bottom: 8px;
 }
 
 .tableHeader h2 {
@@ -19,41 +20,93 @@
 
 .headerActions {
     display: flex;
+    align-items: center;
     gap: 12px;
 }
 
-.totalBadge {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+.tableControls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 0;
 }
 
-.tableScroll {
-    overflow-x: auto;
+.searchWrapper {
+    position: relative;
     flex: 1;
+    max-width: 320px;
 }
 
-.actions {
+.searchIcon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.searchInput {
+    padding-left: 36px !important;
+}
+
+.filterGroup {
     display: flex;
     gap: 8px;
 }
 
-.actions .btn {
-    padding: 6px 10px;
+.tableWrapper {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    overflow: hidden;
+}
+
+.tableScroll {
+    overflow-x: auto;
+}
+
+.actions {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
 }
 
 .pagination {
-    padding: 16px 24px;
+    padding: 12px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-top: 1px solid var(--border-color);
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.05);
 }
 
 .pageText {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--border-color);
+    border: 1px solid var(--border-strong);
+}
+
+.userCell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.userName {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.userEmail {
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }

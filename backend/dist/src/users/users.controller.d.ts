@@ -84,12 +84,12 @@ export declare class UsersController {
         id: string;
         created_at: Date;
         userId: string;
-        receiverId: string | null;
+        content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
-        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
+        receiverId: string | null;
     })[]>;
     markConversationSeen(req: any, otherId: string): Promise<{
         updated: number;
@@ -98,12 +98,12 @@ export declare class UsersController {
         id: string;
         created_at: Date;
         userId: string;
-        receiverId: string | null;
+        content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
-        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
+        receiverId: string | null;
     }>;
     getViewerMessages(req: any, skip?: number, take?: number): Promise<{
         items: ({
@@ -125,12 +125,12 @@ export declare class UsersController {
             id: string;
             created_at: Date;
             userId: string;
-            receiverId: string | null;
+            content: string;
             senderId: string | null;
             senderRole: import("@prisma/client").$Enums.Role;
-            content: string;
             seen_at: Date | null;
             seen_by_role: import("@prisma/client").$Enums.Role | null;
+            receiverId: string | null;
         })[];
         skip: number;
         take: number;
@@ -139,12 +139,12 @@ export declare class UsersController {
         id: string;
         created_at: Date;
         userId: string;
-        receiverId: string | null;
+        content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
-        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
+        receiverId: string | null;
     }>;
     markAdminConversationSeen(req: any, viewerId: string): Promise<{
         updated: number;

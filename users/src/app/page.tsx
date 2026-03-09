@@ -283,36 +283,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {isAboutCardOpen ? (
-          <div className="absolute bottom-24 left-4 z-[40] max-w-[310px] bg-white/95 backdrop-blur border border-slate-200 shadow-sm rounded-xl p-3">
-            <button
-              onClick={() => setIsAboutCardOpen(false)}
-              className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-white border border-slate-300 shadow-sm flex items-center justify-center hover:bg-slate-100 transition"
-              aria-label="Close About Us"
-            >
-              <X size={14} className="text-slate-700" />
-            </button>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">About Us</p>
-            <h3 className="mt-1 text-sm font-bold text-slate-900">Giới thiệu người sáng lập và sứ mệnh dự án</h3>
-            <p className="mt-1 text-xs text-slate-600 leading-5">
-              Tìm hiểu về người tạo ứng dụng, định hướng phát triển và lời mời cộng tác cho các lập trình viên.
-            </p>
-            <button
-              onClick={() => router.push('/about')}
-              className="mt-2 inline-flex items-center rounded-md bg-slate-900 text-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-700 transition"
-            >
-              Xem About Us
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setIsAboutCardOpen(true)}
-            className="absolute bottom-24 left-4 z-[40] w-11 h-11 rounded-full bg-slate-900 text-white shadow-md border border-slate-700 flex items-center justify-center hover:bg-slate-700 transition"
-            aria-label="Open About Us"
-          >
-            <Info size={18} />
-          </button>
-        )}
       </div>
     </div>
   );

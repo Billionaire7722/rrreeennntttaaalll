@@ -22,10 +22,10 @@ export declare class AuditService {
         startDate?: string;
         endDate?: string;
     }): Promise<{
-        items: {
+        items: ({
+            actor: never;
+        } & {
             id: string;
-            ipAddress: string | null;
-            userAgent: string | null;
             actorId: string | null;
             actorRole: string | null;
             actionType: string;
@@ -33,8 +33,10 @@ export declare class AuditService {
             entityId: string;
             beforeData: import("@prisma/client/runtime/client").JsonValue | null;
             afterData: import("@prisma/client/runtime/client").JsonValue | null;
+            ipAddress: string | null;
+            userAgent: string | null;
             createdAt: Date;
-        }[];
+        })[];
         total: number;
         skip: number;
         take: number;

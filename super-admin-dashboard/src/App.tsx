@@ -10,6 +10,10 @@ import { LoginLogs } from './pages/LoginLogs';
 import { Metrics } from './pages/Metrics';
 import { LiveMonitor } from './pages/LiveMonitor';
 import { HousesSheet } from './pages/HousesSheet';
+import { UserReports } from './pages/UserReports';
+import { PropertyReports } from './pages/PropertyReports';
+import { SupportRequests } from './pages/SupportRequests';
+import { PlaceholderPage } from './pages/PlaceholderPage';
 
 function App() {
   return (
@@ -20,12 +24,28 @@ function App() {
 
           <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<Overview />} />
+            
+            {/* User Management */}
             <Route path="users" element={<Users />} />
+            
+            {/* Properties Management */}
             <Route path="houses" element={<HousesSheet />} />
-            <Route path="audit-logs" element={<AuditLogs />} />
+            <Route path="houses-sheet" element={<HousesSheet />} />
+            
+            {/* Reports & Support */}
+            <Route path="reports/users" element={<UserReports />} />
+            <Route path="reports/properties" element={<PropertyReports />} />
+            <Route path="reports/support" element={<SupportRequests />} />
+            
+            {/* System Monitoring */}
             <Route path="login-logs" element={<LoginLogs />} />
-            <Route path="metrics" element={<Metrics />} />
+            <Route path="login-attempts" element={<PlaceholderPage title="Login Attempts" />} />
+            <Route path="audit-logs" element={<AuditLogs />} />
             <Route path="live-monitor" element={<LiveMonitor />} />
+            
+            {/* Analytics */}
+            <Route path="metrics" element={<Metrics />} />
+            <Route path="growth" element={<PlaceholderPage title="Growth Charts" />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

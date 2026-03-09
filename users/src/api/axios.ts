@@ -16,7 +16,7 @@ const resolveApiBaseUrl = () => {
         return `${window.location.protocol}//${window.location.hostname}:3000`;
     }
 
-    return 'http://localhost:3000';
+    return 'http://127.0.0.1:3000';
 };
 
 const api = axios.create({
