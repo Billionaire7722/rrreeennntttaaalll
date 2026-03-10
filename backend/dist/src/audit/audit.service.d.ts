@@ -23,19 +23,23 @@ export declare class AuditService {
         endDate?: string;
     }): Promise<{
         items: ({
-            actor: never;
+            actor: {
+                id: string;
+                email: string;
+                name: string;
+            } | null;
         } & {
             id: string;
-            actorId: string | null;
+            ipAddress: string | null;
+            userAgent: string | null;
             actorRole: string | null;
             actionType: string;
             entityType: string;
             entityId: string;
             beforeData: import("@prisma/client/runtime/client").JsonValue | null;
             afterData: import("@prisma/client/runtime/client").JsonValue | null;
-            ipAddress: string | null;
-            userAgent: string | null;
             createdAt: Date;
+            actorId: string | null;
         })[];
         total: number;
         skip: number;

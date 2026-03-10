@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -62,21 +62,29 @@ interface MapProps {
 // Component to handle map bound changes and emitting events
 function MapEvents({ onBoundsChange, setUserLocation }: { onBoundsChange?: (bounds: string) => void, setUserLocation: (c: [number, number]) => void }) {
     const map = useMap();
+    const onBoundsChangeRef = useRef(onBoundsChange);
+
+    useEffect(() => {
+        onBoundsChangeRef.current = onBoundsChange;
+    }, [onBoundsChange]);
 
     useEffect(() => {
         // Automatically find user location on mount silently
         map.locate();
 
-        map.on('locationfound', (e) => {
+        const handleLocationFound = (e: L.LocationEvent) => {
             setUserLocation([e.latlng.lat, e.latlng.lng]);
-        });
+        };
 
-        if (!onBoundsChange) return;
+        map.on('locationfound', handleLocationFound);
 
         const handleMoveEnd = () => {
+            const cb = onBoundsChangeRef.current;
+            if (!cb) return;
+
             const bounds = map.getBounds();
             const bboxString = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
-            onBoundsChange(bboxString);
+            cb(bboxString);
         };
 
         map.on('moveend', handleMoveEnd);
@@ -85,9 +93,10 @@ function MapEvents({ onBoundsChange, setUserLocation }: { onBoundsChange?: (boun
         handleMoveEnd();
 
         return () => {
+            map.off('locationfound', handleLocationFound);
             map.off('moveend', handleMoveEnd);
         };
-    }, [map, onBoundsChange]);
+    }, [map, setUserLocation]);
 
     return null;
 }

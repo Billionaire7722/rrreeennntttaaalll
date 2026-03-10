@@ -8,11 +8,11 @@ export declare class AdminService {
     getAllUsers(skip?: number, take?: number, search?: string, status?: string): Promise<{
         users: {
             id: string;
+            username: string;
+            email: string;
             name: string;
             firstName: string | null;
             lastName: string | null;
-            username: string;
-            email: string;
             phone: string | null;
             avatarUrl: string | null;
             coverUrl: string | null;
@@ -32,9 +32,9 @@ export declare class AdminService {
     getAllAdmins(skip?: number, take?: number): Promise<{
         admins: {
             id: string;
-            name: string;
             username: string;
             email: string;
+            name: string;
             phone: string | null;
             role: import("@prisma/client").$Enums.Role;
             status: string;
@@ -53,9 +53,9 @@ export declare class AdminService {
         password?: string;
     }): Promise<{
         id: string;
-        name: string;
         username: string;
         email: string;
+        name: string;
         phone: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
@@ -118,14 +118,19 @@ export declare class AdminService {
     }>;
     getLoginLogs(skip?: number, take?: number, status?: string): Promise<{
         items: ({
-            user: never;
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                role: import("@prisma/client").$Enums.Role;
+            } | null;
         } & {
             id: string;
             role: string | null;
             userId: string | null;
+            success: boolean;
             ipAddress: string | null;
             userAgent: string | null;
-            success: boolean;
             timestamp: Date;
         })[];
         total: number;
@@ -167,9 +172,9 @@ export declare class AdminService {
         password: string;
     }): Promise<{
         id: string;
-        name: string;
         username: string;
         email: string;
+        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
@@ -181,9 +186,9 @@ export declare class AdminService {
         password: string;
     }): Promise<{
         id: string;
-        name: string;
         username: string;
         email: string;
+        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
@@ -206,23 +211,109 @@ export declare class AdminService {
         take: number;
     }>;
     getUserReports(skip?: number, take?: number): Promise<{
-        items: any;
-        total: any;
+        items: ({
+            reporter: {
+                id: string;
+                email: string;
+                name: string;
+            };
+            target: {
+                id: string;
+                email: string;
+                name: string;
+                status: string;
+            };
+        } & {
+            id: string;
+            status: string;
+            createdAt: Date;
+            reporterId: string;
+            targetId: string;
+            reason: string;
+            details: string | null;
+            updatedAt: Date;
+        })[];
+        total: number;
         skip: number;
         take: number;
     }>;
     getPropertyReports(skip?: number, take?: number): Promise<{
-        items: any;
-        total: any;
+        items: ({
+            house: {
+                id: string;
+                name: string;
+                status: string | null;
+                address: string;
+            };
+            reporter: {
+                id: string;
+                email: string;
+                name: string;
+            };
+        } & {
+            id: string;
+            status: string;
+            houseId: string;
+            createdAt: Date;
+            reporterId: string;
+            reason: string;
+            details: string | null;
+            updatedAt: Date;
+        })[];
+        total: number;
         skip: number;
         take: number;
     }>;
     getSupportRequests(skip?: number, take?: number): Promise<{
-        items: any;
-        total: any;
+        items: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                role: import("@prisma/client").$Enums.Role;
+            };
+            _count: {
+                messages: number;
+            };
+        } & {
+            id: string;
+            status: string;
+            userId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            subject: string;
+            priority: string;
+        })[];
+        total: number;
         skip: number;
         take: number;
     }>;
-    updateReportStatus(type: 'user' | 'property', id: string, status: string): Promise<any>;
-    updateTicketStatus(id: string, status: string): Promise<any>;
+    updateReportStatus(type: 'user' | 'property', id: string, status: string): Promise<{
+        id: string;
+        status: string;
+        createdAt: Date;
+        reporterId: string;
+        targetId: string;
+        reason: string;
+        details: string | null;
+        updatedAt: Date;
+    } | {
+        id: string;
+        status: string;
+        houseId: string;
+        createdAt: Date;
+        reporterId: string;
+        reason: string;
+        details: string | null;
+        updatedAt: Date;
+    }>;
+    updateTicketStatus(id: string, status: string): Promise<{
+        id: string;
+        status: string;
+        userId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        subject: string;
+        priority: string;
+    }>;
 }

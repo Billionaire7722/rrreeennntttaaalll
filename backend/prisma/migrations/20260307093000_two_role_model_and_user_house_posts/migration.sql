@@ -6,7 +6,7 @@ BEGIN
         SELECT 1
         FROM pg_enum
         WHERE enumlabel = 'ADMIN'
-          AND enumtypid = 'Role'::regtype
+          AND enumtypid = '"Role"'::regtype
     ) THEN
         UPDATE "User"
         SET role = 'USER'

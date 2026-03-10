@@ -266,7 +266,6 @@ export default function HomePage() {
       <div id="tour-map" className="flex-1 relative">
         <InteractiveMap
           properties={filteredProperties}
-          onBoundsChange={() => { }}
         />
 
         <div className="absolute top-4 left-4 sm:left-[60px] z-[40] flex gap-2">

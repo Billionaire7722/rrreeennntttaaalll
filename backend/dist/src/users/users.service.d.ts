@@ -72,6 +72,7 @@ export declare class UsersService {
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
+        ticketId: string | null;
     })[]>;
     getConversations(userId: string): Promise<any[]>;
     sendMessage(userId: string, sendMessageDto: SendMessageDto): Promise<{
@@ -84,6 +85,7 @@ export declare class UsersService {
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
+        ticketId: string | null;
     }>;
     getViewerMessages(adminId: string, adminRole: string, skip?: number, take?: number): Promise<{
         items: ({
@@ -111,6 +113,7 @@ export declare class UsersService {
             seen_at: Date | null;
             seen_by_role: import("@prisma/client").$Enums.Role | null;
             receiverId: string | null;
+            ticketId: string | null;
         })[];
         skip: number;
         take: number;
@@ -125,6 +128,7 @@ export declare class UsersService {
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
+        ticketId: string | null;
     }>;
     markConversationSeen(userId: string, otherId: string): Promise<{
         updated: number;

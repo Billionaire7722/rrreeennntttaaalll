@@ -8,11 +8,11 @@ export declare class AdminController {
     getUsers(skip?: number, take?: number, search?: string, status?: string): Promise<{
         users: {
             id: string;
+            username: string;
+            email: string;
             name: string;
             firstName: string | null;
             lastName: string | null;
-            username: string;
-            email: string;
             phone: string | null;
             avatarUrl: string | null;
             coverUrl: string | null;
@@ -32,9 +32,9 @@ export declare class AdminController {
     getAdmins(skip?: number, take?: number): Promise<{
         admins: {
             id: string;
-            name: string;
             username: string;
             email: string;
+            name: string;
             phone: string | null;
             role: import("@prisma/client").$Enums.Role;
             status: string;
@@ -53,25 +53,25 @@ export declare class AdminController {
     }>;
     createAdmin(body: any): Promise<{
         id: string;
-        name: string;
         username: string;
         email: string;
+        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
     createUser(body: any): Promise<{
         id: string;
-        name: string;
         username: string;
         email: string;
+        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
     updateAdminInfo(id: string, body: any): Promise<{
         id: string;
-        name: string;
         username: string;
         email: string;
+        name: string;
         phone: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
@@ -131,19 +131,23 @@ export declare class AdminController {
     }>;
     getAuditLogs(skip?: number, take?: number, adminId?: string, actionType?: string): Promise<{
         items: ({
-            actor: never;
+            actor: {
+                id: string;
+                email: string;
+                name: string;
+            } | null;
         } & {
             id: string;
-            actorId: string | null;
+            ipAddress: string | null;
+            userAgent: string | null;
             actorRole: string | null;
             actionType: string;
             entityType: string;
             entityId: string;
             beforeData: import("@prisma/client/runtime/client").JsonValue | null;
             afterData: import("@prisma/client/runtime/client").JsonValue | null;
-            ipAddress: string | null;
-            userAgent: string | null;
             createdAt: Date;
+            actorId: string | null;
         })[];
         total: number;
         skip: number;
@@ -151,14 +155,19 @@ export declare class AdminController {
     }>;
     getLoginLogs(skip?: number, take?: number, status?: string): Promise<{
         items: ({
-            user: never;
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                role: import("@prisma/client").$Enums.Role;
+            } | null;
         } & {
             id: string;
             role: string | null;
-            ipAddress: string | null;
-            userAgent: string | null;
             userId: string | null;
             success: boolean;
+            ipAddress: string | null;
+            userAgent: string | null;
             timestamp: Date;
         })[];
         total: number;

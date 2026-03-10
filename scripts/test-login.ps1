@@ -1,5 +1,5 @@
 $body = @{
-    loginId = "ceo@rentalapp.com"
+    loginId = "superadmin@local.test"
     password = "Admin@123"
 } | ConvertTo-Json
 

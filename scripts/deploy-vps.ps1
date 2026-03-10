@@ -1,6 +1,7 @@
 param(
     [string]$CommitMessage = "",
     [string]$Services = "",
+    [string]$RepoUrl = "",
     [switch]$SkipCommit,
     [switch]$SkipPush,
     [switch]$SkipDeploy,
@@ -124,6 +125,18 @@ try {
     }
 
     if (-not $SkipDeploy) {
+        if (-not $RepoUrl) {
+            if ($env:DEPLOY_REPO_URL) {
+                $RepoUrl = $env:DEPLOY_REPO_URL
+            }
+            else {
+                $RepoUrl = (git remote get-url origin).Trim()
+            }
+        }
+        if (-not $RepoUrl) {
+            throw "Git repo URL not found. Set DEPLOY_REPO_URL or pass -RepoUrl."
+        }
+
         $vpsHost = Require-EnvValue -Value $env:DEPLOY_VPS_HOST -Prompt "VPS host/IP"
         $vpsUser = Require-EnvValue -Value $env:DEPLOY_VPS_USER -Prompt "VPS user (default: root)" -Default "root"
         $vpsPath = Require-EnvValue -Value $env:DEPLOY_VPS_PATH -Prompt "Project path on VPS (default: /root/rrreeennntttaaalll)" -Default "/root/rrreeennntttaaalll"
@@ -136,12 +149,39 @@ try {
 
         $remoteCmd = @"
 set -e
-cd '$vpsPath'
+REPO_URL='$RepoUrl'
+BRANCH='$branch'
+VPS_PATH='$vpsPath'
+SERVICES='$servicesArg'
+
+REPO_URL=\$(printf '%s' "\$REPO_URL" | tr -d '\r')
+BRANCH=\$(printf '%s' "\$BRANCH" | tr -d '\r')
+VPS_PATH=\$(printf '%s' "\$VPS_PATH" | tr -d '\r')
+SERVICES=\$(printf '%s' "\$SERVICES" | tr -d '\r')
+
+if [ -d "\$VPS_PATH/.git" ]; then
+  echo "Repo exists at \$VPS_PATH"
+else
+  git clone "\$REPO_URL" "\$VPS_PATH"
+fi
+
+cd "\$VPS_PATH"
 git fetch origin
-git checkout '$branch'
-git pull --ff-only origin '$branch'
-docker-compose up -d --build $servicesArg
-docker-compose ps $servicesArg
+git checkout "\$BRANCH"
+git pull --ff-only origin "\$BRANCH"
+
+if [ ! -f ".env.production" ]; then echo "WARN: Missing .env.production"; fi
+if [ ! -f "backend/.env.production" ]; then echo "WARN: Missing backend/.env.production"; fi
+
+if docker compose version > /dev/null 2>&1; then DC='docker compose'; else DC='docker-compose'; fi
+
+if [ -n "\$SERVICES" ]; then
+  \$DC --env-file .env.production up -d --build \$SERVICES
+  \$DC ps \$SERVICES
+else
+  \$DC --env-file .env.production up -d --build
+  \$DC ps
+fi
 "@.Trim()
 
         $plink = Get-Command plink -ErrorAction SilentlyContinue

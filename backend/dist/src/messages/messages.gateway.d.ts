@@ -39,6 +39,7 @@ export declare class MessagesGateway implements OnGatewayInit, OnGatewayConnecti
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
+        ticketId: string | null;
     }) | {
         error: string;
     }>;

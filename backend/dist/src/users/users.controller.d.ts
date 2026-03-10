@@ -90,6 +90,7 @@ export declare class UsersController {
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
+        ticketId: string | null;
     })[]>;
     markConversationSeen(req: any, otherId: string): Promise<{
         updated: number;
@@ -104,6 +105,7 @@ export declare class UsersController {
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
+        ticketId: string | null;
     }>;
     getViewerMessages(req: any, skip?: number, take?: number): Promise<{
         items: ({
@@ -131,6 +133,7 @@ export declare class UsersController {
             seen_at: Date | null;
             seen_by_role: import("@prisma/client").$Enums.Role | null;
             receiverId: string | null;
+            ticketId: string | null;
         })[];
         skip: number;
         take: number;
@@ -145,6 +148,7 @@ export declare class UsersController {
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
+        ticketId: string | null;
     }>;
     markAdminConversationSeen(req: any, viewerId: string): Promise<{
         updated: number;
