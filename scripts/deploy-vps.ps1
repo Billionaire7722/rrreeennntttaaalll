@@ -147,17 +147,17 @@ try {
         Write-Host "Services: $servicesArg"
         Confirm-OrThrow -Prompt "Proceed with VPS deploy? (y/N)" -AutoApprove:$Yes
 
+        $servicesArgs = if ($servicesArg) { " $servicesArg" } else { "" }
+
         $remoteCmdTemplate = @'
 set -e
 REPO_URL='__REPO_URL__'
 BRANCH='__BRANCH__'
 VPS_PATH='__VPS_PATH__'
-SERVICES='__SERVICES__'
 
 REPO_URL=$(printf '%s' "$REPO_URL" | tr -d '\r')
 BRANCH=$(printf '%s' "$BRANCH" | tr -d '\r')
 VPS_PATH=$(printf '%s' "$VPS_PATH" | tr -d '\r')
-SERVICES=$(printf '%s' "$SERVICES" | tr -d '\r')
 
 if [ -d "$VPS_PATH/.git" ]; then
   echo "Repo exists at $VPS_PATH"
@@ -175,20 +175,15 @@ if [ ! -f "backend/.env.production" ]; then echo "WARN: Missing backend/.env.pro
 
 if docker compose version > /dev/null 2>&1; then DC='docker compose'; else DC='docker-compose'; fi
 
-if [ -n "$SERVICES" ]; then
-  $DC --env-file .env.production up -d --build $SERVICES
-  $DC ps $SERVICES
-else
-  $DC --env-file .env.production up -d --build
-  $DC ps
-fi
+$DC --env-file .env.production up -d --build__SERVICES_ARGS__
+$DC ps__SERVICES_ARGS__
 '@.Trim()
 
         $remoteCmd = $remoteCmdTemplate.
             Replace("__REPO_URL__", $RepoUrl).
             Replace("__BRANCH__", $branch).
             Replace("__VPS_PATH__", $vpsPath).
-            Replace("__SERVICES__", $servicesArg)
+            Replace("__SERVICES_ARGS__", $servicesArgs)
 
         $plink = Get-Command plink -ErrorAction SilentlyContinue
         if ($plink -and $password) {
