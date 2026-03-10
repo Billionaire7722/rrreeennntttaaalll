@@ -24,11 +24,15 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useLanguage } from '@/context/LanguageContext';
 
-const customIcon = L.divIcon({
-    className: 'custom-div-icon',
-    html: `<div style="width: 24px; height: 24px; background-color: #3b82f6; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.4);"></div>`,
+const markerSvg = encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">' +
+        '<circle cx="12" cy="12" r="9" fill="#3b82f6" stroke="white" stroke-width="3"/>' +
+    '</svg>'
+);
+const customIcon = L.icon({
+    iconUrl: `data:image/svg+xml,${markerSvg}`,
     iconSize: [24, 24],
-    iconAnchor: [12, 12]
+    iconAnchor: [12, 12],
 });
 
 interface House {

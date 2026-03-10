@@ -36,7 +36,7 @@ export class HousesService {
                     }
                 }
             } catch (e) {
-                console.error(`Failed to fetch coords from Nominatim for "${normalized}":`, e);
+                console.error('Failed to fetch coords from Nominatim', { query: normalized, error: e });
             }
         }
         return null;

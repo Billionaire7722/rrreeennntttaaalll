@@ -18,9 +18,25 @@ const SocketContext = createContext<SocketContextType>({
 
 export const useSocket = () => useContext(SocketContext);
 
+const normalizeApiBaseUrl = (value?: string) => {
+    if (!value) return '';
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+
+    const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+    try {
+        const url = new URL(candidate);
+        if (!['http:', 'https:'].includes(url.protocol)) return '';
+        if (url.username || url.password) return '';
+        return `${url.origin}${url.pathname}`.replace(/\/+$/, '');
+    } catch {
+        return '';
+    }
+};
+
 const resolveSocketBaseUrl = () => {
-    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim().replace(/\/+$/, '');
-    if (envUrl && !envUrl.includes('yourdomain.com')) return envUrl;
+    const envUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+    if (envUrl) return envUrl;
 
     if (typeof window !== 'undefined' && window.location?.hostname) {
         return `${window.location.protocol}//${window.location.hostname}:3000`;

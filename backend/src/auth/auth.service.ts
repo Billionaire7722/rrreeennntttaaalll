@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, ConflictException, BadRequestExcepti
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { randomBytes, randomInt } from 'crypto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { Role } from '../security/roles.enum';
@@ -240,12 +241,14 @@ export class AuthService {
         let user = await this.prisma.user.findUnique({ where: { email } });
 
         if (!user) {
-            const randomPassword = await bcrypt.hash(Math.random().toString(36), 10);
+            const randomPasswordPlain = randomBytes(18).toString('base64url');
+            const randomPassword = await bcrypt.hash(randomPasswordPlain, 10);
+            const usernameSuffix = randomInt(1000, 10000);
             user = await this.prisma.user.create({
                 data: {
                     email,
                     name,
-                    username: email.split('@')[0] + Math.floor(Math.random() * 1000),
+                    username: `${email.split('@')[0]}${usernameSuffix}`,
                     password: randomPassword,
                     role: Role.USER
                 }

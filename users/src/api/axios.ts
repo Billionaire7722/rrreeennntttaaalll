@@ -2,10 +2,18 @@ import axios from 'axios';
 
 const normalizeApiBaseUrl = (value?: string) => {
     if (!value) return '';
-    const normalized = value.trim().replace(/\/+$/, '');
-    if (!normalized) return '';
-    if (normalized.includes('yourdomain.com')) return '';
-    return normalized;
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+
+    const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+    try {
+        const url = new URL(candidate);
+        if (!['http:', 'https:'].includes(url.protocol)) return '';
+        if (url.username || url.password) return '';
+        return `${url.origin}${url.pathname}`.replace(/\/+$/, '');
+    } catch {
+        return '';
+    }
 };
 
 const resolveApiBaseUrl = () => {
