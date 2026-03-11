@@ -48,12 +48,32 @@ const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const roles_enum_1 = require("../security/roles.enum");
 const presence_service_1 = require("../presence/presence.service");
+const audit_service_1 = require("../audit/audit.service");
 let AdminService = class AdminService {
     prisma;
     presenceService;
-    constructor(prisma, presenceService) {
+    auditService;
+    constructor(prisma, presenceService, auditService) {
         this.prisma = prisma;
         this.presenceService = presenceService;
+        this.auditService = auditService;
+    }
+    async logAdminAction(adminId, action, targetType, targetId) {
+        try {
+            await this.prisma.adminAuditLog.create({
+                data: {
+                    admin_id: adminId,
+                    action,
+                    target_type: targetType,
+                    target_id: targetId,
+                    ip_address: 'request_metatada',
+                    user_agent: 'request_metatada'
+                }
+            });
+        }
+        catch (e) {
+            console.error('Failed to log admin action:', e);
+        }
     }
     async getAllUsers(skip = 0, take = 50, search, status) {
         const where = { role: roles_enum_1.Role.USER };
@@ -88,6 +108,9 @@ let AdminService = class AdminService {
                     avatarUrl: true,
                     coverUrl: true,
                     bio: true,
+                    riskScore: {
+                        select: { score: true }
+                    },
                     _count: {
                         select: { ownedHouses: true }
                     }
@@ -204,44 +227,50 @@ let AdminService = class AdminService {
         });
         return { message: 'Super-admin password updated successfully' };
     }
-    async changeRole(adminId, newRole) {
+    async changeRole(adminId, newRole, actorId) {
         const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
         if (!admin)
             throw new common_1.NotFoundException('User not found');
         if (admin.role === roles_enum_1.Role.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Cannot modify SUPER_ADMIN role');
         }
-        return this.prisma.user.update({
+        const updated = await this.prisma.user.update({
             where: { id: adminId },
             data: { role: newRole },
             select: { id: true, name: true, role: true }
         });
+        await this.logAdminAction(actorId, 'CHANGE_ROLE', 'USER', adminId);
+        return updated;
     }
-    async changeStatus(adminId, status) {
+    async changeStatus(adminId, status, actorId) {
         const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
         if (!admin)
             throw new common_1.NotFoundException('User not found');
         if (admin.role === roles_enum_1.Role.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Cannot modify SUPER_ADMIN status');
         }
-        return this.prisma.user.update({
+        const updated = await this.prisma.user.update({
             where: { id: adminId },
             data: { status },
             select: { id: true, name: true, status: true }
         });
+        await this.logAdminAction(actorId, 'CHANGE_STATUS', 'USER', adminId);
+        return updated;
     }
-    async softDeleteAdmin(adminId) {
+    async softDeleteAdmin(adminId, actorId) {
         const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
         if (!admin)
             throw new common_1.NotFoundException('User not found');
         if (admin.role === roles_enum_1.Role.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Cannot delete SUPER_ADMIN');
         }
-        return this.prisma.user.update({
+        const result = await this.prisma.user.update({
             where: { id: adminId },
             data: { deleted_at: new Date() },
             select: { id: true, name: true, deleted_at: true }
         });
+        await this.logAdminAction(actorId, 'DELETE_ADMIN', 'USER', adminId);
+        return result;
     }
     async restoreUser(userId) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -297,12 +326,13 @@ let AdminService = class AdminService {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
         sevenDaysAgo.setHours(0, 0, 0, 0);
-        const [totalUsers, totalAdmins, totalProperties, deletedProperties, loginAttemptsToday] = await Promise.all([
+        const [totalUsers, totalAdmins, totalProperties, deletedProperties, loginAttemptsToday, openReports,] = await Promise.all([
             this.prisma.user.count({ where: { role: roles_enum_1.Role.USER } }),
             this.prisma.user.count({ where: { role: roles_enum_1.Role.SUPER_ADMIN } }),
             this.prisma.house.count({ where: { deleted_at: null } }),
             this.prisma.house.count({ where: { deleted_at: { not: null } } }),
-            this.prisma.loginLog.count({ where: { timestamp: { gte: todayStart } } })
+            this.prisma.loginLog.count({ where: { timestamp: { gte: todayStart } } }),
+            this.prisma.userReport.count({ where: { status: 'PENDING' } }).then(c => this.prisma.propertyReport.count({ where: { status: 'PENDING' } }).then(c2 => c + c2)),
         ]);
         const recentLogins = await this.prisma.loginLog.findMany({
             where: { timestamp: { gte: sevenDaysAgo } },
@@ -362,7 +392,8 @@ let AdminService = class AdminService {
                 totalAdmins,
                 totalProperties,
                 deletedProperties,
-                loginAttemptsToday
+                loginAttemptsToday,
+                openReports,
             },
             charts: {
                 loginData,
@@ -590,11 +621,195 @@ let AdminService = class AdminService {
     async updateTicketStatus(id, status) {
         return this.prisma.supportTicket.update({ where: { id }, data: { status } });
     }
+    async warnUser(userId, reason, actorId) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        await this.auditService.logAction({
+            actorId,
+            actorRole: roles_enum_1.Role.SUPER_ADMIN,
+            actionType: 'WARN_USER',
+            entityType: 'USER',
+            entityId: userId,
+            afterData: { reason },
+        });
+        await this.logAdminAction(actorId, 'WARN_USER', 'USER', userId);
+        return { message: `User ${user.email} warned successfully`, reason };
+    }
+    async restrictAccount(userId, actorId, durationDays) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        if (user.role === roles_enum_1.Role.SUPER_ADMIN)
+            throw new common_1.ForbiddenException('Cannot restrict SUPER_ADMIN');
+        let lockedUntil = null;
+        if (durationDays) {
+            lockedUntil = new Date();
+            lockedUntil.setDate(lockedUntil.getDate() + durationDays);
+        }
+        else {
+            lockedUntil = new Date('9999-12-31');
+        }
+        const updated = await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                status: 'LOCKED',
+                locked_until: lockedUntil
+            }
+        });
+        await this.logAdminAction(actorId, 'RESTRICT_ACCOUNT', 'USER', userId);
+        return updated;
+    }
+    async deleteProperty(propertyId, actorId) {
+        const house = await this.prisma.house.findUnique({ where: { id: propertyId } });
+        if (!house)
+            throw new common_1.NotFoundException('Property not found');
+        const updated = await this.prisma.house.update({
+            where: { id: propertyId },
+            data: { deleted_at: new Date() }
+        });
+        await this.logAdminAction(actorId, 'DELETE_PROPERTY', 'PROPERTY', propertyId);
+        return updated;
+    }
+    async replyToTicket(ticketId, adminId, content) {
+        const ticket = await this.prisma.supportTicket.findUnique({ where: { id: ticketId } });
+        if (!ticket)
+            throw new common_1.NotFoundException('Ticket not found');
+        const message = await this.prisma.message.create({
+            data: {
+                userId: adminId,
+                ticketId: ticketId,
+                content,
+                senderRole: roles_enum_1.Role.SUPER_ADMIN,
+            }
+        });
+        await this.prisma.supportTicket.update({
+            where: { id: ticketId },
+            data: { updatedAt: new Date() }
+        });
+        return message;
+    }
+    getDateRange(range) {
+        const now = new Date();
+        let startDate = new Date();
+        switch (range) {
+            case '7d':
+                startDate.setDate(now.getDate() - 7);
+                break;
+            case '30d':
+                startDate.setDate(now.getDate() - 30);
+                break;
+            case 'this_month':
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                break;
+            case 'last_month':
+                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                break;
+            case 'this_year':
+                startDate = new Date(now.getFullYear(), 0, 1);
+                break;
+            default: startDate.setDate(now.getDate() - 30);
+        }
+        return { gte: startDate };
+    }
+    async getUserGrowth(range) {
+        const where = { created_at: this.getDateRange(range) };
+        const users = await this.prisma.user.findMany({
+            where,
+            select: { created_at: true },
+            orderBy: { created_at: 'asc' }
+        });
+        const growth = {};
+        users.forEach(u => {
+            const date = u.created_at.toISOString().split('T')[0];
+            growth[date] = (growth[date] || 0) + 1;
+        });
+        return Object.entries(growth).map(([date, count]) => ({ date, count }));
+    }
+    async getPropertyActivity(range) {
+        const dateFilter = this.getDateRange(range);
+        const [created, deleted] = await Promise.all([
+            this.prisma.house.findMany({
+                where: { created_at: dateFilter },
+                select: { created_at: true }
+            }),
+            this.prisma.house.findMany({
+                where: { deleted_at: dateFilter },
+                select: { deleted_at: true }
+            })
+        ]);
+        const activity = {};
+        created.forEach(h => {
+            const date = h.created_at.toISOString().split('T')[0];
+            if (!activity[date])
+                activity[date] = { created: 0, deleted: 0 };
+            activity[date].created++;
+        });
+        deleted.forEach(h => {
+            const date = h.deleted_at.toISOString().split('T')[0];
+            if (!activity[date])
+                activity[date] = { created: 0, deleted: 0 };
+            activity[date].deleted++;
+        });
+        return Object.entries(activity).map(([date, data]) => ({ date, ...data }));
+    }
+    async getLoginTraffic(range) {
+        const where = { timestamp: this.getDateRange(range) };
+        const logs = await this.prisma.loginLog.findMany({
+            where,
+            select: { timestamp: true, success: true },
+            orderBy: { timestamp: 'asc' }
+        });
+        const traffic = {};
+        logs.forEach(l => {
+            const date = l.timestamp.toISOString().split('T')[0];
+            if (!traffic[date])
+                traffic[date] = { success: 0, failed: 0 };
+            if (l.success)
+                traffic[date].success++;
+            else
+                traffic[date].failed++;
+        });
+        return Object.entries(traffic).map(([date, data]) => ({ date, ...data }));
+    }
+    async getIPDistribution() {
+        const logs = await this.prisma.loginLog.findMany({
+            take: 1000,
+            orderBy: { timestamp: 'desc' },
+            select: { ipAddress: true }
+        });
+        const dist = {};
+        let total = 0;
+        logs.forEach(l => {
+            if (l.ipAddress) {
+                const country = this.mockGeoIP(l.ipAddress);
+                dist[country] = (dist[country] || 0) + 1;
+                total++;
+            }
+        });
+        return Object.entries(dist)
+            .map(([country, count]) => ({
+            country,
+            count,
+            percentage: total > 0 ? Math.round((count / total) * 100) : 0
+        }))
+            .sort((a, b) => b.count - a.count);
+    }
+    mockGeoIP(ip) {
+        if (ip.startsWith('113.') || ip.startsWith('115.'))
+            return 'Vietnam';
+        if (ip.startsWith('203.'))
+            return 'Singapore';
+        if (ip.startsWith('66.') || ip.startsWith('72.'))
+            return 'USA';
+        return 'Other';
+    }
 };
 exports.AdminService = AdminService;
 exports.AdminService = AdminService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        presence_service_1.PresenceService])
+        presence_service_1.PresenceService,
+        audit_service_1.AuditService])
 ], AdminService);
 //# sourceMappingURL=admin.service.js.map

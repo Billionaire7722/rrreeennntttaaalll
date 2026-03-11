@@ -49,6 +49,7 @@ model House {
 
   favorites           Favorite[]
   reports             PropertyReport[]
+  propertyFraudAlerts PropertyFraudAlert[]
   owner               User?    @relation("HouseOwner", fields: [owner_id], references: [id], onDelete: SetNull)
 
   @@index([city])
@@ -98,12 +99,15 @@ model User {
   coverUrl     String?    @map("cover_url")
   role         Role       @default(USER)
   status       String     @default("ACTIVE")
-  locked_until DateTime?
   name_updated_at DateTime?
   bio          String?
   deleted_at   DateTime?
   created_at   DateTime   @default(now())
   updated_at   DateTime   @updatedAt
+  
+  failed_attempts Int       @default(0)
+  last_failed_attempt DateTime?
+  locked_until DateTime?
 
   favorites    Favorite[]
   messages     Message[] @relation("MessageSender")
@@ -117,6 +121,14 @@ model User {
   reportsReceived UserReport[] @relation("ReportedUser")
   propertyReports PropertyReport[] @relation("PropertyReporter")
   supportTickets  SupportTicket[]
+  
+  riskScore       UserRiskScore?
+  fraudAlerts     FraudAlert[]
+  propertyFraudAlerts PropertyFraudAlert[]
+  activityLogs    UserActivityLog[]
+  securityEvents  SecurityEvent[]
+  adminAuditLogs  AdminAuditLog[]
+  refreshTokens   RefreshToken[]
 }
 
 model UserReport {
@@ -189,4 +201,141 @@ model Message {
   ticket     SupportTicket? @relation("TicketMessages", fields: [ticketId], references: [id])
 
   @@index([receiverId])
+}
+
+model UserRiskScore {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  score     Int      @default(0)
+  factors   Json?    
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_risk_scores")
+}
+
+model FraudAlert {
+  id          String   @id @default(uuid())
+  userId      String?
+  type        String   
+  description String
+  severity    String   
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("fraud_alerts")
+}
+
+model SuspiciousIP {
+  id             String   @id @default(uuid())
+  ipAddress      String   @unique
+  country        String?
+  city           String?
+  loginAttempts  Int      @default(0)
+  failedAttempts Int      @default(0)
+  affectedUsers  Int      @default(0)
+  riskLevel      String   
+  status         String   @default("UNBLOCKED")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("suspicious_ips")
+}
+
+model UserActivityLog {
+  id           String   @id @default(uuid())
+  userId       String
+  activityType String   @map("activity_type")
+  description  String
+  ipAddress    String?  @map("ip_address")
+  country      String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_activity_logs")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model PropertyFraudAlert {
+  id          String   @id @default(uuid())
+  propertyId  String   @map("property_id")
+  ownerId     String   @map("owner_id")
+  fraudType   String   @map("fraud_type")
+  description String
+  severity    String   
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  property    House    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("property_fraud_alerts")
+  @@index([propertyId])
+  @@index([ownerId])
+}
+
+model AdminLoginAttempt {
+  id        String   @id @default(uuid())
+  email     String
+  ipAddress String   @map("ip_address")
+  userAgent String?  @map("user_agent")
+  success   Boolean
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("admin_login_attempts")
+  @@index([email])
+  @@index([ipAddress])
+}
+
+model SecurityEvent {
+  id          String   @id @default(uuid())
+  admin_id    String?
+  event_type  String   @map("event_type")
+  ip_address  String?
+  country     String?
+  description String
+  created_at  DateTime @default(now())
+  
+  admin       User?    @relation(fields: [admin_id], references: [id])
+
+  @@map("security_events")
+  @@index([admin_id])
+}
+
+model AdminAuditLog {
+  id          String   @id @default(uuid())
+  admin_id    String
+  action      String
+  target_type String
+  target_id   String
+  ip_address  String
+  user_agent  String?
+  created_at  DateTime @default(now())
+
+  admin       User     @relation(fields: [admin_id], references: [id])
+
+  @@map("admin_audit_logs")
+  @@index([admin_id])
+  @@index([created_at])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
 }

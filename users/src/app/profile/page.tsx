@@ -375,7 +375,10 @@ export default function ProfilePage() {
           onClick={() => coverInputRef.current?.click()}
         >
           {isUploadingCover ? (
-            <span className="text-white text-sm font-bold">{t("uploading")}</span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+              <span className="text-white text-sm font-bold">{t("loading")}</span>
+            </div>
           ) : (
             <div className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg text-white font-medium">
               <Camera className="w-5 h-5" />
@@ -410,7 +413,12 @@ export default function ProfilePage() {
                   )}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
                     {isUploading
-                      ? <span className="text-white text-xs font-bold">{t("uploading")}</span>
+                      ? (
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span className="text-white text-[10px] font-bold">{t("loading")}</span>
+                        </div>
+                      )
                       : <Camera className="text-white w-6 h-6" />
                     }
                   </div>

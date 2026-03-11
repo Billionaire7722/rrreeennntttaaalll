@@ -5,9 +5,10 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { AuditModule } from '../audit/audit.module';
 import { AuditInterceptor } from '../audit/audit.interceptor';
 import { JwtModule } from '@nestjs/jwt';
+import { AdminModule } from '../admin/admin.module';
 
 @Module({
-    imports: [PrismaModule, AuditModule, JwtModule],
+    imports: [PrismaModule, AuditModule, JwtModule, AdminModule],
     controllers: [HousesController],
     providers: [HousesService, AuditInterceptor],
 })

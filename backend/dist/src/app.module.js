@@ -43,10 +43,12 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const cache_manager_1 = require("@nestjs/cache-manager");
 const bullmq_1 = require("@nestjs/bullmq");
+const throttler_1 = require("@nestjs/throttler");
 const nestjs_prometheus_1 = require("@willsoto/nestjs-prometheus");
 const redisStore = __importStar(require("cache-manager-redis-store"));
 const prisma_module_1 = require("./prisma/prisma.module");
 const health_module_1 = require("./health/health.module");
+const security_middleware_1 = require("./common/middleware/security.middleware");
 const logging_middleware_1 = require("./common/middleware/logging.middleware");
 const auth_module_1 = require("./auth/auth.module");
 const users_module_1 = require("./users/users.module");
@@ -57,9 +59,10 @@ const cloudinary_module_1 = require("./cloudinary/cloudinary.module");
 const upload_module_1 = require("./upload/upload.module");
 const presence_module_1 = require("./presence/presence.module");
 const messages_module_1 = require("./messages/messages.module");
+const support_module_1 = require("./support/support.module");
 let AppModule = class AppModule {
     configure(consumer) {
-        consumer.apply(logging_middleware_1.LoggingMiddleware).forRoutes('*');
+        consumer.apply(security_middleware_1.SecurityMiddleware, logging_middleware_1.LoggingMiddleware).forRoutes('*');
     }
 };
 exports.AppModule = AppModule;
@@ -73,6 +76,15 @@ exports.AppModule = AppModule = __decorate([
                     port: parseInt(process.env.REDIS_PORT || '6379'),
                 },
             }),
+            throttler_1.ThrottlerModule.forRoot([{
+                    name: 'global',
+                    ttl: 60000,
+                    limit: 100,
+                }, {
+                    name: 'login',
+                    ttl: 60000,
+                    limit: 5,
+                }]),
             cache_manager_1.CacheModule.register({
                 isGlobal: true,
                 store: redisStore,
@@ -89,7 +101,8 @@ exports.AppModule = AppModule = __decorate([
             cloudinary_module_1.CloudinaryModule,
             upload_module_1.UploadModule,
             presence_module_1.PresenceModule,
-            messages_module_1.MessagesModule
+            messages_module_1.MessagesModule,
+            support_module_1.SupportModule
         ],
         controllers: [],
         providers: [],

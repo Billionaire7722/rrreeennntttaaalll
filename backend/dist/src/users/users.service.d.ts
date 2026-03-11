@@ -66,9 +66,9 @@ export declare class UsersService {
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
@@ -79,9 +79,9 @@ export declare class UsersService {
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
@@ -107,9 +107,9 @@ export declare class UsersService {
             id: string;
             created_at: Date;
             userId: string;
-            content: string;
             senderId: string | null;
             senderRole: import("@prisma/client").$Enums.Role;
+            content: string;
             seen_at: Date | null;
             seen_by_role: import("@prisma/client").$Enums.Role | null;
             receiverId: string | null;
@@ -122,9 +122,9 @@ export declare class UsersService {
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
@@ -149,12 +149,14 @@ export declare class UsersService {
         coverUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
-        locked_until: Date | null;
         name_updated_at: Date | null;
         bio: string | null;
         deleted_at: Date | null;
         created_at: Date;
         updated_at: Date;
+        failed_attempts: number;
+        last_failed_attempt: Date | null;
+        locked_until: Date | null;
     }>;
     updateAvatar(userId: string, avatarUrl: string): Promise<{
         id: string;
@@ -169,12 +171,14 @@ export declare class UsersService {
         coverUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
-        locked_until: Date | null;
         name_updated_at: Date | null;
         bio: string | null;
         deleted_at: Date | null;
         created_at: Date;
         updated_at: Date;
+        failed_attempts: number;
+        last_failed_attempt: Date | null;
+        locked_until: Date | null;
     }>;
     updateCover(userId: string, coverUrl: string): Promise<{
         id: string;
@@ -189,12 +193,14 @@ export declare class UsersService {
         coverUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
-        locked_until: Date | null;
         name_updated_at: Date | null;
         bio: string | null;
         deleted_at: Date | null;
         created_at: Date;
         updated_at: Date;
+        failed_attempts: number;
+        last_failed_attempt: Date | null;
+        locked_until: Date | null;
     }>;
     getPublicProfile(userId: string): Promise<{
         id: string;
@@ -236,12 +242,14 @@ export declare class UsersService {
         coverUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
-        locked_until: Date | null;
         name_updated_at: Date | null;
         bio: string | null;
         deleted_at: Date | null;
         created_at: Date;
         updated_at: Date;
+        failed_attempts: number;
+        last_failed_attempt: Date | null;
+        locked_until: Date | null;
     }>;
     changePassword(userId: string, data: ChangePasswordDto): Promise<{
         message: string;

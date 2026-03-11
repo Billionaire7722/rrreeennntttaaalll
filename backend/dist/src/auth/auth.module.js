@@ -8,13 +8,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthModule = void 0;
 const common_1 = require("@nestjs/common");
+const core_1 = require("@nestjs/core");
+const throttler_1 = require("@nestjs/throttler");
 const auth_service_1 = require("./auth.service");
 const auth_controller_1 = require("./auth.controller");
-const passport_1 = require("@nestjs/passport");
 const jwt_1 = require("@nestjs/jwt");
 const prisma_module_1 = require("../prisma/prisma.module");
 const jwt_strategy_1 = require("./jwt.strategy");
-const security_config_1 = require("../config/security.config");
+const admin_module_1 = require("../admin/admin.module");
+const admin_auth_controller_1 = require("./admin-auth.controller");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -22,14 +24,21 @@ exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
             prisma_module_1.PrismaModule,
-            passport_1.PassportModule,
+            admin_module_1.AdminModule,
             jwt_1.JwtModule.register({
-                secret: (0, security_config_1.getJwtSecretOrThrow)(),
-                signOptions: { expiresIn: '7d' },
+                secret: process.env.JWT_SECRET || 'super-secret',
+                signOptions: { expiresIn: '15m' },
             }),
         ],
-        controllers: [auth_controller_1.AuthController],
-        providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy],
+        controllers: [auth_controller_1.AuthController, admin_auth_controller_1.AdminAuthController],
+        providers: [
+            auth_service_1.AuthService,
+            jwt_strategy_1.JwtStrategy,
+            {
+                provide: core_1.APP_GUARD,
+                useClass: throttler_1.ThrottlerGuard,
+            },
+        ],
         exports: [auth_service_1.AuthService],
     })
 ], AuthModule);

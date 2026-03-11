@@ -85,16 +85,18 @@ export default function OnboardingTour({ userId, authLoading }: { userId?: strin
 
   // Check if tour should show
   useEffect(() => {
-    if (authLoading) return; // Wait for auth state to be certain
+    if (authLoading || !userId) return; // Only show for logged-in users
 
-    const key = userId ? `hasSeenOnboarding_${userId}` : "hasSeenOnboarding";
+    const key = `hasSeenOnboarding_${userId}`;
     const seen = localStorage.getItem(key);
     if (!seen) setVisible(true);
   }, [userId, authLoading]);
 
   const markDone = useCallback(() => {
-    const key = userId ? `hasSeenOnboarding_${userId}` : "hasSeenOnboarding";
-    localStorage.setItem(key, "1");
+    if (userId) {
+      const key = `hasSeenOnboarding_${userId}`;
+      localStorage.setItem(key, "1");
+    }
     setVisible(false);
   }, [userId]);
 
@@ -224,17 +226,17 @@ export default function OnboardingTour({ userId, authLoading }: { userId?: strin
 
       {/* Tooltip card */}
       <div
-        className="absolute left-1/2 -translate-x-1/2 z-10 w-[min(340px,90vw)] pointer-events-auto"
+        className="absolute left-1/2 -translate-x-1/2 z-10 w-[min(340px,90vw)] md:w-[340px] pointer-events-auto"
         style={
           isLast || isLargeTarget || !spotlight
             ? { top: "50%", transform: "translate(-50%, -50%)" }
             : tooltipBelow
-            ? { top: Math.min(spotlight.y + spotlight.h + 20, H - 250) }
-            : { bottom: Math.min(H - spotlight.y + 20, H - 250) }
+            ? { top: Math.max(20, Math.min(spotlight.y + spotlight.h + 20, H - 350)) }
+            : { bottom: Math.max(20, Math.min(H - spotlight.y + 20, H - 350)) }
         }
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
           {/* Card header */}
           <div className="bg-gradient-to-r from-teal-600 to-teal-500 px-5 py-4">
             {isLast && (
@@ -251,7 +253,7 @@ export default function OnboardingTour({ userId, authLoading }: { userId?: strin
           </div>
 
           {/* Card body */}
-          <div className="px-5 py-4">
+          <div className="px-5 py-4 overflow-y-auto min-h-0">
             <p className="text-gray-600 text-sm leading-relaxed">
               {tk(current.descKey)}
             </p>

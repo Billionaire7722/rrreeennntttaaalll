@@ -31,6 +31,7 @@ export declare class AuditService {
         } & {
             id: string;
             ipAddress: string | null;
+            createdAt: Date;
             userAgent: string | null;
             actorRole: string | null;
             actionType: string;
@@ -38,7 +39,6 @@ export declare class AuditService {
             entityId: string;
             beforeData: import("@prisma/client/runtime/client").JsonValue | null;
             afterData: import("@prisma/client/runtime/client").JsonValue | null;
-            createdAt: Date;
             actorId: string | null;
         })[];
         total: number;

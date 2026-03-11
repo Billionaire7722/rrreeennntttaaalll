@@ -83,7 +83,7 @@ async function main() {
     console.log('✅ SUPER_ADMIN account established exclusively.');
     console.log('--------------------------------------------------');
     console.log(`Login ID: ${superAdmin.email}`);
-    console.log(`Password: ${superAdminPassword}`);
+    console.log('Password: (set via SUPER_ADMIN_PASSWORD env)');
     console.log('--------------------------------------------------');
 }
 main()

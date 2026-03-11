@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
+import { io } from 'socket.io-client';
+import { resolvedApiBaseUrl } from '../api/axios';
 import {
     LayoutDashboard,
     Users,
@@ -20,6 +22,7 @@ import {
     FileText,
     MessageSquare,
     AlertTriangle,
+    ShieldAlert,
     TrendingUp
 } from 'lucide-react';
 import css from './DashboardLayout.module.css';
@@ -27,6 +30,33 @@ import css from './DashboardLayout.module.css';
 export const DashboardLayout: React.FC = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
+    const [notifications, setNotifications] = useState(0);
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const socket = io(resolvedApiBaseUrl, {
+            auth: { token }
+        });
+
+        socket.on('connect', () => {
+            console.log('Admin connected to notifications gateway');
+        });
+
+        socket.on('new_report', () => {
+            setNotifications(prev => prev + 1);
+            // Optional: alert or Toast
+        });
+
+        socket.on('new_support_ticket', () => {
+            setNotifications(prev => prev + 1);
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
 
     const menuGroups = [
         {
@@ -63,9 +93,11 @@ export const DashboardLayout: React.FC = () => {
             title: 'System Monitoring',
             links: [
                 { to: '/login-logs', label: 'Login Logs', icon: <History size={18} /> },
-                { to: '/login-attempts', label: 'Login Attempts', icon: <ShieldCheck size={18} /> },
+                { to: '/fraud-alerts', label: 'User Fraud', icon: <ShieldAlert size={18} color="var(--danger-color)" /> },
+                { to: '/property-fraud', label: 'Property Fraud', icon: <Home size={18} color="var(--danger-color)" /> },
+                { to: '/suspicious-ips', label: 'Suspicious IPs', icon: <Radar size={18} /> },
                 { to: '/audit-logs', label: 'Audit Logs', icon: <Target size={18} /> },
-                { to: '/live-monitor', label: 'Live Monitor', icon: <Radar size={18} /> },
+                { to: '/live-monitor', label: 'Live Monitor', icon: <Activity size={18} /> },
             ]
         },
         {
@@ -137,8 +169,11 @@ export const DashboardLayout: React.FC = () => {
                         <button className={css.logoutBtn} title="Search">
                             <Search size={18} />
                         </button>
-                        <button className={css.logoutBtn} title="Notifications">
+                        <button className={css.logoutBtn} title="Notifications" onClick={() => setNotifications(0)} style={{ position: 'relative' }}>
                             <Bell size={18} />
+                            {notifications > 0 && (
+                                <span className={css.notificationBadge}>{notifications}</span>
+                            )}
                         </button>
                     </div>
                 </header>

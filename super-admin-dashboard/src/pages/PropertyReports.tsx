@@ -11,12 +11,12 @@ import css from './Table.module.css';
 
 interface PropertyReport {
     id: string;
-    propertyId: string;
+    houseId: string;
     reporterId: string;
     reason: string;
     status: 'PENDING' | 'RESOLVED' | 'DISMISSED';
     createdAt: string;
-    property: { title: string };
+    house: { name: string };
     reporter: { name: string };
 }
 
@@ -28,11 +28,46 @@ export const PropertyReports: React.FC = () => {
         setLoading(true);
         try {
             const res = await api.get('/admin/property-reports');
-            setReports(res.data.reports || []);
+            setReports(res.data.items || []);
         } catch (err) {
             console.error('Failed to fetch property reports', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async (houseId: string, reportId: string) => {
+        if (!confirm('Are you sure you want to SOFT DELETE this property?')) return;
+        try {
+            await api.delete(`/admin/houses/${houseId}`);
+            await api.post(`/admin/reports/property/${reportId}/status`, { status: 'RESOLVED' });
+            alert('Property deleted and report resolved');
+            fetchReports();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to delete property');
+        }
+    };
+
+    const handleResolve = async (reportId: string) => {
+        try {
+            await api.post(`/admin/reports/property/${reportId}/status`, { status: 'RESOLVED' });
+            alert('Report resolved');
+            fetchReports();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to resolve report');
+        }
+    };
+
+    const handleDismiss = async (reportId: string) => {
+        if (!confirm('Are you sure you want to dismiss this report?')) return;
+        try {
+            await api.post(`/admin/reports/property/${reportId}/status`, { status: 'DISMISSED' });
+            fetchReports();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to dismiss report');
         }
     };
 
@@ -80,7 +115,7 @@ export const PropertyReports: React.FC = () => {
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <div className={css.avatar} style={{ width: '28px', height: '28px', borderRadius: '4px' }}><Home size={14} /></div>
-                                                <div style={{ fontWeight: 600 }}>{r.property?.title}</div>
+                                                <div style={{ fontWeight: 600 }}>{r.house?.name}</div>
                                             </div>
                                         </td>
                                         <td>
@@ -95,9 +130,9 @@ export const PropertyReports: React.FC = () => {
                                         </td>
                                         <td style={{ textAlign: 'right' }}>
                                             <div className={css.actions} style={{ justifyContent: 'flex-end' }}>
-                                                <button className="btn btn-outline" style={{ padding: '6px' }} title="View Details"><Eye size={14} /></button>
-                                                <button className="btn btn-outline" style={{ padding: '6px', color: 'var(--success-color)' }} title="Approve"><CheckCircle size={14} /></button>
-                                                <button className="btn btn-outline" style={{ padding: '6px', color: 'var(--danger-color)' }} title="Remove Listing"><XCircle size={14} /></button>
+                                                <button className="btn btn-outline" style={{ padding: '6px', color: 'var(--success-color)' }} title="Resolve Only" onClick={() => handleResolve(r.id)}><CheckCircle size={14} /></button>
+                                                <button className="btn btn-outline" style={{ padding: '6px', color: 'var(--danger-color)' }} title="Soft Delete Property" onClick={() => handleDelete(r.houseId, r.id)}><XCircle size={14} /></button>
+                                                <button className="btn btn-outline" style={{ padding: '6px' }} title="Dismiss Report" onClick={() => handleDismiss(r.id)}><Eye size={14} /></button>
                                             </div>
                                         </td>
                                     </tr>

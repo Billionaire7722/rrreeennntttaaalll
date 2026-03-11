@@ -9,6 +9,9 @@ import {
     Settings,
     Clock
 } from 'lucide-react';
+import { io } from 'socket.io-client';
+import { resolvedApiBaseUrl } from '../api/axios';
+import api from '../api/axios';
 
 interface LiveEvent {
     id: string;
@@ -19,13 +22,7 @@ interface LiveEvent {
 }
 
 export const LiveMonitor: React.FC = () => {
-    const [events, setEvents] = useState<LiveEvent[]>([
-        { id: '1', type: 'LOGIN', message: 'User admin@example.com logged in', time: 'Just now', level: 'INFO' },
-        { id: '2', type: 'ACTION', message: 'New property "Sunset Villa" published', time: '2m ago', level: 'INFO' },
-        { id: '3', type: 'SYSTEM', message: 'Database backup completed', time: '5m ago', level: 'INFO' },
-        { id: '4', type: 'ERROR', message: 'Failed login attempt from 192.168.1.45', time: '10m ago', level: 'WARNING' },
-        { id: '5', type: 'SYSTEM', message: 'Memory usage exceeding 80% threshold', time: '12m ago', level: 'CRITICAL' },
-    ]);
+    const [events, setEvents] = useState<LiveEvent[]>([]);
 
     const stats = [
         { label: 'Active Users', value: '42', icon: <Wifi size={16} />, color: '#10b981' },
@@ -34,19 +31,58 @@ export const LiveMonitor: React.FC = () => {
         { label: 'Latency', value: '24ms', icon: <Zap size={16} />, color: '#f59e0b' },
     ];
 
+    const fetchInitialData = async () => {
+        try {
+            const res = await api.get('/admin/login-logs?take=10');
+            const initialEvents: LiveEvent[] = res.data.items.map((l: any) => ({
+                id: l.id,
+                type: 'LOGIN',
+                message: `Login ${l.success ? 'success' : 'failed'} from ${l.ipAddress} (${l.user?.email || 'Unknown'})`,
+                time: new Date(l.timestamp).toLocaleTimeString(),
+                level: l.success ? 'INFO' : 'WARNING'
+            }));
+            setEvents(initialEvents);
+        } catch (err) {
+            console.error('Failed to fetch initial events', err);
+        }
+    };
+
     useEffect(() => {
-        const interval = setInterval(() => {
-            // Simulated real-time update
+        fetchInitialData();
+
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const socket = io(resolvedApiBaseUrl, {
+            auth: { token }
+        });
+
+        socket.on('new_login_log', (log: any) => {
             const newEvent: LiveEvent = {
-                id: Date.now().toString(),
-                type: 'SYSTEM',
-                message: 'System health check: All services operational',
+                id: log.id,
+                type: 'LOGIN',
+                message: `Real-time: Login ${log.success ? 'success' : 'failed'} from ${log.ipAddress}`,
                 time: 'Just now',
-                level: 'INFO'
+                level: log.success ? 'INFO' : 'WARNING'
             };
-            setEvents(prev => [newEvent, ...prev.slice(0, 9)]);
-        }, 15000);
-        return () => clearInterval(interval);
+            setEvents(prev => [newEvent, ...prev.slice(0, 19)]);
+        });
+
+        socket.on('new_audit_log', (log: any) => {
+            const isSuspicious = log.actionType === 'RESTRICT_ACCOUNT' || log.actionType === 'DELETE_PROPERTY';
+            const newEvent: LiveEvent = {
+                id: log.id,
+                type: 'ACTION',
+                message: `${log.actionType} on ${log.entityType} (${log.entityId})`,
+                time: 'Just now',
+                level: isSuspicious ? 'WARNING' : 'INFO'
+            };
+            setEvents(prev => [newEvent, ...prev.slice(0, 19)]);
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const getLevelColor = (level: string) => {

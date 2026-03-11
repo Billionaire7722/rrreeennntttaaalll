@@ -13,13 +13,16 @@ exports.HousesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const roles_enum_1 = require("../security/roles.enum");
+const activity_log_service_1 = require("../admin/activity-log.service");
+const monitoring_service_1 = require("../admin/monitoring.service");
 let HousesService = class HousesService {
     prisma;
-    constructor(prisma) {
+    activityLogService;
+    monitoringService;
+    constructor(prisma, activityLogService, monitoringService) {
         this.prisma = prisma;
-    }
-    isAdminRole(role) {
-        return role === roles_enum_1.Role.SUPER_ADMIN;
+        this.activityLogService = activityLogService;
+        this.monitoringService = monitoringService;
     }
     async fetchCoordinatesFromAddress(queries) {
         for (const baseQuery of queries) {
@@ -47,7 +50,7 @@ let HousesService = class HousesService {
                 }
             }
             catch (e) {
-                console.error(`Failed to fetch coords from Nominatim for "${normalized}":`, e);
+                console.error('Failed to fetch coords from Nominatim', { query: normalized, error: e });
             }
         }
         return null;
@@ -234,6 +237,12 @@ let HousesService = class HousesService {
         });
         if (!refreshedHouse)
             throw new Error('House not found');
+        if (actorId) {
+            await this.activityLogService.log(actorId, 'property_updated', `Updated property: ${refreshedHouse.name}`, { houseId: id });
+        }
+        this.monitoringService.detectPropertyFraud(id).catch(err => {
+            console.error('Fraud detection failed', err);
+        });
         return {
             ...refreshedHouse,
             postedByAdmins: refreshedHouse.owner ? [refreshedHouse.owner] : [],
@@ -316,6 +325,12 @@ let HousesService = class HousesService {
         });
         if (!populatedHouse)
             throw new Error('House not found');
+        if (actorId) {
+            await this.activityLogService.log(actorId, 'property_created', `Created property: ${populatedHouse.name}`, { houseId: populatedHouse.id });
+        }
+        this.monitoringService.detectPropertyFraud(populatedHouse.id).catch(err => {
+            console.error('Fraud detection failed', err);
+        });
         return {
             ...populatedHouse,
             postedByAdmins: populatedHouse.owner ? [populatedHouse.owner] : [],
@@ -328,10 +343,14 @@ let HousesService = class HousesService {
         if (!house)
             throw new Error('House not found');
         await this.assertUserCanManageHouse(id, actorId, actorRole);
-        return this.prisma.house.update({
+        const updated = await this.prisma.house.update({
             where: { id },
             data: { status }
         });
+        if (actorId) {
+            await this.activityLogService.log(actorId, 'property_updated', `Changed status of property ${updated.name} to ${status}`, { houseId: id, status });
+        }
+        return updated;
     }
     async removeHouse(id, actorId, actorRole) {
         const house = await this.prisma.house.findUnique({
@@ -340,15 +359,21 @@ let HousesService = class HousesService {
         if (!house)
             throw new Error('House not found');
         await this.assertUserCanManageHouse(id, actorId, actorRole);
-        return this.prisma.house.update({
+        const updated = await this.prisma.house.update({
             where: { id },
             data: { deleted_at: new Date() }
         });
+        if (actorId) {
+            await this.activityLogService.log(actorId, 'property_deleted', `Deleted property: ${updated.name}`, { houseId: id });
+        }
+        return updated;
     }
 };
 exports.HousesService = HousesService;
 exports.HousesService = HousesService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        activity_log_service_1.ActivityLogService,
+        monitoring_service_1.MonitoringService])
 ], HousesService);
 //# sourceMappingURL=houses.service.js.map

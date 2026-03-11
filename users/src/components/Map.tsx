@@ -74,6 +74,8 @@ function MapEvents({ onBoundsChange, setUserLocation }: { onBoundsChange?: (boun
 
         const handleLocationFound = (e: L.LocationEvent) => {
             setUserLocation([e.latlng.lat, e.latlng.lng]);
+            // If we want to automatically center on found location once at start:
+            // map.flyTo(e.latlng, 15);
         };
 
         map.on('locationfound', handleLocationFound);

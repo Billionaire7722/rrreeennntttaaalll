@@ -63,24 +63,26 @@ export class AdminController {
     @Roles(Role.SUPER_ADMIN)
     async changeAdminRole(
         @Param('id') id: string,
-        @Body('role') role: Role
+        @Body('role') role: Role,
+        @Request() req
     ) {
-        return this.adminService.changeRole(id, role);
+        return this.adminService.changeRole(id, role, req.user.userId);
     }
 
     @Patch('admins/:id/status')
     @Roles(Role.SUPER_ADMIN)
     async changeAdminStatus(
         @Param('id') id: string,
-        @Body('status') status: string
+        @Body('status') status: string,
+        @Request() req
     ) {
-        return this.adminService.changeStatus(id, status);
+        return this.adminService.changeStatus(id, status, req.user.userId);
     }
 
     @Delete('admins/:id')
     @Roles(Role.SUPER_ADMIN)
-    async deleteAdmin(@Param('id') id: string) {
-        return this.adminService.softDeleteAdmin(id);
+    async deleteAdmin(@Param('id') id: string, @Request() req) {
+        return this.adminService.softDeleteAdmin(id, req.user.userId);
     }
 
     @Post('users/:id/restore')
@@ -127,5 +129,76 @@ export class AdminController {
         @Query('role') role?: string
     ) {
         return this.adminService.getLiveSessions(skip, take, role);
+    }
+
+    // --- Analytics ---
+    @Get('analytics/user-growth')
+    async getUserGrowth(@Query('range') range: string) {
+        return this.adminService.getUserGrowth(range);
+    }
+
+    @Get('analytics/property-activity')
+    async getPropertyActivity(@Query('range') range: string) {
+        return this.adminService.getPropertyActivity(range);
+    }
+
+    @Get('analytics/login-traffic')
+    async getLoginTraffic(@Query('range') range: string) {
+        return this.adminService.getLoginTraffic(range);
+    }
+
+    @Get('analytics/ip-distribution')
+    async getIPDistribution() {
+        return this.adminService.getIPDistribution();
+    }
+
+    // --- Management Actions ---
+    @Post('users/:id/warn')
+    async warnUser(@Param('id') id: string, @Body('reason') reason: string, @Request() req) {
+        return this.adminService.warnUser(id, reason, req.user.userId);
+    }
+
+    @Post('users/:id/restrict')
+    async restrictAccount(@Param('id') id: string, @Body('durationDays') durationDays: number | undefined, @Request() req) {
+        return this.adminService.restrictAccount(id, req.user.userId, durationDays);
+    }
+
+    @Delete('houses/:id')
+    async deleteHouse(@Param('id') id: string, @Request() req) {
+        return this.adminService.deleteProperty(id, req.user.userId);
+    }
+
+    @Post('tickets/:id/reply')
+    async replyTicket(@Param('id') id: string, @Request() req, @Body('content') content: string) {
+        return this.adminService.replyToTicket(id, req.user.userId, content);
+    }
+
+    @Get('user-reports')
+    async getUserReports(@Query('skip') skip?: number, @Query('take') take?: number) {
+        return this.adminService.getUserReports(skip, take);
+    }
+
+    @Get('property-reports')
+    async getPropertyReports(@Query('skip') skip?: number, @Query('take') take?: number) {
+        return this.adminService.getPropertyReports(skip, take);
+    }
+
+    @Get('support-requests')
+    async getSupportRequests(@Query('skip') skip?: number, @Query('take') take?: number) {
+        return this.adminService.getSupportRequests(skip, take);
+    }
+
+    @Post('reports/:type/:id/status')
+    async updateReportStatus(
+        @Param('type') type: 'user' | 'property',
+        @Param('id') id: string,
+        @Body('status') status: string
+    ) {
+        return this.adminService.updateReportStatus(type, id, status);
+    }
+
+    @Post('tickets/:id/status')
+    async updateTicketStatus(@Param('id') id: string, @Body('status') status: string) {
+        return this.adminService.updateTicketStatus(id, status);
     }
 }

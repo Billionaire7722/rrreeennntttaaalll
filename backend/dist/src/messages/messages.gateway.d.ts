@@ -33,9 +33,9 @@ export declare class MessagesGateway implements OnGatewayInit, OnGatewayConnecti
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
@@ -51,5 +51,7 @@ export declare class MessagesGateway implements OnGatewayInit, OnGatewayConnecti
     emitToUser(userId: string, event: string, data: any): Promise<void>;
     sendMessageToUser(userId: string, message: any): Promise<void>;
     notifySuperAdmins(message: any): Promise<void>;
+    notifyAdminOfReport(report: any): Promise<void>;
+    notifyAdminOfTicket(ticket: any): Promise<void>;
 }
 export {};

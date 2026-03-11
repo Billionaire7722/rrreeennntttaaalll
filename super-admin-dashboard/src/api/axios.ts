@@ -20,7 +20,7 @@ const normalizeApiBaseUrl = (value?: string) => {
 };
 
 const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
-const resolvedApiBaseUrl = normalizeApiBaseUrl(envApiBaseUrl) || fallbackApiBaseUrl;
+export const resolvedApiBaseUrl = normalizeApiBaseUrl(envApiBaseUrl) || fallbackApiBaseUrl;
 
 const api = axios.create({
     baseURL: resolvedApiBaseUrl,

@@ -54,8 +54,8 @@ export const Overview: React.FC = () => {
                 const res = await api.get('/admin/metrics');
                 setStats({
                     ...res.data.overview,
-                    totalAdmins: res.data.overview.totalAdmins || 5, // Fallback if missing
-                    openReports: 12 // Mocked for now
+                    totalAdmins: res.data.overview.totalAdmins || 0,
+                    openReports: res.data.overview.openReports || 0
                 });
                 setCharts({
                     loginData: res.data.charts?.loginData || [],

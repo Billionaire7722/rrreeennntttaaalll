@@ -151,6 +151,20 @@ let MessagesGateway = class MessagesGateway {
             socket.emit('new_message', message);
         });
     }
+    async notifyAdminOfReport(report) {
+        this.connectedClients.forEach((socket) => {
+            if (socket.user?.role !== roles_enum_1.Role.SUPER_ADMIN)
+                return;
+            socket.emit('new_report', report);
+        });
+    }
+    async notifyAdminOfTicket(ticket) {
+        this.connectedClients.forEach((socket) => {
+            if (socket.user?.role !== roles_enum_1.Role.SUPER_ADMIN)
+                return;
+            socket.emit('new_support_ticket', ticket);
+        });
+    }
 };
 exports.MessagesGateway = MessagesGateway;
 __decorate([

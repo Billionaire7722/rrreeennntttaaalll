@@ -161,7 +161,13 @@ export default function PropertyDetailsPage() {
             <div className="flex flex-col h-screen items-center justify-center bg-white">
                 <span className="text-gray-500 font-medium mb-4">{t("no_info")}</span>
                 <button
-                    onClick={() => router.back()}
+                    onClick={() => {
+                        if (window.history.length > 1) {
+                            router.back();
+                        } else {
+                            router.push('/');
+                        }
+                    }}
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold"
                 >
                     {t("go_back")}
@@ -215,7 +221,17 @@ export default function PropertyDetailsPage() {
 
                 {/* Back / Share / Heart — top bar */}
                 <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-                    <button onClick={(e) => { e.stopPropagation(); router.back(); }} className="shadow-md w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex justify-center items-center hover:bg-white transition-colors">
+                    <button 
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (window.history.length > 1) {
+                                router.back();
+                            } else {
+                                router.push('/');
+                            }
+                        }} 
+                        className="shadow-md w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex justify-center items-center hover:bg-white transition-colors"
+                    >
                         <ChevronLeft size={24} className="text-gray-800 pr-0.5" />
                     </button>
                     <div className="flex gap-3">

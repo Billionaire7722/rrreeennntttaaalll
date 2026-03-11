@@ -13,6 +13,9 @@ import { HousesSheet } from './pages/HousesSheet';
 import { UserReports } from './pages/UserReports';
 import { PropertyReports } from './pages/PropertyReports';
 import { SupportRequests } from './pages/SupportRequests';
+import { FraudAlerts } from './pages/FraudAlerts';
+import { SuspiciousIPs } from './pages/SuspiciousIPs';
+import { PropertyFraudAlerts } from './pages/PropertyFraudAlerts';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 
 function App() {
@@ -39,7 +42,9 @@ function App() {
             
             {/* System Monitoring */}
             <Route path="login-logs" element={<LoginLogs />} />
-            <Route path="login-attempts" element={<PlaceholderPage title="Login Attempts" />} />
+            <Route path="fraud-alerts" element={<FraudAlerts />} />
+            <Route path="property-fraud" element={<PropertyFraudAlerts />} />
+            <Route path="suspicious-ips" element={<SuspiciousIPs />} />
             <Route path="audit-logs" element={<AuditLogs />} />
             <Route path="live-monitor" element={<LiveMonitor />} />
             

@@ -1,8 +1,11 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { ActivityLogService } from '../admin/activity-log.service';
+import { MonitoringService } from '../admin/monitoring.service';
 export declare class HousesService {
     private prisma;
-    constructor(prisma: PrismaService);
-    private isAdminRole;
+    private activityLogService;
+    private monitoringService;
+    constructor(prisma: PrismaService, activityLogService: ActivityLogService, monitoringService: MonitoringService);
     private fetchCoordinatesFromAddress;
     private assertUserCanManageHouse;
     getHouses(skip?: number, take?: number, ownerId?: string, search?: string, status?: string): Promise<{

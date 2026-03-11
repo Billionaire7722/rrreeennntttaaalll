@@ -14,12 +14,13 @@ const prisma_module_1 = require("../prisma/prisma.module");
 const audit_module_1 = require("../audit/audit.module");
 const audit_interceptor_1 = require("../audit/audit.interceptor");
 const jwt_1 = require("@nestjs/jwt");
+const admin_module_1 = require("../admin/admin.module");
 let HousesModule = class HousesModule {
 };
 exports.HousesModule = HousesModule;
 exports.HousesModule = HousesModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, audit_module_1.AuditModule, jwt_1.JwtModule],
+        imports: [prisma_module_1.PrismaModule, audit_module_1.AuditModule, jwt_1.JwtModule, admin_module_1.AdminModule],
         controllers: [houses_controller_1.HousesController],
         providers: [houses_service_1.HousesService, audit_interceptor_1.AuditInterceptor],
     })

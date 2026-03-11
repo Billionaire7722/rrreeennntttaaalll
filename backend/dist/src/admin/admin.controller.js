@@ -45,14 +45,14 @@ let AdminController = class AdminController {
     async updateAdminInfo(id, body) {
         return this.adminService.updateAdmin(id, body);
     }
-    async changeAdminRole(id, role) {
-        return this.adminService.changeRole(id, role);
+    async changeAdminRole(id, role, req) {
+        return this.adminService.changeRole(id, role, req.user.userId);
     }
-    async changeAdminStatus(id, status) {
-        return this.adminService.changeStatus(id, status);
+    async changeAdminStatus(id, status, req) {
+        return this.adminService.changeStatus(id, status, req.user.userId);
     }
-    async deleteAdmin(id) {
-        return this.adminService.softDeleteAdmin(id);
+    async deleteAdmin(id, req) {
+        return this.adminService.softDeleteAdmin(id, req.user.userId);
     }
     async restoreUser(id) {
         return this.adminService.restoreUser(id);
@@ -71,6 +71,45 @@ let AdminController = class AdminController {
     }
     async getLiveSessions(skip, take, role) {
         return this.adminService.getLiveSessions(skip, take, role);
+    }
+    async getUserGrowth(range) {
+        return this.adminService.getUserGrowth(range);
+    }
+    async getPropertyActivity(range) {
+        return this.adminService.getPropertyActivity(range);
+    }
+    async getLoginTraffic(range) {
+        return this.adminService.getLoginTraffic(range);
+    }
+    async getIPDistribution() {
+        return this.adminService.getIPDistribution();
+    }
+    async warnUser(id, reason, req) {
+        return this.adminService.warnUser(id, reason, req.user.userId);
+    }
+    async restrictAccount(id, durationDays, req) {
+        return this.adminService.restrictAccount(id, req.user.userId, durationDays);
+    }
+    async deleteHouse(id, req) {
+        return this.adminService.deleteProperty(id, req.user.userId);
+    }
+    async replyTicket(id, req, content) {
+        return this.adminService.replyToTicket(id, req.user.userId, content);
+    }
+    async getUserReports(skip, take) {
+        return this.adminService.getUserReports(skip, take);
+    }
+    async getPropertyReports(skip, take) {
+        return this.adminService.getPropertyReports(skip, take);
+    }
+    async getSupportRequests(skip, take) {
+        return this.adminService.getSupportRequests(skip, take);
+    }
+    async updateReportStatus(type, id, status) {
+        return this.adminService.updateReportStatus(type, id, status);
+    }
+    async updateTicketStatus(id, status) {
+        return this.adminService.updateTicketStatus(id, status);
     }
 };
 exports.AdminController = AdminController;
@@ -132,8 +171,9 @@ __decorate([
     (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)('role')),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "changeAdminRole", null);
 __decorate([
@@ -141,16 +181,18 @@ __decorate([
     (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)('status')),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "changeAdminStatus", null);
 __decorate([
     (0, common_1.Delete)('admins/:id'),
     (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "deleteAdmin", null);
 __decorate([
@@ -204,6 +246,109 @@ __decorate([
     __metadata("design:paramtypes", [Number, Number, String]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "getLiveSessions", null);
+__decorate([
+    (0, common_1.Get)('analytics/user-growth'),
+    __param(0, (0, common_1.Query)('range')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getUserGrowth", null);
+__decorate([
+    (0, common_1.Get)('analytics/property-activity'),
+    __param(0, (0, common_1.Query)('range')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getPropertyActivity", null);
+__decorate([
+    (0, common_1.Get)('analytics/login-traffic'),
+    __param(0, (0, common_1.Query)('range')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getLoginTraffic", null);
+__decorate([
+    (0, common_1.Get)('analytics/ip-distribution'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getIPDistribution", null);
+__decorate([
+    (0, common_1.Post)('users/:id/warn'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('reason')),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "warnUser", null);
+__decorate([
+    (0, common_1.Post)('users/:id/restrict'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('durationDays')),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restrictAccount", null);
+__decorate([
+    (0, common_1.Delete)('houses/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "deleteHouse", null);
+__decorate([
+    (0, common_1.Post)('tickets/:id/reply'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Body)('content')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "replyTicket", null);
+__decorate([
+    (0, common_1.Get)('user-reports'),
+    __param(0, (0, common_1.Query)('skip')),
+    __param(1, (0, common_1.Query)('take')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getUserReports", null);
+__decorate([
+    (0, common_1.Get)('property-reports'),
+    __param(0, (0, common_1.Query)('skip')),
+    __param(1, (0, common_1.Query)('take')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getPropertyReports", null);
+__decorate([
+    (0, common_1.Get)('support-requests'),
+    __param(0, (0, common_1.Query)('skip')),
+    __param(1, (0, common_1.Query)('take')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getSupportRequests", null);
+__decorate([
+    (0, common_1.Post)('reports/:type/:id/status'),
+    __param(0, (0, common_1.Param)('type')),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)('status')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateReportStatus", null);
+__decorate([
+    (0, common_1.Post)('tickets/:id/status'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('status')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateTicketStatus", null);
 exports.AdminController = AdminController = __decorate([
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

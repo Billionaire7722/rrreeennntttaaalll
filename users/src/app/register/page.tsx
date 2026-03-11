@@ -314,26 +314,6 @@ export default function RegisterPage() {
                                             <User className="h-5 w-5 text-gray-400" />
                                         </div>
                                         <input
-                                            id="lastName"
-                                            name="lastName"
-                                            type="text"
-                                            required
-                                            value={formData.lastName}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            className={getInputClassName('lastName')}
-                                            placeholder={t('last_name_placeholder') || "Họ"}
-                                        />
-                                    </div>
-                                    {errors.lastName && touched.lastName && <p className="text-[10px] text-red-500">{errors.lastName}</p>}
-                                </div>
-
-                                <div className="space-y-1">
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                                            <User className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
                                             id="firstName"
                                             name="firstName"
                                             type="text"
@@ -346,6 +326,26 @@ export default function RegisterPage() {
                                         />
                                     </div>
                                     {errors.firstName && touched.firstName && <p className="text-[10px] text-red-500">{errors.firstName}</p>}
+                                </div>
+
+                                <div className="space-y-1">
+                                    <div className="relative">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                            <User className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                        <input
+                                            id="lastName"
+                                            name="lastName"
+                                            type="text"
+                                            required
+                                            value={formData.lastName}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            className={getInputClassName('lastName')}
+                                            placeholder={t('last_name_placeholder') || "Họ"}
+                                        />
+                                    </div>
+                                    {errors.lastName && touched.lastName && <p className="text-[10px] text-red-500">{errors.lastName}</p>}
                                 </div>
                             </div>
 

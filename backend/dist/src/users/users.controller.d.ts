@@ -18,12 +18,14 @@ export declare class UsersController {
         coverUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
-        locked_until: Date | null;
         name_updated_at: Date | null;
         bio: string | null;
         deleted_at: Date | null;
         created_at: Date;
         updated_at: Date;
+        failed_attempts: number;
+        last_failed_attempt: Date | null;
+        locked_until: Date | null;
     }>;
     getFavorites(req: any): Promise<({
         house: {
@@ -84,9 +86,9 @@ export declare class UsersController {
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
@@ -99,9 +101,9 @@ export declare class UsersController {
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
@@ -127,9 +129,9 @@ export declare class UsersController {
             id: string;
             created_at: Date;
             userId: string;
-            content: string;
             senderId: string | null;
             senderRole: import("@prisma/client").$Enums.Role;
+            content: string;
             seen_at: Date | null;
             seen_by_role: import("@prisma/client").$Enums.Role | null;
             receiverId: string | null;
@@ -142,9 +144,9 @@ export declare class UsersController {
         id: string;
         created_at: Date;
         userId: string;
-        content: string;
         senderId: string | null;
         senderRole: import("@prisma/client").$Enums.Role;
+        content: string;
         seen_at: Date | null;
         seen_by_role: import("@prisma/client").$Enums.Role | null;
         receiverId: string | null;
@@ -168,12 +170,14 @@ export declare class UsersController {
         coverUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
-        locked_until: Date | null;
         name_updated_at: Date | null;
         bio: string | null;
         deleted_at: Date | null;
         created_at: Date;
         updated_at: Date;
+        failed_attempts: number;
+        last_failed_attempt: Date | null;
+        locked_until: Date | null;
     }>;
     updateCover(req: any, body: {
         url: string;
@@ -190,12 +194,14 @@ export declare class UsersController {
         coverUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
-        locked_until: Date | null;
         name_updated_at: Date | null;
         bio: string | null;
         deleted_at: Date | null;
         created_at: Date;
         updated_at: Date;
+        failed_attempts: number;
+        last_failed_attempt: Date | null;
+        locked_until: Date | null;
     }>;
     getPublicProfile(id: string): Promise<{
         id: string;
@@ -237,12 +243,14 @@ export declare class UsersController {
         coverUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
-        locked_until: Date | null;
         name_updated_at: Date | null;
         bio: string | null;
         deleted_at: Date | null;
         created_at: Date;
         updated_at: Date;
+        failed_attempts: number;
+        last_failed_attempt: Date | null;
+        locked_until: Date | null;
     }>;
     changePassword(req: any, changePasswordDto: ChangePasswordDto): Promise<{
         message: string;

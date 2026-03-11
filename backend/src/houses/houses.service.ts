@@ -1,15 +1,17 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '../security/roles.enum';
+import { ActivityLogService } from '../admin/activity-log.service';
+import { MonitoringService } from '../admin/monitoring.service';
 
 @Injectable()
 export class HousesService {
 
-    constructor(private prisma: PrismaService) { }
-
-    private isAdminRole(role?: string) {
-        return role === Role.SUPER_ADMIN;
-    }
+    constructor(
+        private prisma: PrismaService,
+        private activityLogService: ActivityLogService,
+        private monitoringService: MonitoringService
+    ) { }
 
     private async fetchCoordinatesFromAddress(queries: string[]): Promise<{ lat: number, lon: number } | null> {
         for (const baseQuery of queries) {
@@ -186,7 +188,6 @@ export class HousesService {
             if (normalizedAddress && normalizedDistrict && normalizedCity) {
                 searchQueries.push(`${normalizedAddress}, ${normalizedDistrict}, ${normalizedCity}`);
             }
-            // ... more specific queries as needed
             if (normalizedCity) searchQueries.push(normalizedCity);
 
             const coords = await this.fetchCoordinatesFromAddress(searchQueries);
@@ -237,6 +238,22 @@ export class HousesService {
         });
 
         if (!refreshedHouse) throw new Error('House not found');
+
+        // Log House Update
+        if (actorId) {
+            await this.activityLogService.log(
+                actorId,
+                'property_updated',
+                `Updated property: ${refreshedHouse.name}`,
+                { houseId: id } as any
+            );
+        }
+
+        // Trigger Fraud Detection
+        this.monitoringService.detectPropertyFraud(id).catch(err => {
+            console.error('Fraud detection failed', err);
+        });
+
         return {
             ...refreshedHouse,
             postedByAdmins: refreshedHouse.owner ? [refreshedHouse.owner] : [],
@@ -326,6 +343,22 @@ export class HousesService {
         });
 
         if (!populatedHouse) throw new Error('House not found');
+
+        // Log House Creation
+        if (actorId) {
+            await this.activityLogService.log(
+                actorId,
+                'property_created',
+                `Created property: ${populatedHouse.name}`,
+                { houseId: populatedHouse.id } as any
+            );
+        }
+
+        // Trigger Fraud Detection
+        this.monitoringService.detectPropertyFraud(populatedHouse.id).catch(err => {
+            console.error('Fraud detection failed', err);
+        });
+
         return {
             ...populatedHouse,
             postedByAdmins: populatedHouse.owner ? [populatedHouse.owner] : [],
@@ -339,10 +372,21 @@ export class HousesService {
         if (!house) throw new Error('House not found');
         await this.assertUserCanManageHouse(id, actorId, actorRole);
 
-        return this.prisma.house.update({
+        const updated = await this.prisma.house.update({
             where: { id },
             data: { status }
         });
+
+        if (actorId) {
+            await this.activityLogService.log(
+                actorId,
+                'property_updated',
+                `Changed status of property ${updated.name} to ${status}`,
+                { houseId: id, status } as any
+            );
+        }
+
+        return updated;
     }
 
     async removeHouse(id: string, actorId?: string, actorRole?: string) {
@@ -352,10 +396,20 @@ export class HousesService {
         if (!house) throw new Error('House not found');
         await this.assertUserCanManageHouse(id, actorId, actorRole);
 
-        return this.prisma.house.update({
+        const updated = await this.prisma.house.update({
             where: { id },
             data: { deleted_at: new Date() }
         });
+
+        if (actorId) {
+            await this.activityLogService.log(
+                actorId,
+                'property_deleted',
+                `Deleted property: ${updated.name}`,
+                { houseId: id } as any
+            );
+        }
+
+        return updated;
     }
 }
-

@@ -10,17 +10,21 @@ exports.AdminModule = void 0;
 const common_1 = require("@nestjs/common");
 const admin_controller_1 = require("./admin.controller");
 const admin_service_1 = require("./admin.service");
+const monitoring_controller_1 = require("./monitoring.controller");
+const monitoring_service_1 = require("./monitoring.service");
 const prisma_module_1 = require("../prisma/prisma.module");
 const audit_module_1 = require("../audit/audit.module");
 const presence_module_1 = require("../presence/presence.module");
+const activity_log_service_1 = require("./activity-log.service");
 let AdminModule = class AdminModule {
 };
 exports.AdminModule = AdminModule;
 exports.AdminModule = AdminModule = __decorate([
     (0, common_1.Module)({
         imports: [prisma_module_1.PrismaModule, audit_module_1.AuditModule, presence_module_1.PresenceModule],
-        controllers: [admin_controller_1.AdminController],
-        providers: [admin_service_1.AdminService],
+        controllers: [admin_controller_1.AdminController, monitoring_controller_1.MonitoringController],
+        providers: [admin_service_1.AdminService, monitoring_service_1.MonitoringService, activity_log_service_1.ActivityLogService],
+        exports: [admin_service_1.AdminService, monitoring_service_1.MonitoringService, activity_log_service_1.ActivityLogService]
     })
 ], AdminModule);
 //# sourceMappingURL=admin.module.js.map

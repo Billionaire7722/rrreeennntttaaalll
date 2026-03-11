@@ -4,9 +4,8 @@ import {
     Filter, 
     AlertTriangle,
     User,
-    Eye,
-    CheckCircle,
-    Trash2
+    Trash2,
+    ShieldCheck
 } from 'lucide-react';
 import api from '../api/axios';
 import css from './Table.module.css';
@@ -30,11 +29,50 @@ export const UserReports: React.FC = () => {
         setLoading(true);
         try {
             const res = await api.get('/admin/user-reports');
-            setReports(res.data.reports || []);
+            setReports(res.data.items || []);
         } catch (err) {
             console.error('Failed to fetch user reports', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleWarn = async (userId: string, reportId: string) => {
+        const reason = prompt('Enter warning reason:');
+        if (!reason) return;
+        try {
+            await api.post(`/admin/users/${userId}/warn`, { reason });
+            await api.post(`/admin/reports/user/${reportId}/status`, { status: 'RESOLVED' });
+            alert('User warned and report resolved');
+            fetchReports();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to warn user');
+        }
+    };
+
+    const handleRestrict = async (userId: string, reportId: string) => {
+        const days = prompt('Enter restriction duration in days (leave empty for permanent):');
+        const durationDays = days ? parseInt(days) : undefined;
+        try {
+            await api.post(`/admin/users/${userId}/restrict`, { durationDays });
+            await api.post(`/admin/reports/user/${reportId}/status`, { status: 'RESOLVED' });
+            alert('User restricted and report resolved');
+            fetchReports();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to restrict user');
+        }
+    };
+
+    const handleDismiss = async (reportId: string) => {
+        if (!confirm('Are you sure you want to dismiss this report?')) return;
+        try {
+            await api.post(`/admin/reports/user/${reportId}/status`, { status: 'DISMISSED' });
+            fetchReports();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to dismiss report');
         }
     };
 
@@ -103,9 +141,9 @@ export const UserReports: React.FC = () => {
                                         </td>
                                         <td style={{ textAlign: 'right' }}>
                                             <div className={css.actions} style={{ justifyContent: 'flex-end' }}>
-                                                <button className="btn btn-outline" style={{ padding: '6px' }} title="View Details"><Eye size={14} /></button>
-                                                <button className="btn btn-outline" style={{ padding: '6px', color: 'var(--success-color)' }} title="Resolve"><CheckCircle size={14} /></button>
-                                                <button className="btn btn-outline" style={{ padding: '6px', color: 'var(--danger-color)' }} title="Dismiss"><Trash2 size={14} /></button>
+                                                <button className="btn btn-outline" style={{ padding: '6px' }} title="Warn User" onClick={() => handleWarn(r.targetId, r.id)}><AlertTriangle size={14} /></button>
+                                                <button className="btn btn-outline" style={{ padding: '6px', color: 'var(--warning-color)' }} title="Restrict Account" onClick={() => handleRestrict(r.targetId, r.id)}><ShieldCheck size={14} /></button>
+                                                <button className="btn btn-outline" style={{ padding: '6px', color: 'var(--danger-color)' }} title="Dismiss Report" onClick={() => handleDismiss(r.id)}><Trash2 size={14} /></button>
                                             </div>
                                         </td>
                                     </tr>

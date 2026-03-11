@@ -189,4 +189,18 @@ export class MessagesGateway
             socket.emit('new_message', message);
         });
     }
+
+    async notifyAdminOfReport(report: any) {
+        this.connectedClients.forEach((socket) => {
+            if (socket.user?.role !== Role.SUPER_ADMIN) return;
+            socket.emit('new_report', report);
+        });
+    }
+
+    async notifyAdminOfTicket(ticket: any) {
+        this.connectedClients.forEach((socket) => {
+            if (socket.user?.role !== Role.SUPER_ADMIN) return;
+            socket.emit('new_support_ticket', ticket);
+        });
+    }
 }
