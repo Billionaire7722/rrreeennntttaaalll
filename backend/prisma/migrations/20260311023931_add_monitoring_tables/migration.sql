@@ -10,6 +10,14 @@
 */
 -- AlterEnum
 BEGIN;
+-- Normalize legacy role values before narrowing enum variants.
+UPDATE "User" SET "role" = 'SUPER_ADMIN' WHERE "role" = 'ADMIN';
+UPDATE "User" SET "role" = 'USER' WHERE "role" = 'GUEST';
+UPDATE "Message" SET "senderRole" = 'SUPER_ADMIN' WHERE "senderRole" = 'ADMIN';
+UPDATE "Message" SET "senderRole" = 'USER' WHERE "senderRole" = 'GUEST';
+UPDATE "Message" SET "seen_by_role" = 'SUPER_ADMIN' WHERE "seen_by_role" = 'ADMIN';
+UPDATE "Message" SET "seen_by_role" = 'USER' WHERE "seen_by_role" = 'GUEST';
+
 CREATE TYPE "Role_new" AS ENUM ('SUPER_ADMIN', 'USER');
 ALTER TABLE "public"."Message" ALTER COLUMN "senderRole" DROP DEFAULT;
 ALTER TABLE "public"."User" ALTER COLUMN "role" DROP DEFAULT;
