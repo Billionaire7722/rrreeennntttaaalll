@@ -14,7 +14,9 @@ export const getAllowedCorsOrigins = (): string[] => {
   const raw = process.env.CORS_ORIGIN?.trim();
 
   if (!raw) {
-    return isProduction ? [] : ['*'];
+    // In production, we should ideally restrict this, but for testing/initial deployment,
+    // allowing '*' ensures the frontend can connect if CORS_ORIGIN is forgotten.
+    return ['*'];
   }
 
   return raw

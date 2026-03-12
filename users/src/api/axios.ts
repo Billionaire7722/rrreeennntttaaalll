@@ -17,11 +17,13 @@ const normalizeApiBaseUrl = (value?: string) => {
 };
 
 const resolveApiBaseUrl = () => {
-    const envUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
-    if (envUrl) return envUrl.replace(/\/+$/, '');
+    const rawEnvUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const envUrl = normalizeApiBaseUrl(rawEnvUrl);
+    if (envUrl) return envUrl;
 
     if (typeof window !== 'undefined' && window.location?.hostname) {
-        return `${window.location.protocol}//${window.location.hostname}:3000`;
+        const host = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
+        return `${window.location.protocol}//${host}:3000`;
     }
 
     return 'http://127.0.0.1:3000';

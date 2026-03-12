@@ -58,6 +58,7 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-rental}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - NODE_ENV=production
     ports:
       - "3000:3000"
     depends_on:

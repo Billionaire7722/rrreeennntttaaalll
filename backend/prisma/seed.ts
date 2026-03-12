@@ -60,9 +60,6 @@ async function main() {
     console.log('Seeding Users...');
     await seedUsers();
 
-    console.log('Clearing existing houses...');
-    await prisma.house.deleteMany({});
-
     // ==========================================
     // Seed Houses from JSON
     // ==========================================

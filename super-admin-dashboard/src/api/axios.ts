@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const runtimeHost = typeof window !== 'undefined' ? (window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname) : '127.0.0.1';
-const runtimeProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'https:' : 'http:';
-const fallbackApiBaseUrl = `${runtimeProtocol}//${runtimeHost}:3000`;
+const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+
 const normalizeApiBaseUrl = (value?: string) => {
     if (!value) return '';
     const trimmed = value.trim();
@@ -19,7 +18,10 @@ const normalizeApiBaseUrl = (value?: string) => {
     }
 };
 
-const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const runtimeHost = typeof window !== 'undefined' ? (window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname) : '127.0.0.1';
+const runtimeProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'https:' : 'http:';
+const fallbackApiBaseUrl = `${runtimeProtocol}//${runtimeHost}:3000`;
+
 export const resolvedApiBaseUrl = normalizeApiBaseUrl(envApiBaseUrl) || fallbackApiBaseUrl;
 
 const api = axios.create({
