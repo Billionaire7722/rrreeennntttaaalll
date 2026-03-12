@@ -25,8 +25,8 @@ export declare class AuditService {
         items: ({
             actor: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
             } | null;
         } & {
             id: string;

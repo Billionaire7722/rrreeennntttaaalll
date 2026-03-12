@@ -456,12 +456,40 @@ export declare class AdminService {
         skip: number;
         take: number;
     }>;
+    updateUser(userId: string, data: {
+        name?: string;
+        username?: string;
+        email?: string;
+        phone?: string;
+        password?: string;
+    }, actorId: string): Promise<{
+        id: string;
+        name: string;
+        username: string;
+        email: string;
+        phone: string | null;
+        role: import("@prisma/client").$Enums.Role;
+        status: string;
+    }>;
+    updateUserStatus(userId: string, status: string, actorId: string, durationDays?: number): Promise<{
+        id: string;
+        name: string;
+        username: string;
+        email: string;
+        role: import("@prisma/client").$Enums.Role;
+        status: string;
+    }>;
+    softDeleteUser(userId: string, actorId: string): Promise<{
+        id: string;
+        name: string;
+        deleted_at: Date | null;
+    }>;
     getAllAdmins(skip?: number, take?: number): Promise<{
         admins: {
             id: string;
+            name: string;
             username: string;
             email: string;
-            name: string;
             phone: string | null;
             role: import("@prisma/client").$Enums.Role;
             status: string;
@@ -480,9 +508,9 @@ export declare class AdminService {
         password?: string;
     }): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
-        name: string;
         phone: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
@@ -547,8 +575,8 @@ export declare class AdminService {
         items: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 role: import("@prisma/client").$Enums.Role;
             } | null;
         } & {
@@ -600,9 +628,9 @@ export declare class AdminService {
         password: string;
     }): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
-        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
@@ -614,9 +642,9 @@ export declare class AdminService {
         password: string;
     }): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
-        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
@@ -642,13 +670,13 @@ export declare class AdminService {
         items: ({
             reporter: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
             };
             target: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 status: string;
             };
         } & {
@@ -675,8 +703,8 @@ export declare class AdminService {
             };
             reporter: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
             };
         } & {
             id: string;
@@ -696,8 +724,8 @@ export declare class AdminService {
         items: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 role: import("@prisma/client").$Enums.Role;
             };
             _count: {
@@ -750,11 +778,11 @@ export declare class AdminService {
     }>;
     restrictAccount(userId: string, actorId: string, durationDays?: number): Promise<{
         id: string;
-        username: string;
-        email: string;
         name: string;
         firstName: string | null;
         lastName: string | null;
+        username: string;
+        email: string;
         phone: string | null;
         password: string;
         avatarUrl: string | null;

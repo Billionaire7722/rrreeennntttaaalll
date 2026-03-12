@@ -91,16 +91,16 @@ export declare class UsersService {
         items: ({
             user: {
                 id: string;
+                name: string;
                 username: string;
                 email: string;
-                name: string;
                 phone: string | null;
                 role: import("@prisma/client").$Enums.Role;
             };
             receiver: {
                 id: string;
-                username: string;
                 name: string;
+                username: string;
                 avatarUrl: string | null;
             } | null;
         } & {
@@ -138,11 +138,11 @@ export declare class UsersService {
     }>;
     getProfile(userId: string): Promise<{
         id: string;
-        username: string;
-        email: string;
         name: string;
         firstName: string | null;
         lastName: string | null;
+        username: string;
+        email: string;
         phone: string | null;
         password: string;
         avatarUrl: string | null;
@@ -160,11 +160,11 @@ export declare class UsersService {
     }>;
     updateAvatar(userId: string, avatarUrl: string): Promise<{
         id: string;
-        username: string;
-        email: string;
         name: string;
         firstName: string | null;
         lastName: string | null;
+        username: string;
+        email: string;
         phone: string | null;
         password: string;
         avatarUrl: string | null;
@@ -182,11 +182,11 @@ export declare class UsersService {
     }>;
     updateCover(userId: string, coverUrl: string): Promise<{
         id: string;
-        username: string;
-        email: string;
         name: string;
         firstName: string | null;
         lastName: string | null;
+        username: string;
+        email: string;
         phone: string | null;
         password: string;
         avatarUrl: string | null;
@@ -231,11 +231,11 @@ export declare class UsersService {
         email?: string;
     }): Promise<{
         id: string;
-        username: string;
-        email: string;
         name: string;
         firstName: string | null;
         lastName: string | null;
+        username: string;
+        email: string;
         phone: string | null;
         password: string;
         avatarUrl: string | null;

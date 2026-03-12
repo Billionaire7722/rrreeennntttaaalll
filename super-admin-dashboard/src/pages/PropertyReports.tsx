@@ -23,6 +23,7 @@ interface PropertyReport {
 export const PropertyReports: React.FC = () => {
     const [reports, setReports] = useState<PropertyReport[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const fetchReports = async () => {
         setLoading(true);
@@ -87,7 +88,13 @@ export const PropertyReports: React.FC = () => {
             <div className={css.tableControls}>
                 <div className={css.searchWrapper}>
                     <Search className={css.searchIcon} size={16} />
-                    <input type="text" placeholder="Search reports..." className={`input-field ${css.searchInput}`} />
+                    <input
+                        type="text"
+                        placeholder="Search by property name, reporter, reason..."
+                        className={`input-field ${css.searchInput}`}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </div>
             </div>
 
@@ -110,7 +117,14 @@ export const PropertyReports: React.FC = () => {
                             ) : reports.length === 0 ? (
                                 <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px' }}>No reports found.</td></tr>
                             ) : (
-                                reports.map(r => (
+                                reports
+                                    .filter((r) => {
+                                        const q = searchQuery.trim().toLowerCase();
+                                        if (!q) return true;
+                                        const hay = `${r.house?.name || ''} ${r.reporter?.name || ''} ${r.reason || ''}`.toLowerCase();
+                                        return hay.includes(q);
+                                    })
+                                    .map(r => (
                                     <tr key={r.id}>
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -130,6 +144,14 @@ export const PropertyReports: React.FC = () => {
                                         </td>
                                         <td style={{ textAlign: 'right' }}>
                                             <div className={css.actions} style={{ justifyContent: 'flex-end' }}>
+                                                <button
+                                                    className="btn btn-outline"
+                                                    style={{ padding: '6px' }}
+                                                    title="Open property in Users app"
+                                                    onClick={() => window.open(`http://localhost:3002/properties/${r.houseId}`, '_blank')}
+                                                >
+                                                    <Eye size={14} />
+                                                </button>
                                                 <button className="btn btn-outline" style={{ padding: '6px', color: 'var(--success-color)' }} title="Resolve Only" onClick={() => handleResolve(r.id)}><CheckCircle size={14} /></button>
                                                 <button className="btn btn-outline" style={{ padding: '6px', color: 'var(--danger-color)' }} title="Soft Delete Property" onClick={() => handleDelete(r.houseId, r.id)}><XCircle size={14} /></button>
                                                 <button className="btn btn-outline" style={{ padding: '6px' }} title="Dismiss Report" onClick={() => handleDismiss(r.id)}><Eye size={14} /></button>

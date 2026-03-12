@@ -7,11 +7,11 @@ export declare class UsersController {
     constructor(usersService: UsersService);
     getProfile(req: any): Promise<{
         id: string;
-        username: string;
-        email: string;
         name: string;
         firstName: string | null;
         lastName: string | null;
+        username: string;
+        email: string;
         phone: string | null;
         password: string;
         avatarUrl: string | null;
@@ -113,16 +113,16 @@ export declare class UsersController {
         items: ({
             user: {
                 id: string;
+                name: string;
                 username: string;
                 email: string;
-                name: string;
                 phone: string | null;
                 role: import("@prisma/client").$Enums.Role;
             };
             receiver: {
                 id: string;
-                username: string;
                 name: string;
+                username: string;
                 avatarUrl: string | null;
             } | null;
         } & {
@@ -159,11 +159,11 @@ export declare class UsersController {
         url: string;
     }): Promise<{
         id: string;
-        username: string;
-        email: string;
         name: string;
         firstName: string | null;
         lastName: string | null;
+        username: string;
+        email: string;
         phone: string | null;
         password: string;
         avatarUrl: string | null;
@@ -183,11 +183,11 @@ export declare class UsersController {
         url: string;
     }): Promise<{
         id: string;
-        username: string;
-        email: string;
         name: string;
         firstName: string | null;
         lastName: string | null;
+        username: string;
+        email: string;
         phone: string | null;
         password: string;
         avatarUrl: string | null;
@@ -232,11 +232,11 @@ export declare class UsersController {
         email?: string;
     }): Promise<{
         id: string;
-        username: string;
-        email: string;
         name: string;
         firstName: string | null;
         lastName: string | null;
+        username: string;
+        email: string;
         phone: string | null;
         password: string;
         avatarUrl: string | null;

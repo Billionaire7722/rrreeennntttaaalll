@@ -47,13 +47,18 @@ async function seedUsers() {
     const saltRounds = 10;
     const defaultPassword = '123456';
     const hashedPassword = await bcrypt.hash(defaultPassword, saltRounds);
+    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'ceo@rentalapp.com').trim();
+    const superAdminUsername = (process.env.SUPER_ADMIN_USERNAME || 'superadmin_ceo').trim();
+    const superAdminName = 'Super Admin';
+    const superAdminPasswordRaw = (process.env.SUPER_ADMIN_PASSWORD || 'Admin@123').trim();
+    const superAdminPassword = await bcrypt.hash(superAdminPasswordRaw, saltRounds);
     const usersToSeed = [
         {
-            email: 'superadmin@test.com',
-            username: 'superadmin',
-            name: 'Super Admin',
+            email: superAdminEmail,
+            username: superAdminUsername,
+            name: superAdminName,
             role: 'SUPER_ADMIN',
-            password: hashedPassword,
+            password: superAdminPassword,
         },
         {
             email: 'admin@test.com',
@@ -71,13 +76,31 @@ async function seedUsers() {
         }
     ];
     for (const user of usersToSeed) {
-        const existingUser = await prisma.user.findUnique({ where: { email: user.email } });
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                OR: [{ email: user.email }, { username: user.username }],
+            },
+        });
         if (!existingUser) {
             await prisma.user.create({ data: user });
             console.log(`Seeded user: ${user.email} (${user.role})`);
+            continue;
         }
-        else {
-            console.log(`User already exists: ${user.email}`);
+        try {
+            await prisma.user.update({
+                where: { id: existingUser.id },
+                data: {
+                    email: user.email,
+                    username: user.username,
+                    name: user.name,
+                    role: user.role,
+                    password: user.password,
+                },
+            });
+            console.log(`Updated seeded user: ${user.email} (${user.role})`);
+        }
+        catch (e) {
+            console.log(`Seed user exists but could not be updated safely (email=${user.email}, username=${user.username}). Skipping.`);
         }
     }
 }
@@ -88,8 +111,6 @@ async function main() {
     }
     console.log('Seeding Users...');
     await seedUsers();
-    console.log('Clearing existing houses...');
-    await prisma.house.deleteMany({});
     console.log('Seeding Houses from JSON...');
     const houseDataPath = require('path').join(__dirname, 'data', 'house.json');
     let houseData;
@@ -126,7 +147,6 @@ async function main() {
             image_url_5: house.image_url_5 || null,
             image_url_6: house.image_url_6 || null,
             image_url_7: house.image_url_7 || null,
-            image_url_8: house.image_url_8 || null,
             description: house.decription || null,
             status: house.status || null,
             is_private_bathroom: house.is_private_bathroom === true || house.is_private_bathroom === 'true'

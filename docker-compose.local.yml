@@ -23,7 +23,7 @@ services:
   backend:
     build:
       target: builder # Target the builder stage to retain devDependencies (Prisma CLI, ts-node, etc)
-    command: sh -c "npx prisma generate && npx prisma migrate deploy && npx prisma db seed && npm run start:dev" # Auto-seed logic exclusively for development mode
+    command: sh -c "test -d node_modules/axios -a -d node_modules/@nestjs/throttler && echo \"node_modules present\" || npm ci; npx prisma generate && npx prisma migrate deploy && npx prisma db seed && npm run start:dev" # Auto-install deps for bind-mount dev
     env_file:
       - ./backend/.env
     environment:
@@ -37,7 +37,7 @@ services:
   super-admin:
     build:
       target: builder # Retain Node.js and Vite instead of Nginx
-    command: npm run dev -- --host 0.0.0.0 # Expose Vite to Docker network
+    command: sh -c "test -d node_modules/react && test -d node_modules/socket.io-client || npm ci; npm run dev -- --host 0.0.0.0" # Ensure deps exist, then expose Vite
     volumes:
       - ./super-admin-dashboard:/app
       - /app/node_modules
@@ -51,7 +51,7 @@ services:
       target: builder # Retain devDependencies for NextJS
       args:
         NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
-    command: npm run dev # Next.js dev server
+    command: sh -c "test -d node_modules/next || npm ci; npm run dev" # Ensure deps exist, then run Next.js dev server
     volumes:
       - ./users:/app
       - /app/node_modules

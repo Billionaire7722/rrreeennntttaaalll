@@ -53,6 +53,28 @@ export class AdminController {
         return this.adminService.createUser(body);
     }
 
+    @Patch('users/:id')
+    @Roles(Role.SUPER_ADMIN)
+    async updateUser(@Param('id') id: string, @Body() body: any, @Request() req) {
+        return this.adminService.updateUser(id, body, req.user.userId);
+    }
+
+    @Patch('users/:id/status')
+    @Roles(Role.SUPER_ADMIN)
+    async updateUserStatus(
+        @Param('id') id: string,
+        @Body() body: { status: string; durationDays?: number },
+        @Request() req,
+    ) {
+        return this.adminService.updateUserStatus(id, body.status, req.user.userId, body.durationDays);
+    }
+
+    @Delete('users/:id')
+    @Roles(Role.SUPER_ADMIN)
+    async deleteUser(@Param('id') id: string, @Request() req) {
+        return this.adminService.softDeleteUser(id, req.user.userId);
+    }
+
     @Patch('admins/:id')
     @Roles(Role.SUPER_ADMIN)
     async updateAdminInfo(@Param('id') id: string, @Body() body: any) {

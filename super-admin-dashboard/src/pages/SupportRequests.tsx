@@ -26,6 +26,8 @@ export const SupportRequests: React.FC = () => {
     const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
     const [replyContent, setReplyContent] = useState('');
     const [sending, setSending] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [openOnly, setOpenOnly] = useState(false);
 
     const fetchRequests = async () => {
         setLoading(true);
@@ -86,17 +88,25 @@ export const SupportRequests: React.FC = () => {
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Manage and respond to platform support tickets</p>
                 </div>
                 <div className={css.headerActions}>
-                    <button className="btn btn-primary">Archive Closed</button>
+                    <button className="btn btn-primary" onClick={fetchRequests}>Refresh</button>
                 </div>
             </div>
 
             <div className={css.tableControls}>
                 <div className={css.searchWrapper}>
                     <Search className={css.searchIcon} size={16} />
-                    <input type="text" placeholder="Search support tickets..." className={`input-field ${css.searchInput}`} />
+                    <input
+                        type="text"
+                        placeholder="Search by subject, message, name, email..."
+                        className={`input-field ${css.searchInput}`}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </div>
                 <div className={css.filterGroup}>
-                    <button className="btn btn-outline"><Filter size={14} /> Open Only</button>
+                    <button className="btn btn-outline" onClick={() => setOpenOnly(v => !v)}>
+                        <Filter size={14} /> {openOnly ? 'Showing Open Only' : 'All Statuses'}
+                    </button>
                 </div>
             </div>
 
@@ -119,7 +129,15 @@ export const SupportRequests: React.FC = () => {
                             ) : requests.length === 0 ? (
                                 <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px' }}>No support requests found.</td></tr>
                             ) : (
-                                requests.map(r => (
+                                requests
+                                    .filter((r) => (openOnly ? r.status !== 'CLOSED' : true))
+                                    .filter((r) => {
+                                        const q = searchQuery.trim().toLowerCase();
+                                        if (!q) return true;
+                                        const hay = `${r.subject} ${r.message} ${r.user?.name || ''} ${r.user?.email || ''}`.toLowerCase();
+                                        return hay.includes(q);
+                                    })
+                                    .map(r => (
                                     <React.Fragment key={r.id}>
                                         <tr>
                                             <td>

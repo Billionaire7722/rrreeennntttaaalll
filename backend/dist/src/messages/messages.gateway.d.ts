@@ -24,9 +24,9 @@ export declare class MessagesGateway implements OnGatewayInit, OnGatewayConnecti
     }): Promise<({
         user: {
             id: string;
+            name: string;
             username: string;
             email: string;
-            name: string;
             role: import("@prisma/client").$Enums.Role;
         };
     } & {

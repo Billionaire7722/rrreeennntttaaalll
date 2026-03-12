@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import api from '../api/axios';
 import css from './Table.module.css';
+import { UserTimelineModal } from '../components/UserTimelineModal';
 
 interface FraudAlert {
     id: string;
@@ -24,6 +25,7 @@ interface FraudAlert {
 export const FraudAlerts: React.FC = () => {
     const [alerts, setAlerts] = useState<FraudAlert[]>([]);
     const [loading, setLoading] = useState(true);
+    const [timelineUserId, setTimelineUserId] = useState<string | null>(null);
 
     const fetchAlerts = async () => {
         setLoading(true);
@@ -143,7 +145,15 @@ export const FraudAlerts: React.FC = () => {
                                         </td>
                                         <td>
                                             <div className={css.actions}>
-                                                <button className="btn btn-outline" style={{ padding: '6px' }} title="Investigate"><Eye size={14} /></button>
+                                                <button
+                                                    className="btn btn-outline"
+                                                    style={{ padding: '6px' }}
+                                                    title={a.userId ? 'View user timeline' : 'No user attached'}
+                                                    disabled={!a.userId}
+                                                    onClick={() => a.userId && setTimelineUserId(a.userId)}
+                                                >
+                                                    <Eye size={14} />
+                                                </button>
                                                 {a.status === 'OPEN' ? (
                                                     <button onClick={() => handleStatusUpdate(a.id, 'RESOLVED')} className="btn btn-outline" style={{ padding: '6px', color: 'var(--success-color)' }} title="Resolve"><CheckCircle size={14} /></button>
                                                 ) : (
@@ -159,6 +169,9 @@ export const FraudAlerts: React.FC = () => {
                     </table>
                 </div>
             </div>
+            {timelineUserId && (
+                <UserTimelineModal userId={timelineUserId} userName="User" onClose={() => setTimelineUserId(null)} />
+            )}
         </div>
     );
 };

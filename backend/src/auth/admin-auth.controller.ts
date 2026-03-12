@@ -10,7 +10,7 @@ export class AdminAuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
-  @Throttle({ login: { limit: 5, ttl: 60000 } })
+  @Throttle({ login: { limit: 5, ttl: 60 } })
   @Post('login')
   async login(
     @Body() loginDto: LoginDto,

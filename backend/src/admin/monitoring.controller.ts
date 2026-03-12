@@ -8,7 +8,7 @@ import { ActivityLogService } from './activity-log.service';
 import { PrismaService } from '../prisma/prisma.service'; // Added PrismaService import
 
 @Controller('admin/monitoring')
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.SUPER_ADMIN)
 export class MonitoringController {
     constructor(

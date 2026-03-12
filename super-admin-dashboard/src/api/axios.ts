@@ -18,11 +18,9 @@ const normalizeApiBaseUrl = (value?: string) => {
     }
 };
 
-const runtimeHost = typeof window !== 'undefined' ? (window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname) : '127.0.0.1';
-const runtimeProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'https:' : 'http:';
-const fallbackApiBaseUrl = `${runtimeProtocol}//${runtimeHost}:3000`;
-
-export const resolvedApiBaseUrl = normalizeApiBaseUrl(envApiBaseUrl) || fallbackApiBaseUrl;
+// Prefer explicit build-time env; otherwise use a same-origin proxy path.
+// This avoids relying on exposing backend port 3000 publicly in VPS deployments.
+export const resolvedApiBaseUrl = normalizeApiBaseUrl(envApiBaseUrl) || '/api';
 
 const api = axios.create({
     baseURL: resolvedApiBaseUrl,

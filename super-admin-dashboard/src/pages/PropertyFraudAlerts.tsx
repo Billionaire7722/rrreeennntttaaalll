@@ -54,7 +54,7 @@ export const PropertyFraudAlerts: React.FC = () => {
 
     const handleStatusUpdate = async (id: string, status: string) => {
         try {
-            await api.patch(`/admin/monitoring/property-fraud-alerts/${id}`, { status });
+            await api.post(`/admin/monitoring/property-alerts/${id}/status`, { status });
             fetchAlerts();
         } catch (err) {
             alert('Failed to update alert status');
@@ -64,7 +64,7 @@ export const PropertyFraudAlerts: React.FC = () => {
     const handleHideProperty = async (propertyId: string) => {
         if (!confirm('Are you sure you want to hide this property?')) return;
         try {
-            await api.patch(`/admin/houses/${propertyId}/status`, { status: 'hidden' });
+            await api.patch(`/houses/${propertyId}/status`, { status: 'hidden' });
             alert('Property hidden successfully');
             fetchAlerts();
         } catch (err) {
@@ -168,6 +168,14 @@ export const PropertyFraudAlerts: React.FC = () => {
                                         <td>
                                             <div className={css.actions}>
                                                 <button className="btn btn-outline" style={{ padding: '6px' }} title="View Property"><Eye size={14} /></button>
+                                                <button
+                                                    className="btn btn-outline"
+                                                    style={{ padding: '6px' }}
+                                                    title="Open in Users app"
+                                                    onClick={() => window.open(`http://localhost:3002/properties/${a.propertyId}`, '_blank')}
+                                                >
+                                                    <Eye size={14} />
+                                                </button>
                                                 <button onClick={() => handleHideProperty(a.propertyId)} className="btn btn-outline" style={{ padding: '6px', color: 'var(--warning-color)' }} title="Hide Listing"><EyeOff size={14} /></button>
                                                 {a.status === 'PENDING' ? (
                                                     <button onClick={() => handleStatusUpdate(a.id, 'RESOLVED')} className="btn btn-outline" style={{ padding: '6px', color: 'var(--success-color)' }} title="Mark Resolved"><CheckCircle size={14} /></button>

@@ -28,7 +28,7 @@ interface User {
     created_at: string;
     last_login?: string;
     avatarUrl?: string | null;
-    riskScore?: { score: number; factors?: any };
+    riskScore?: { score: number; factors?: any; updatedAt?: string };
 }
 
 export const Users: React.FC = () => {
@@ -38,6 +38,7 @@ export const Users: React.FC = () => {
     const take = 10;
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'ACTIVE' | 'LOCKED' | 'deleted'>('all');
 
     // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -61,7 +62,8 @@ export const Users: React.FC = () => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const res = await api.get(`/admin/users?skip=${skip}&take=${take}&search=${searchQuery}`);
+            const statusParam = statusFilter === 'all' ? '' : `&status=${encodeURIComponent(statusFilter)}`;
+            const res = await api.get(`/admin/users?skip=${skip}&take=${take}&search=${encodeURIComponent(searchQuery)}${statusParam}`);
             setUsers(res.data.users || []);
             setTotal(res.data.total || 0);
         } catch (err) {
@@ -76,12 +78,16 @@ export const Users: React.FC = () => {
             fetchUsers();
         }, 300);
         return () => clearTimeout(timer);
-    }, [skip, searchQuery]);
+    }, [skip, searchQuery, statusFilter]);
 
     const handleStatusToggle = async (userId: string, currentStatus: string) => {
-        const newStatus = currentStatus === 'ACTIVE' ? 'BANNED' : 'ACTIVE';
+        const newStatus = currentStatus === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
         try {
-            await api.patch(`/admin/admins/${userId}/status`, { status: newStatus });
+            const durationDays =
+                newStatus === 'LOCKED'
+                    ? Number(prompt('Lock duration in days? Leave blank for indefinite lock.') || '') || undefined
+                    : undefined;
+            await api.patch(`/admin/users/${userId}/status`, { status: newStatus, durationDays });
             fetchUsers();
         } catch (err: any) {
             alert(err.response?.data?.message || 'Action failed.');
@@ -92,7 +98,7 @@ export const Users: React.FC = () => {
         if (!deleteTarget) return;
         setDeleting(true);
         try {
-            await api.delete(`/admin/admins/${deleteTarget.id}`);
+            await api.delete(`/admin/users/${deleteTarget.id}`);
             fetchUsers();
             setDeleteTarget(null);
         } catch (err: any) {
@@ -120,13 +126,38 @@ export const Users: React.FC = () => {
         try {
             const payload: any = { ...formData };
             if (!payload.password) delete payload.password;
-            await api.patch(`/admin/admins/${selectedUser.id}`, payload);
+            await api.patch(`/admin/users/${selectedUser.id}`, payload);
             setIsEditModalOpen(false);
             setSelectedUser(null);
             fetchUsers();
         } catch (err: any) {
             alert(err.response?.data?.message || 'Failed to update user');
         }
+    };
+
+    const exportCsv = () => {
+        const header = ['id', 'name', 'username', 'email', 'phone', 'status', 'created_at', 'last_login', 'risk_score'];
+        const rows = users.map((u) => [
+            u.id,
+            u.name,
+            u.username,
+            u.email,
+            u.phone || '',
+            u.status,
+            u.created_at,
+            u.last_login || '',
+            String(u.riskScore?.score ?? ''),
+        ]);
+        const csv = [header, ...rows]
+            .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `users_export_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     const openEditModal = (user: User) => {
@@ -149,7 +180,7 @@ export const Users: React.FC = () => {
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Manage and monitor platform users</p>
                 </div>
                 <div className={css.headerActions}>
-                    <button className="btn btn-outline"><Download size={16} /> Export</button>
+                    <button className="btn btn-outline" onClick={exportCsv}><Download size={16} /> Export CSV</button>
                     <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
                         <Plus size={16} /> Add User
                     </button>
@@ -168,7 +199,21 @@ export const Users: React.FC = () => {
                     />
                 </div>
                 <div className={css.filterGroup}>
-                    <button className="btn btn-outline"><Filter size={14} /> Filter</button>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <Filter size={14} />
+                        <select
+                            className="btn btn-outline"
+                            value={statusFilter}
+                            onChange={(e) => { setSkip(0); setStatusFilter(e.target.value as any); }}
+                            style={{ background: 'transparent', color: 'inherit' }}
+                            aria-label="Status filter"
+                        >
+                            <option value="all">All</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="LOCKED">Locked</option>
+                            <option value="deleted">Deleted</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 

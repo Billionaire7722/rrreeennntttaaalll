@@ -24,6 +24,8 @@ interface UserReport {
 export const UserReports: React.FC = () => {
     const [reports, setReports] = useState<UserReport[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [pendingOnly, setPendingOnly] = useState(true);
 
     const fetchReports = async () => {
         setLoading(true);
@@ -92,10 +94,18 @@ export const UserReports: React.FC = () => {
             <div className={css.tableControls}>
                 <div className={css.searchWrapper}>
                     <Search className={css.searchIcon} size={16} />
-                    <input type="text" placeholder="Search reports..." className={`input-field ${css.searchInput}`} />
+                    <input
+                        type="text"
+                        placeholder="Search by user, reporter, reason..."
+                        className={`input-field ${css.searchInput}`}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </div>
                 <div className={css.filterGroup}>
-                    <button className="btn btn-outline"><Filter size={14} /> Pending Only</button>
+                    <button className="btn btn-outline" onClick={() => setPendingOnly(v => !v)}>
+                        <Filter size={14} /> {pendingOnly ? 'Pending Only' : 'All Statuses'}
+                    </button>
                 </div>
             </div>
 
@@ -118,7 +128,15 @@ export const UserReports: React.FC = () => {
                             ) : reports.length === 0 ? (
                                 <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px' }}>No reports found.</td></tr>
                             ) : (
-                                reports.map(r => (
+                                reports
+                                    .filter((r) => (pendingOnly ? r.status === 'PENDING' : true))
+                                    .filter((r) => {
+                                        const q = searchQuery.trim().toLowerCase();
+                                        if (!q) return true;
+                                        const hay = `${r.target?.name || ''} ${r.reporter?.name || ''} ${r.reason || ''}`.toLowerCase();
+                                        return hay.includes(q);
+                                    })
+                                    .map(r => (
                                     <tr key={r.id}>
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

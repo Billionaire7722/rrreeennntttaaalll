@@ -42,6 +42,15 @@ let AdminController = class AdminController {
     async createUser(body) {
         return this.adminService.createUser(body);
     }
+    async updateUser(id, body, req) {
+        return this.adminService.updateUser(id, body, req.user.userId);
+    }
+    async updateUserStatus(id, body, req) {
+        return this.adminService.updateUserStatus(id, body.status, req.user.userId, body.durationDays);
+    }
+    async deleteUser(id, req) {
+        return this.adminService.softDeleteUser(id, req.user.userId);
+    }
     async updateAdminInfo(id, body) {
         return this.adminService.updateAdmin(id, body);
     }
@@ -157,6 +166,35 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "createUser", null);
+__decorate([
+    (0, common_1.Patch)('users/:id'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateUser", null);
+__decorate([
+    (0, common_1.Patch)('users/:id/status'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateUserStatus", null);
+__decorate([
+    (0, common_1.Delete)('users/:id'),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "deleteUser", null);
 __decorate([
     (0, common_1.Patch)('admins/:id'),
     (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUPER_ADMIN),

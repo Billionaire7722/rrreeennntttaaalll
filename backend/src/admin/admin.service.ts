@@ -33,8 +33,15 @@ export class AdminService {
 
     async getAllUsers(skip = 0, take = 50, search?: string, status?: string) {
         const where: any = { role: Role.USER };
+
+        // By default, hide soft-deleted records unless explicitly requested.
+        if (status === 'deleted') {
+            where.deleted_at = { not: null };
+        } else {
+            where.deleted_at = null;
+        }
         
-        if (status) {
+        if (status && status !== 'deleted') {
             where.status = status;
         }
 
@@ -68,7 +75,7 @@ export class AdminService {
                     coverUrl: true,
                     bio: true,
                     riskScore: {
-                        select: { score: true }
+                        select: { score: true, factors: true, updatedAt: true }
                     },
                     _count: {
                         select: { ownedHouses: true }
@@ -78,6 +85,97 @@ export class AdminService {
             this.prisma.user.count({ where })
         ]);
         return { users, total, skip: Number(skip), take: Number(take) };
+    }
+
+    async updateUser(
+        userId: string,
+        data: { name?: string; username?: string; email?: string; phone?: string; password?: string },
+        actorId: string,
+    ) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User not found');
+        if (user.role === Role.SUPER_ADMIN) throw new ForbiddenException('Cannot edit SUPER_ADMIN');
+
+        const payload: any = {};
+        if (data.name !== undefined) payload.name = data.name;
+        if (data.phone !== undefined) payload.phone = data.phone;
+
+        if (data.username !== undefined && data.username !== user.username) {
+            const usernameTaken = await this.prisma.user.findFirst({
+                where: { username: data.username, id: { not: userId } },
+            });
+            if (usernameTaken) throw new ForbiddenException('Username already exists');
+            payload.username = data.username;
+        }
+
+        if (data.email !== undefined && data.email !== user.email) {
+            const emailTaken = await this.prisma.user.findFirst({
+                where: { email: data.email, id: { not: userId } },
+            });
+            if (emailTaken) throw new ForbiddenException('Email already exists');
+            payload.email = data.email;
+        }
+
+        if (data.password && data.password.trim().length > 0) {
+            payload.password = await bcrypt.hash(data.password, 10);
+        }
+
+        const updated = await this.prisma.user.update({
+            where: { id: userId },
+            data: payload,
+            select: { id: true, name: true, username: true, email: true, phone: true, role: true, status: true },
+        });
+
+        await this.logAdminAction(actorId, 'UPDATE_USER', 'USER', userId);
+        return updated;
+    }
+
+    async updateUserStatus(userId: string, status: string, actorId: string, durationDays?: number) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User not found');
+        if (user.role === Role.SUPER_ADMIN) throw new ForbiddenException('Cannot modify SUPER_ADMIN');
+
+        const normalized = String(status || '').toUpperCase();
+        if (!['ACTIVE', 'LOCKED'].includes(normalized)) {
+            throw new BadRequestException('Invalid status. Allowed: ACTIVE, LOCKED');
+        }
+
+        let lockedUntil: Date | null = null;
+        if (normalized === 'LOCKED') {
+            lockedUntil = new Date();
+            if (durationDays && Number(durationDays) > 0) {
+                lockedUntil.setDate(lockedUntil.getDate() + Number(durationDays));
+            } else {
+                lockedUntil = new Date('9999-12-31');
+            }
+        }
+
+        const updated = await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                status: normalized,
+                locked_until: normalized === 'LOCKED' ? lockedUntil : null,
+            } as any,
+            select: { id: true, name: true, username: true, email: true, role: true, status: true },
+        });
+
+        await this.logAdminAction(actorId, normalized === 'LOCKED' ? 'LOCK_USER' : 'UNLOCK_USER', 'USER', userId);
+        return updated;
+    }
+
+    async softDeleteUser(userId: string, actorId: string) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User not found');
+        if (user.role === Role.SUPER_ADMIN) throw new ForbiddenException('Cannot delete SUPER_ADMIN');
+
+        const result = await this.prisma.user.update({
+            where: { id: userId },
+            data: { deleted_at: new Date() },
+            select: { id: true, name: true, deleted_at: true },
+        });
+
+        await this.logAdminAction(actorId, 'DELETE_USER', 'USER', userId);
+        return result;
     }
 
     async getAllAdmins(skip = 0, take = 50) {

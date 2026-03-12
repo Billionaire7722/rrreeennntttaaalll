@@ -456,9 +456,9 @@ export declare class AdminController {
     getAdmins(skip?: number, take?: number): Promise<{
         admins: {
             id: string;
+            name: string;
             username: string;
             email: string;
-            name: string;
             phone: string | null;
             role: import("@prisma/client").$Enums.Role;
             status: string;
@@ -477,25 +477,50 @@ export declare class AdminController {
     }>;
     createAdmin(body: any): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
-        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
     createUser(body: any): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
-        name: string;
         role: import("@prisma/client").$Enums.Role;
         status: string;
     }>;
-    updateAdminInfo(id: string, body: any): Promise<{
+    updateUser(id: string, body: any, req: any): Promise<{
         id: string;
+        name: string;
         username: string;
         email: string;
+        phone: string | null;
+        role: import("@prisma/client").$Enums.Role;
+        status: string;
+    }>;
+    updateUserStatus(id: string, body: {
+        status: string;
+        durationDays?: number;
+    }, req: any): Promise<{
+        id: string;
         name: string;
+        username: string;
+        email: string;
+        role: import("@prisma/client").$Enums.Role;
+        status: string;
+    }>;
+    deleteUser(id: string, req: any): Promise<{
+        id: string;
+        name: string;
+        deleted_at: Date | null;
+    }>;
+    updateAdminInfo(id: string, body: any): Promise<{
+        id: string;
+        name: string;
+        username: string;
+        email: string;
         phone: string | null;
         role: import("@prisma/client").$Enums.Role;
         status: string;
@@ -557,8 +582,8 @@ export declare class AdminController {
         items: ({
             actor: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
             } | null;
         } & {
             id: string;
@@ -581,8 +606,8 @@ export declare class AdminController {
         items: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 role: import("@prisma/client").$Enums.Role;
             } | null;
         } & {
@@ -664,11 +689,11 @@ export declare class AdminController {
     }>;
     restrictAccount(id: string, durationDays: number | undefined, req: any): Promise<{
         id: string;
-        username: string;
-        email: string;
         name: string;
         firstName: string | null;
         lastName: string | null;
+        username: string;
+        email: string;
         phone: string | null;
         password: string;
         avatarUrl: string | null;
@@ -733,13 +758,13 @@ export declare class AdminController {
         items: ({
             reporter: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
             };
             target: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 status: string;
             };
         } & {
@@ -766,8 +791,8 @@ export declare class AdminController {
             };
             reporter: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
             };
         } & {
             id: string;
@@ -787,8 +812,8 @@ export declare class AdminController {
         items: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 role: import("@prisma/client").$Enums.Role;
             };
             _count: {

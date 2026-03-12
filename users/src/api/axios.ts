@@ -21,12 +21,14 @@ const resolveApiBaseUrl = () => {
     const envUrl = normalizeApiBaseUrl(rawEnvUrl);
     if (envUrl) return envUrl;
 
-    if (typeof window !== 'undefined' && window.location?.hostname) {
-        const host = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
-        return `${window.location.protocol}//${host}:3000`;
+    // Server-side (SSR / Route Handlers): prefer an internal Docker URL if provided.
+    if (typeof window === 'undefined') {
+        const internal = normalizeApiBaseUrl(process.env.API_BASE_URL);
+        return internal || 'http://127.0.0.1:3000';
     }
 
-    return 'http://127.0.0.1:3000';
+    // Browser: prefer same-origin proxy to avoid depending on :3000 being public.
+    return '/api';
 };
 
 const api = axios.create({

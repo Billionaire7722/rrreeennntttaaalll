@@ -89,7 +89,26 @@ export const Metrics: React.FC = () => {
                         <option value="last_month">Last Month</option>
                         <option value="this_year">This Year</option>
                     </select>
-                    <button className="btn btn-primary"><Download size={16} /> Generate Report</button>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => {
+                            const payload = {
+                                generatedAt: new Date().toISOString(),
+                                timeRange,
+                                overview: metrics,
+                                charts,
+                            };
+                            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `system_metrics_${timeRange}_${new Date().toISOString().slice(0, 10)}.json`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        }}
+                    >
+                        <Download size={16} /> Generate Report
+                    </button>
                 </div>
             </div>
 
@@ -113,10 +132,10 @@ export const Metrics: React.FC = () => {
                 <div className={css.statCard}>
                     <div className={css.statHeader}>
                         <div className={css.statIcon} style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}><Activity size={20} /></div>
-                        <span className={css.statTrend} style={{ color: 'var(--danger-color)' }}>-2.1% <ArrowDownRight size={14} /></span>
+                        <span className={css.statTrend} style={{ color: 'var(--text-muted)' }}>Today</span>
                     </div>
-                    <div className={css.statValue}>1,284</div>
-                    <div className={css.statLabel}>Daily Active Sessions</div>
+                    <div className={css.statValue}>{metrics?.loginAttemptsToday || 0}</div>
+                    <div className={css.statLabel}>Login Attempts Today</div>
                 </div>
                 <div className={css.statCard}>
                     <div className={css.statHeader}>

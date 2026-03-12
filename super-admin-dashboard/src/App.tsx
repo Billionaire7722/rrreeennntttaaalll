@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { DashboardLayout } from './layouts/DashboardLayout';
-import { Login } from './pages/Login';
 import { Overview } from './pages/Overview';
 import { Users } from './pages/Users';
 import { AuditLogs } from './pages/AuditLogs';
@@ -16,15 +15,13 @@ import { SupportRequests } from './pages/SupportRequests';
 import { FraudAlerts } from './pages/FraudAlerts';
 import { SuspiciousIPs } from './pages/SuspiciousIPs';
 import { PropertyFraudAlerts } from './pages/PropertyFraudAlerts';
-import { PlaceholderPage } from './pages/PlaceholderPage';
+import { Growth } from './pages/Growth';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
         <Routes>
-          <Route path="/login" element={<Login />} />
-
           <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<Overview />} />
             
@@ -50,7 +47,7 @@ function App() {
             
             {/* Analytics */}
             <Route path="metrics" element={<Metrics />} />
-            <Route path="growth" element={<PlaceholderPage title="Growth Charts" />} />
+            <Route path="growth" element={<Growth />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

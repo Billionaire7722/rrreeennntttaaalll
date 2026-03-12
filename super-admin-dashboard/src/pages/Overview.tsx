@@ -49,32 +49,34 @@ export const Overview: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const res = await api.get('/admin/metrics');
-                setStats({
-                    ...res.data.overview,
-                    totalAdmins: res.data.overview.totalAdmins || 0,
-                    openReports: res.data.overview.openReports || 0
-                });
-                setCharts({
-                    loginData: res.data.charts?.loginData || [],
-                    actionData: res.data.charts?.actionData || []
-                });
-            } catch (error) {
-                console.error('Failed to fetch stats', error);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchStats();
     }, []);
+
+    const fetchStats = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/admin/metrics');
+            setStats({
+                ...res.data.overview,
+                totalAdmins: res.data.overview.totalAdmins || 0,
+                openReports: res.data.overview.openReports || 0
+            });
+            setCharts({
+                loginData: res.data.charts?.loginData || [],
+                actionData: res.data.charts?.actionData || []
+            });
+        } catch (error) {
+            console.error('Failed to fetch stats', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (loading) return <div className="loading-screen">Preparing Command Center...</div>;
 
     const statCards = [
         { label: 'Total Users', value: stats?.totalUsers, icon: <Users size={20} />, color: '#3b82f6', path: '/users', trend: '+12%', up: true },
-        { label: 'Total Admins', value: stats?.totalAdmins, icon: <ShieldCheck size={20} />, color: '#8b5cf6', path: '/login-attempts', trend: 'Stable', up: true },
+        { label: 'Total Admins', value: stats?.totalAdmins, icon: <ShieldCheck size={20} />, color: '#8b5cf6', path: '/login-logs', trend: 'Stable', up: true },
         { label: 'Total Properties', value: stats?.totalProperties, icon: <Home size={20} />, color: '#10b981', path: '/houses', trend: '+5.4%', up: true },
         { label: 'Deleted Properties', value: stats?.deletedProperties, icon: <Trash2 size={20} />, color: '#ef4444', path: '/houses?status=deleted', trend: '-2.1%', up: false },
         { label: 'Login Attempts', value: stats?.loginAttemptsToday, icon: <LogIn size={20} />, color: '#f59e0b', path: '/login-logs', trend: '+18%', up: true },
@@ -110,7 +112,9 @@ export const Overview: React.FC = () => {
                     <div className={css.chartHeader}>
                         <h3 className={css.chartTitle}>Authentication Traffic (7 Days)</h3>
                         <div className={css.chartActions}>
-                            <button className="btn btn-outline" style={{ padding: '4px 8px' }}><MoreHorizontal size={16} /></button>
+                            <button className="btn btn-outline" style={{ padding: '4px 8px' }} onClick={fetchStats} title="Refresh">
+                                <MoreHorizontal size={16} />
+                            </button>
                         </div>
                     </div>
                     <div style={{ flex: 1, minHeight: 0 }}>
@@ -137,7 +141,9 @@ export const Overview: React.FC = () => {
                     <div className={css.chartHeader}>
                         <h3 className={css.chartTitle}>Admin Mutative Actions</h3>
                         <div className={css.chartActions}>
-                            <button className="btn btn-outline" style={{ padding: '4px 8px' }}><MoreHorizontal size={16} /></button>
+                            <button className="btn btn-outline" style={{ padding: '4px 8px' }} onClick={fetchStats} title="Refresh">
+                                <MoreHorizontal size={16} />
+                            </button>
                         </div>
                     </div>
                     <div style={{ flex: 1, minHeight: 0 }}>

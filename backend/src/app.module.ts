@@ -30,11 +30,12 @@ import { SupportModule } from './support/support.module';
     }),
     ThrottlerModule.forRoot([{
       name: 'global',
-      ttl: 60000,
+      // TTL is in seconds for @nestjs/throttler
+      ttl: 60,
       limit: 100,
     }, {
       name: 'login',
-      ttl: 60000,
+      ttl: 60,
       limit: 5,
     }]),
     CacheModule.register({
