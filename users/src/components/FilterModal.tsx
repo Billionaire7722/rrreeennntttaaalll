@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export type FilterOptions = {
     searchQuery: string;
@@ -34,7 +35,21 @@ interface Props {
     applyFilters: (f: FilterOptions) => void;
 }
 
+const formatWithDots = (val: number | null) => {
+    if (val === null) return "";
+    return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
+const parseWithDots = (val: string) => {
+    // Remove all non-numeric characters except dots (though we only want to strip dots)
+    const raw = val.replace(/\./g, "").replace(/[^\d]/g, "");
+    if (!raw) return null;
+    const num = parseInt(raw, 10);
+    return isNaN(num) ? null : num;
+};
+
 export default function FilterModal({ visible, onClose, filters, applyFilters }: Props) {
+    const { t } = useLanguage();
     const [localFilters, setLocalFilters] = useState<FilterOptions>(filters);
 
     // Use JSON data or state as requested instead of mock data
@@ -88,7 +103,7 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
 
                 {/* Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-white sticky top-0 z-10">
-                    <h2 className="text-lg font-bold text-gray-900">Bộ lọc nâng cao</h2>
+                    <h2 className="text-lg font-bold text-gray-900">{t("advanced_filter")}</h2>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition">
                         <X size={24} className="text-gray-600" />
                     </button>
@@ -99,27 +114,29 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
 
                     {/* Price Range */}
                     <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-800 text-sm">Mức giá (VNĐ)</h3>
+                        <h3 className="font-semibold text-gray-800 text-sm">{t("price_range")}</h3>
                         <div className="flex items-center gap-3">
                             <input
-                                type="number"
-                                placeholder="Từ..."
+                                type="text"
+                                inputMode="numeric"
+                                placeholder={t("from")}
                                 className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
-                                value={localFilters.minPrice || ""}
+                                value={formatWithDots(localFilters.minPrice)}
                                 onChange={(e) => {
-                                    const val = parseInt(e.target.value);
-                                    setLocalFilters(p => ({ ...p, minPrice: isNaN(val) ? null : val }));
+                                    const val = parseWithDots(e.target.value);
+                                    setLocalFilters(p => ({ ...p, minPrice: val }));
                                 }}
                             />
                             <span className="text-gray-400">-</span>
                             <input
-                                type="number"
-                                placeholder="Đến..."
+                                type="text"
+                                inputMode="numeric"
+                                placeholder={t("to")}
                                 className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
-                                value={localFilters.maxPrice || ""}
+                                value={formatWithDots(localFilters.maxPrice)}
                                 onChange={(e) => {
-                                    const val = parseInt(e.target.value);
-                                    setLocalFilters(p => ({ ...p, maxPrice: isNaN(val) ? null : val }));
+                                    const val = parseWithDots(e.target.value);
+                                    setLocalFilters(p => ({ ...p, maxPrice: val }));
                                 }}
                             />
                         </div>
@@ -127,14 +144,14 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
 
                     {/* Area Dropdowns */}
                     <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-800 text-sm">Khu vực</h3>
+                        <h3 className="font-semibold text-gray-800 text-sm">{t("location_area")}</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <select
                                 className="w-full border border-gray-300 bg-gray-50 text-gray-900 text-sm rounded-lg px-3 py-2 focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none"
                                 value={localFilters.province || ""}
                                 onChange={(e) => setLocalFilters(p => ({ ...p, province: e.target.value || null, ward: null }))}
                             >
-                                <option value="">Tỉnh / Thành phố</option>
+                                <option value="">{t("province_city")}</option>
                                 {provincesList.map(p => (
                                     <option key={p.code} value={p.name}>{p.name}</option>
                                 ))}
@@ -146,7 +163,7 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
                                 onChange={(e) => setLocalFilters(p => ({ ...p, ward: e.target.value || null }))}
                                 disabled={!localFilters.province}
                             >
-                                <option value="">Phường / Xã</option>
+                                <option value="">{t("ward_commune")}</option>
                                 {availableWards.map(w => (
                                     <option key={w.code} value={w.name}>{w.name}</option>
                                 ))}
@@ -156,7 +173,7 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
 
                     {/* Bedrooms Minimum */}
                     <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-800 text-sm">Số phòng ngủ tối thiểu</h3>
+                        <h3 className="font-semibold text-gray-800 text-sm">{t("min_bedrooms")}</h3>
                         <div className="flex gap-2">
                             {[1, 2, 3, 4].map(n => (
                                 <button
@@ -175,11 +192,11 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
 
                     {/* Room Area */}
                     <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-800 text-sm">Diện tích (m2)</h3>
+                        <h3 className="font-semibold text-gray-800 text-sm">{t("area_m2")}</h3>
                         <div className="flex items-center gap-3 max-w-[220px]">
                             <input
                                 type="number"
-                                placeholder="Từ..."
+                                placeholder={t("from")}
                                 className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
                                 value={localFilters.minArea || ""}
                                 onChange={(e) => {
@@ -190,7 +207,7 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
                             <span className="text-gray-400">-</span>
                             <input
                                 type="number"
-                                placeholder="Đến..."
+                                placeholder={t("to")}
                                 className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
                                 value={localFilters.maxArea || ""}
                                 onChange={(e) => {
@@ -209,13 +226,13 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
                         onClick={handleReset}
                         className="flex-1 py-3.5 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
                     >
-                        Đặt lại
+                        {t("reset")}
                     </button>
                     <button
                         onClick={handleApply}
                         className="flex-[2] py-3.5 rounded-xl bg-blue-600 text-white font-bold shadow-sm hover:bg-blue-700 transition"
                     >
-                        Áp dụng
+                        {t("apply")}
                     </button>
                 </div>
 

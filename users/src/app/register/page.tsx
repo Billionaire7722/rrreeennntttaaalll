@@ -1,8 +1,7 @@
 "use client";
+import React, { useState } from 'react';
 
 export const dynamic = 'force-dynamic';
-
-import { useState } from 'react';
 import { useAuth } from '@/context/useAuth';
 import { useLanguage } from '@/context/LanguageContext';
 import Link from 'next/link';
@@ -19,6 +18,7 @@ interface FormErrors {
     password?: string;
     confirmPassword?: string;
     captcha?: string;
+    acceptTerms?: string;
 }
 
 const passwordRules = (t: any) => [
@@ -40,6 +40,7 @@ export default function RegisterPage() {
         phone: '',
         password: '',
         confirmPassword: '',
+        acceptTerms: false,
     });
     const [errors, setErrors] = useState<FormErrors>({});
     const [error, setError] = useState('');
@@ -58,10 +59,10 @@ export default function RegisterPage() {
     const validateField = (name: string, value: string): string | undefined => {
         switch (name) {
             case 'firstName':
-                if (!value.trim()) return t('err_enter_first_name') || 'Vui lòng nhập Tên';
+                if (!value.trim()) return t('err_enter_first_name');
                 break;
             case 'lastName':
-                if (!value.trim()) return t('err_enter_last_name') || 'Vui lòng nhập Họ';
+                if (!value.trim()) return t('err_enter_last_name');
                 break;
             case 'username':
                 if (!value.trim()) return t('err_enter_username');
@@ -81,24 +82,28 @@ export default function RegisterPage() {
                 if (!value) return t('err_confirm_password');
                 if (value !== formData.password) return t('err_passwords_mismatch');
                 break;
+            case 'acceptTerms':
+                if (!value) return t('err_accept_terms');
+                break;
         }
         return undefined;
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        const { name, value, type, checked } = e.target;
+        const fieldValue = type === 'checkbox' ? checked : value;
+        setFormData({ ...formData, [name]: fieldValue });
 
         if (touched[name]) {
-            const fieldError = validateField(name, value);
+            const fieldError = validateField(name, String(fieldValue));
             setErrors((prev) => ({ ...prev, [name]: fieldError }));
         }
     };
 
     const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
         setTouched((prev) => ({ ...prev, [name]: true }));
-        const fieldError = validateField(name, value);
+        const fieldError = validateField(name, type === 'checkbox' ? String(checked) : value);
         setErrors((prev) => ({ ...prev, [name]: fieldError }));
     };
 
@@ -113,7 +118,8 @@ export default function RegisterPage() {
         let hasErrors = false;
 
         Object.keys(formData).forEach((key) => {
-            const fieldError = validateField(key, formData[key as keyof typeof formData]);
+            const val = formData[key as keyof typeof formData];
+            const fieldError = validateField(key, typeof val === 'boolean' ? String(val) : val);
             if (fieldError) {
                 newErrors[key as keyof FormErrors] = fieldError;
                 hasErrors = true;
@@ -135,6 +141,7 @@ export default function RegisterPage() {
             password: true,
             confirmPassword: true,
             captcha: true,
+            acceptTerms: true,
         });
 
         if (hasErrors || !submittedToken) return;
@@ -322,7 +329,7 @@ export default function RegisterPage() {
                                             onChange={handleChange}
                                             onBlur={handleBlur}
                                             className={getInputClassName('firstName')}
-                                            placeholder={t('first_name_placeholder') || "Tên"}
+                                            placeholder={t('first_name_placeholder')}
                                         />
                                     </div>
                                     {errors.firstName && touched.firstName && <p className="text-[10px] text-red-500">{errors.firstName}</p>}
@@ -342,7 +349,7 @@ export default function RegisterPage() {
                                             onChange={handleChange}
                                             onBlur={handleBlur}
                                             className={getInputClassName('lastName')}
-                                            placeholder={t('last_name_placeholder') || "Họ"}
+                                            placeholder={t('last_name_placeholder')}
                                         />
                                     </div>
                                     {errors.lastName && touched.lastName && <p className="text-[10px] text-red-500">{errors.lastName}</p>}
@@ -458,6 +465,57 @@ export default function RegisterPage() {
                                     </div>
                                 </div>
                             )}
+
+                            <div className="space-y-3 pt-2">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-5 items-center">
+                                        <input
+                                            id="acceptTerms"
+                                            name="acceptTerms"
+                                            type="checkbox"
+                                            required
+                                            checked={formData.acceptTerms as boolean}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500 transition-colors"
+                                        />
+                                    </div>
+                                    <div className="text-sm">
+                                        <label htmlFor="acceptTerms" className="text-slate-600 leading-snug select-none">
+                                            {t('accept_terms_label').split(t('terms_of_service')).map((part, i, arr) => (
+                                                <React.Fragment key={i}>
+                                                    {part.split(t('privacy_policy')).map((subPart, j, subArr) => (
+                                                        <React.Fragment key={j}>
+                                                            {subPart}
+                                                            {j < subArr.length - 1 && (
+                                                                <Link 
+                                                                    href="/privacy" 
+                                                                    className="font-semibold underline underline-offset-4 hover:opacity-80 transition-opacity"
+                                                                    style={{ color: 'var(--color-emerald-600)' }}
+                                                                >
+                                                                    {t('privacy_policy')}
+                                                                </Link>
+                                                            )}
+                                                        </React.Fragment>
+                                                    ))}
+                                                    {i < arr.length - 1 && (
+                                                        <Link 
+                                                            href="/terms" 
+                                                            className="font-semibold underline underline-offset-4 hover:opacity-80 transition-opacity"
+                                                            style={{ color: 'var(--color-emerald-600)' }}
+                                                        >
+                                                            {t('terms_of_service')}
+                                                        </Link>
+                                                    )}
+                                                </React.Fragment>
+                                            ))}
+                                        </label>
+                                    </div>
+                                </div>
+                                {errors.acceptTerms && touched.acceptTerms && (
+                                    <p className="text-xs text-red-500">{errors.acceptTerms}</p>
+                                )}
+                            </div>
                         </div>
 
                         <div>

@@ -5,7 +5,6 @@ import {
     Home, 
     Activity, 
     ArrowUpRight,
-    ArrowDownRight,
     Download
 } from 'lucide-react';
 import { 

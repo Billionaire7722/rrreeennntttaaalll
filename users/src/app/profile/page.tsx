@@ -645,9 +645,9 @@ export default function ProfilePage() {
             {activeTab === "messages" && (
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-base font-bold text-gray-900">Conversations</h2>
+                  <h2 className="text-base font-bold text-gray-900">{t("conversations")}</h2>
                   <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
-                    {conversations.length} {conversations.length === 1 ? "chat" : "chats"}
+                    {conversations.length} {conversations.length === 1 ? t("chat_count_singular") : t("chat_count_plural")}
                   </span>
                 </div>
 
@@ -660,8 +660,8 @@ export default function ProfilePage() {
                 ) : conversations.length === 0 ? (
                   <EmptyState
                     icon={<MessageCircle className="w-10 h-10 text-gray-300" />}
-                    title="No conversations yet"
-                    description="Your chat history with admins will appear here."
+                    title={t("no_conversations")}
+                    description={t("no_conversations_desc")}
                   />
                 ) : (
                   <div className="space-y-3">
@@ -699,7 +699,7 @@ export default function ProfilePage() {
                               </span>
                             </div>
                             <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'text-gray-900 font-bold' : 'text-gray-500'}`}>
-                              {latest.senderId === user.id ? "You: " : ""}{latest.content}
+                              {latest.senderId === user.id ? t("you_prefix") : ""}{latest.content}
                             </p>
                           </div>
 

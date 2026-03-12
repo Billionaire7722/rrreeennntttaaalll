@@ -164,7 +164,7 @@ const COPY: Record<string, AboutCopy> = {
 };
 
 export default function AboutPage() {
-    const { language } = useLanguage();
+    const { language, t } = useLanguage();
     
     const text = useMemo(() => {
         // Fallback to English if the current language isn't explicitly supported in COPY
@@ -181,7 +181,7 @@ export default function AboutPage() {
                         className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors text-sm font-medium"
                     >
                         <ChevronLeft size={16} />
-                        <span>Trở lại Hồ sơ</span>
+                        <span>{t("go_back_profile")}</span>
                     </Link>
                 </div>
 

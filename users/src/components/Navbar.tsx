@@ -45,7 +45,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
                     <Search size={16} className="text-gray-500 flex-shrink-0" />
                     <input
                         className="flex-1 ml-2 text-sm text-gray-800 bg-transparent outline-none placeholder-gray-500 min-w-0"
-                        placeholder="Search"
+                        placeholder={t("search_placeholder")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
