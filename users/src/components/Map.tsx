@@ -69,13 +69,63 @@ function MapEvents({ onBoundsChange, setUserLocation }: { onBoundsChange?: (boun
     }, [onBoundsChange]);
 
     useEffect(() => {
-        // Automatically find user location on mount silently
-        map.locate();
+        // Try to get user location on mount
+        const tryGetUserLocation = async () => {
+            try {
+                // First try browser geolocation API
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const { latitude, longitude } = position.coords;
+                            setUserLocation([latitude, longitude]);
+                            // Center map on user location
+                            map.setView([latitude, longitude], 15);
+                        },
+                        (error) => {
+                            console.warn('Geolocation failed:', error.message);
+                            // Fallback to IP-based location
+                            fetchUserLocationFromIP();
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 300000 // 5 minutes
+                        }
+                    );
+                } else {
+                    // Fallback to IP-based location
+                    fetchUserLocationFromIP();
+                }
+            } catch (error) {
+                console.warn('Location detection failed:', error);
+                // Fallback to IP-based location
+                fetchUserLocationFromIP();
+            }
+        };
+
+        const fetchUserLocationFromIP = async () => {
+            try {
+                // Use a free IP geolocation service
+                const response = await fetch('https://ipapi.co/json/');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.latitude && data.longitude) {
+                        setUserLocation([data.latitude, data.longitude]);
+                        // Center map on detected location
+                        map.setView([data.latitude, data.longitude], 12);
+                    }
+                }
+            } catch (error) {
+                console.warn('IP-based location failed:', error);
+                // Default to Hanoi center
+                setUserLocation([21.0285, 105.8542]);
+            }
+        };
+
+        tryGetUserLocation();
 
         const handleLocationFound = (e: L.LocationEvent) => {
             setUserLocation([e.latlng.lat, e.latlng.lng]);
-            // If we want to automatically center on found location once at start:
-            // map.flyTo(e.latlng, 15);
         };
 
         map.on('locationfound', handleLocationFound);

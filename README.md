@@ -141,10 +141,301 @@ graph TD
 
 ## 🌐 Deployment
 
-Deployment is managed via Docker Compose on a VPS:
-1. Copy `.env.production.example` to `.env.production` in root and backend.
-2. Fill in production secrets (Cloudinary, DB credentials).
-3. Run `docker compose --env-file .env.production up -d --build`.
+### VPS Deployment (Recommended)
+
+**Prerequisites:**
+- VPS with Docker and Docker Compose installed
+- SSH access to the VPS
+- Domain name (optional, for HTTPS)
+
+**1. Environment Configuration:**
+Create production environment files:
+
+```bash
+# Root level .env.production
+cp .env.production.example .env.production
+# Edit with your VPS settings
+
+# Backend .env.production  
+cp backend/.env.production.example backend/.env.production
+# Edit with your production secrets
+```
+
+**2. Deploy via Script:**
+```bash
+# From project root
+cd scripts
+powershell -File deploy-vps.ps1 -CommitMessage "Deploy to VPS" -Services "backend users super-admin" -Yes
+```
+
+**3. Manual Deployment:**
+```bash
+# SSH to your VPS
+ssh root@your-vps-ip
+
+# Clone repository
+git clone https://github.com/your-username/rrreeennntttaaalll.git
+cd rrreeennntttaaalll
+
+# Copy environment files
+cp .env.production.example .env.production
+cp backend/.env.production.example backend/.env.production
+
+# Edit environment files with your production settings
+nano .env.production
+nano backend/.env.production
+
+# Deploy
+docker compose --env-file .env.production up -d --build
+```
+
+**4. Access Your Applications:**
+- Backend API: `http://your-vps-ip:3000`
+- Users App: `http://your-vps-ip:3002`
+- Admin Dashboard: `http://your-vps-ip:5174`
+
+### Docker Compose Services
+
+```yaml
+services:
+  postgres:           # PostgreSQL + PostGIS database
+  redis:              # Redis caching layer
+  backend:            # NestJS API server (port 3000)
+  users:              # Next.js frontend (port 3002)
+  super-admin:        # Admin dashboard (port 5174)
+  prisma-migrate:     # Database migration container
+```
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+
+**Root Level (.env.production):**
+```bash
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your-secure-password
+POSTGRES_DB=rental
+NEXT_PUBLIC_API_BASE_URL=http://your-vps-ip:3000
+TURNSTILE_SECRET_KEY=your-cloudflare-secret
+```
+
+**Backend (.env.production):**
+```bash
+DATABASE_URL="postgresql://postgres:password@postgres:5432/rental?schema=public"
+REDIS_HOST=redis
+REDIS_PORT=6379
+JWT_SECRET=your-super-secret-jwt-key
+CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
+```
+
+### HTTPS Setup (Recommended)
+
+For production, set up HTTPS using Let's Encrypt:
+
+```bash
+# Install Certbot
+sudo apt install certbot
+
+# Get SSL certificate
+sudo certbot certonly --standalone -d your-domain.com
+
+# Update docker-compose.yml to use HTTPS
+# Mount SSL certificates
+# Update CORS_ORIGIN to use https://
+```
+
+---
+
+## 🐛 Known Issues & Fixes
+
+### Map Location Issues (VPS)
+
+**Problem:** The "current location" button and geolocation API don't work on VPS deployment.
+
+**Root Cause:** 
+1. Browser geolocation API requires HTTPS
+2. Mixed content issues when serving over HTTP
+3. CORS restrictions on location API
+
+**Solutions Implemented:**
+1. **Fallback Location Detection:** Added IP-based geolocation as fallback
+2. **Enhanced Error Handling:** Graceful degradation when geolocation fails
+3. **Multiple Location Sources:** Try browser API first, then IP-based, then default
+
+**Code Changes in `users/src/components/Map.tsx`:**
+- Added `tryGetUserLocation()` function with multiple fallbacks
+- Implemented IP-based location using `ipapi.co`
+- Enhanced error handling for geolocation failures
+- Default fallback to Hanoi coordinates
+
+**For Better Results:**
+1. Set up HTTPS on your VPS
+2. Use a domain name instead of IP address
+3. Configure proper CORS headers
+
+### Other Common Issues
+
+**1. Database Connection Issues:**
+```bash
+# Check if PostgreSQL is running
+docker ps | grep postgres
+
+# Check logs
+docker logs rental_postgres
+
+# Reset database (WARNING: Deletes all data)
+docker compose down -v
+docker compose up -d
+```
+
+**2. Redis Connection Issues:**
+```bash
+# Check Redis status
+docker ps | grep redis
+
+# Test Redis connection
+docker exec -it rental_redis redis-cli ping
+```
+
+**3. Build Issues:**
+```bash
+# Clean build
+cd backend && npm run build
+cd ../users && npm run build
+
+# Check environment variables
+echo $DATABASE_URL
+echo $REDIS_HOST
+```
+
+---
+
+## 🧪 Testing
+
+### Local Testing
+```bash
+# Backend tests
+cd backend && npm test
+
+# E2E tests
+cd backend && npm run test:e2e
+
+# Frontend tests (if implemented)
+cd users && npm test
+```
+
+### Production Testing
+```bash
+# Check service health
+curl http://your-vps-ip:3000/health
+
+# Check database connection
+curl http://your-vps-ip:3000/api/health/db
+
+# Test map functionality
+open http://your-vps-ip:3002
+```
+
+---
+
+## 📊 Monitoring
+
+### Health Checks
+- Backend: `GET /health` - System health status
+- Database: `GET /api/health/db` - Database connection status
+- Redis: `GET /api/health/redis` - Cache layer status
+
+### Logs
+```bash
+# View all service logs
+docker compose logs -f
+
+# View specific service logs
+docker compose logs backend
+docker compose logs users
+```
+
+### Metrics
+- Admin dashboard shows real-time user and property counts
+- Audit logs track all property changes
+- Performance metrics available in Swagger docs
+
+---
+
+## 🚨 Troubleshooting
+
+### Common Deployment Issues
+
+**1. Permission Denied Errors:**
+```bash
+# Fix file permissions
+sudo chown -R $USER:$USER .
+sudo chmod -R 755 scripts/
+```
+
+**2. Port Already in Use:**
+```bash
+# Check what's using the port
+sudo netstat -tlnp | grep :3000
+
+# Stop conflicting services
+sudo systemctl stop apache2
+```
+
+**3. Docker Build Failures:**
+```bash
+# Clean Docker cache
+docker system prune -af
+
+# Rebuild with no cache
+docker compose build --no-cache
+```
+
+**4. Environment Variables Not Loading:**
+```bash
+# Check if .env.production exists
+ls -la .env.production
+ls -la backend/.env.production
+
+# Verify file content
+cat .env.production
+```
+
+### Getting Help
+
+1. **Check Logs:** `docker compose logs -f`
+2. **Verify Environment:** Ensure all `.env.production` files are configured
+3. **Test Connectivity:** Check database and Redis connections
+4. **Review Documentation:** This README and inline code comments
+5. **Contact Team:** Reach out to development team for complex issues
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Leaflet** - Interactive maps
+- **Prisma** - Database ORM
+- **Next.js** - React framework
+- **NestJS** - Backend framework
+- **Cloudinary** - Media management
 
 ---
 
