@@ -47,20 +47,19 @@ async function seedUsers() {
     ];
 
     for (const user of usersToSeed) {
-        // User has multiple unique fields (email, username). Make this idempotent.
-        const existingUser = await prisma.user.findFirst({
-            where: {
-                OR: [{ email: user.email }, { username: user.username }],
-            },
-        });
-
-        if (!existingUser) {
-            await prisma.user.create({ data: user });
-            console.log(`Seeded user: ${user.email} (${user.role})`);
-            continue;
-        }
-
         try {
+            const existingUser = await prisma.user.findFirst({
+                where: {
+                    OR: [{ email: user.email }, { username: user.username }],
+                },
+            });
+
+            if (!existingUser) {
+                await prisma.user.create({ data: user });
+                console.log(`Seeded user: ${user.email} (${user.role})`);
+                continue;
+            }
+
             await prisma.user.update({
                 where: { id: existingUser.id },
                 data: {
@@ -73,9 +72,8 @@ async function seedUsers() {
             });
             console.log(`Updated seeded user: ${user.email} (${user.role})`);
         } catch (e) {
-            console.log(
-                `Seed user exists but could not be updated safely (email=${user.email}, username=${user.username}). Skipping.`,
-            );
+            console.error(`Error seeding user ${user.email}:`, e);
+            throw e;
         }
     }
 }
@@ -87,12 +85,15 @@ async function main() {
     }
 
     console.log('Seeding Users...');
-    await seedUsers();
+    try {
+        await seedUsers();
+    } catch (e) {
+        console.error('FAILED to seed users');
+        throw e;
+    }
 
-    // ==========================================
-    // Seed Houses from JSON
-    // ==========================================
     console.log('Seeding Houses from JSON...');
+    // ... rest of the file ...
     const houseDataPath = require('path').join(__dirname, 'data', 'house.json');
     let houseData: Record<string, any>;
     try {
@@ -104,7 +105,6 @@ async function main() {
 
     const houseSeedData: any[] = [];
     for (const [key, house] of Object.entries(houseData)) {
-        // Parse numerical fields safely
         const lat = house.latitude ? parseFloat(house.latitude) : null;
         const lng = house.longitude ? parseFloat(house.longitude) : null;
         const price = house.price ? parseInt(house.price, 10) : null;
@@ -117,12 +117,12 @@ async function main() {
             address: house.address || '',
             district: house.district || '',
             city: house.city || '',
-            latitude: Number.isNaN(lat) ? null : lat,
-            longitude: Number.isNaN(lng) ? null : lng,
-            price: Number.isNaN(price) ? null : price,
+            latitude: (lat === null || Number.isNaN(lat)) ? null : lat,
+            longitude: (lng === null || Number.isNaN(lng)) ? null : lng,
+            price: (price === null || Number.isNaN(price)) ? null : price,
             payment_method: house.payment_method || null,
-            bedrooms: Number.isNaN(bedrooms) ? null : bedrooms,
-            square: Number.isNaN(square) ? null : square,
+            bedrooms: (bedrooms === null || Number.isNaN(bedrooms)) ? null : bedrooms,
+            square: (square === null || Number.isNaN(square)) ? null : square,
             image_url_1: house.image_url_1 || null,
             image_url_2: house.image_url_2 || null,
             image_url_3: house.image_url_3 || null,
@@ -136,22 +136,26 @@ async function main() {
         });
     }
 
-    // Upsert to handle re-running scripts safely
     let houseCount = 0;
     for (const data of houseSeedData) {
-        await prisma.house.upsert({
-            where: { original_id: data.original_id },
-            update: data,
-            create: data
-        });
-        houseCount++;
+        try {
+            await prisma.house.upsert({
+                where: { original_id: data.original_id },
+                update: data,
+                create: data
+            });
+            houseCount++;
+        } catch (e) {
+            console.error(`Error upserting house ${data.original_id}:`, e);
+            throw e;
+        }
     }
     console.log(`Seeded ${houseCount} houses from JSON.`);
 }
 
 main()
     .catch((e) => {
-        console.error(e);
+        console.error('FATAL SEED ERROR:', e);
         process.exit(1);
     })
     .finally(async () => {

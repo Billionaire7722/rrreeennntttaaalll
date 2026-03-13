@@ -1,167 +1,311 @@
-import React, { useEffect, useState } from 'react';
-import { 
-    Users, 
-    Home, 
-    Trash2, 
-    LogIn, 
-    ShieldCheck, 
-    AlertCircle, 
-    TrendingUp, 
-    TrendingDown,
-    MoreHorizontal
-} from 'lucide-react';
+import React from 'react';
+import { Users, Home, LogIn, TrendingUp, TrendingDown, MoreHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar, Legend
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
-import api from '../api/axios';
+import { useKpis, usePlatformActivity, useUserEngagement } from '../hooks/useAnalytics';
+import { TimeFilter } from '../components/dashboard/TimeFilter';
 import css from './Overview.module.css';
 
-interface DashboardStats {
-    totalUsers: number;
-    totalProperties: number;
-    deletedProperties: number;
-    loginAttemptsToday: number;
-    totalAdmins?: number; // Added
-    openReports?: number; // Added
+interface KpiMetric {
+  value: number;
+  changePct: number | null;
+  periodCount?: number;
+  comparison?: number | null;
+  sparkline?: Array<{ time: string; value: number }>;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-        return (
-            <div style={{ background: '#18181b', border: '1px solid #27272a', padding: '12px', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
-                <p style={{ margin: 0, color: '#fafafa', fontWeight: 600, marginBottom: '4px' }}>{label}</p>
-                {payload.map((entry: any, index: number) => (
-                    <p key={index} style={{ margin: 0, color: entry.color, fontSize: '0.8rem' }}>
-                        {entry.name}: {entry.value}
-                    </p>
-                ))}
+interface KpisResponse {
+  totalUsers?: KpiMetric;
+  newUsers?: KpiMetric;
+  totalListings?: KpiMetric;
+  newListings?: KpiMetric;
+  favoritesAdded?: KpiMetric;
+  messagesSent?: KpiMetric;
+  loginAttempts?: KpiMetric;
+}
+
+const formatPercent = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return '-';
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value}%`;
+};
+
+const StatCard: React.FC<{
+    label: string;
+    value: number | undefined;
+    change?: number | null;
+    icon: React.ReactNode;
+    color: string;
+    path: string;
+    sparklineData?: Array<{ time: string; value: number }>;
+}> = ({ label, value, change, icon, color, path, sparklineData }) => {
+    const up = (change ?? 0) >= 0;
+
+    return (
+        <Link to={path} className={`glass-panel ${css.statCard}`} style={{ textDecoration: 'none' }}>
+            <div className={css.cardHeader}>
+                <div className={css.iconBox} style={{ color, background: `${color}15` }}>
+                    {icon}
+                </div>
+                <div className={`${css.statTrend} ${up ? css.trendUp : css.trendDown}`}>
+                    {up ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                    {formatPercent(change)}
+                </div>
             </div>
-        );
-    }
-    return null;
+            <div className={css.statInfo}>
+                <span className={css.statLabel}>{label}</span>
+                <h3 className={css.statValue}>{value?.toLocaleString() ?? '—'}</h3>
+            </div>
+            {sparklineData && sparklineData.length > 1 && (
+                <div className={css.sparkline}>
+                    <ResponsiveContainer width="100%" height={50}>
+                        <LineChart data={sparklineData}>
+                            <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+        </Link>
+    );
 };
 
 export const Overview: React.FC = () => {
-    const [stats, setStats] = useState<DashboardStats | null>(null);
-    const [charts, setCharts] = useState<{loginData: any[], actionData: any[]}>({ loginData: [], actionData: [] });
-    const [loading, setLoading] = useState(true);
+    const { data, isLoading, refetch } = useKpis();
+    const { data: activityData, refetch: refetchActivity } = usePlatformActivity();
+    const { data: engagementData, refetch: refetchEngagement } = useUserEngagement();
 
-    useEffect(() => {
-        fetchStats();
-    }, []);
+    const stats = (data ?? {}) as KpisResponse;
 
-    const fetchStats = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get('/admin/metrics');
-            setStats({
-                ...res.data.overview,
-                totalAdmins: res.data.overview.totalAdmins || 0,
-                openReports: res.data.overview.openReports || 0
-            });
-            setCharts({
-                loginData: res.data.charts?.loginData || [],
-                actionData: res.data.charts?.actionData || []
-            });
-        } catch (error) {
-            console.error('Failed to fetch stats', error);
-        } finally {
-            setLoading(false);
-        }
+    const handleRefresh = () => {
+        refetch();
+        refetchActivity();
+        refetchEngagement();
     };
 
-    if (loading) return <div className="loading-screen">Preparing Command Center...</div>;
-
-    const statCards = [
-        { label: 'Total Users', value: stats?.totalUsers, icon: <Users size={20} />, color: '#3b82f6', path: '/users', trend: '+12%', up: true },
-        { label: 'Total Admins', value: stats?.totalAdmins, icon: <ShieldCheck size={20} />, color: '#8b5cf6', path: '/login-logs', trend: 'Stable', up: true },
-        { label: 'Total Properties', value: stats?.totalProperties, icon: <Home size={20} />, color: '#10b981', path: '/houses', trend: '+5.4%', up: true },
-        { label: 'Deleted Properties', value: stats?.deletedProperties, icon: <Trash2 size={20} />, color: '#ef4444', path: '/houses?status=deleted', trend: '-2.1%', up: false },
-        { label: 'Login Attempts', value: stats?.loginAttemptsToday, icon: <LogIn size={20} />, color: '#f59e0b', path: '/login-logs', trend: '+18%', up: true },
-        { label: 'Open Reports', value: stats?.openReports, icon: <AlertCircle size={20} />, color: '#f43f5e', path: '/reports/users', trend: 'Urgent', up: true },
-    ];
+    if (isLoading) return <div className="loading-screen">Preparing Command Center...</div>;
 
     return (
         <div className={css.overview}>
-            {/* KPI Cards Section */}
-            <div className={css.kpiGrid}>
-                {statCards.map((card, idx) => (
-                    <Link key={idx} to={card.path} className={`glass-panel ${css.statCard}`} style={{ textDecoration: 'none' }}>
-                        <div className={css.cardHeader}>
-                            <div className={css.iconBox} style={{ color: card.color, background: `${card.color}15` }}>
-                                {card.icon}
-                            </div>
-                            <div className={`${css.statTrend} ${card.up ? css.trendUp : css.trendDown}`}>
-                                {card.up ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                                {card.trend}
-                            </div>
-                        </div>
-                        <div className={css.statInfo}>
-                            <span className={css.statLabel}>{card.label}</span>
-                            <h3 className={css.statValue}>{card.value?.toLocaleString()}</h3>
-                        </div>
-                    </Link>
-                ))}
+            <div className={css.filterRow}>
+                <TimeFilter />
             </div>
 
-            {/* Charts Section */}
-            <div className={css.chartsGrid}>
-                <div className={`glass-panel ${css.chartCard}`}>
-                    <div className={css.chartHeader}>
-                        <h3 className={css.chartTitle}>Authentication Traffic (7 Days)</h3>
-                        <div className={css.chartActions}>
-                            <button className="btn btn-outline" style={{ padding: '4px 8px' }} onClick={fetchStats} title="Refresh">
-                                <MoreHorizontal size={16} />
-                            </button>
-                        </div>
-                    </div>
-                    <div style={{ flex: 1, minHeight: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={charts.loginData}>
-                                <defs>
-                                    <linearGradient id="colorLogins" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <XAxis dataKey="day" stroke="#71717a" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#71717a" fontSize={12} tickLine={false} axisLine={false} />
-                                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Area type="monotone" dataKey="logins" name="Success" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorLogins)" />
-                                <Area type="monotone" dataKey="failed" name="Failed" stroke="#ef4444" strokeWidth={2} fillOpacity={0} />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
+            <div className={css.kpiGrid}>
+                <StatCard
+                    label="Total Users"
+                    value={stats.totalUsers?.value}
+                    change={stats.totalUsers?.changePct ?? null}
+                    icon={<Users size={20} />}
+                    color="#3b82f6"
+                    path="/users"
+                    sparklineData={stats.totalUsers?.sparkline}
+                />
+                <StatCard
+                    label="New Users"
+                    value={stats.newUsers?.value}
+                    change={stats.newUsers?.changePct ?? null}
+                    icon={<Users size={20} />}
+                    color="#22c55e"
+                    path="/users"
+                    sparklineData={stats.newUsers?.sparkline}
+                />
+                <StatCard
+                    label="Total Listings"
+                    value={stats.totalListings?.value}
+                    change={stats.totalListings?.changePct ?? null}
+                    icon={<Home size={20} />}
+                    color="#10b981"
+                    path="/houses"
+                    sparklineData={stats.totalListings?.sparkline}
+                />
+                <StatCard
+                    label="New Listings"
+                    value={stats.newListings?.value}
+                    change={stats.newListings?.changePct ?? null}
+                    icon={<Home size={20} />}
+                    color="#0ea5e9"
+                    path="/houses"
+                    sparklineData={stats.newListings?.sparkline}
+                />
+                <StatCard
+                    label="Favorites Added"
+                    value={stats.favoritesAdded?.value}
+                    change={stats.favoritesAdded?.changePct ?? null}
+                    icon={<HeartIcon />}
+                    color="#f43f5e"
+                    path="/favorites"
+                    sparklineData={stats.favoritesAdded?.sparkline}
+                />
+                <StatCard
+                    label="Messages Sent"
+                    value={stats.messagesSent?.value}
+                    change={stats.messagesSent?.changePct ?? null}
+                    icon={<MessageIcon />}
+                    color="#a855f7"
+                    path="/messages"
+                    sparklineData={stats.messagesSent?.sparkline}
+                />
+                <StatCard
+                    label="Login Attempts"
+                    value={stats.loginAttempts?.value}
+                    change={stats.loginAttempts?.changePct ?? null}
+                    icon={<LogIn size={20} />}
+                    color="#f59e0b"
+                    path="/login-logs"
+                    sparklineData={stats.loginAttempts?.sparkline}
+                />
+            </div>
+
+            <div className={css.section}>
+                <div className={css.sectionHeader}>
+                    <h2>Platform Activity</h2>
+                    <button className="btn btn-outline" style={{ padding: '4px 8px' }} onClick={() => refetch()} title="Refresh">
+                        <MoreHorizontal size={16} />
+                    </button>
                 </div>
 
-                <div className={`glass-panel ${css.chartCard}`}>
-                    <div className={css.chartHeader}>
-                        <h3 className={css.chartTitle}>Admin Mutative Actions</h3>
-                        <div className={css.chartActions}>
-                            <button className="btn btn-outline" style={{ padding: '4px 8px' }} onClick={fetchStats} title="Refresh">
-                                <MoreHorizontal size={16} />
-                            </button>
+                <div className={css.chartsGrid}>
+                    <div className={`glass-panel ${css.chartCard}`}>
+                        <div className={css.chartHeader}>
+                            <h3 className={css.chartTitle}>User Growth</h3>
+                        </div>
+                        <div style={{ height: '260px' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={activityData?.userGrowth || []}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                                    <Tooltip
+                                        contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+                                    />
+                                    <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
-                    <div style={{ flex: 1, minHeight: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={charts.actionData}>
-                                <XAxis dataKey="day" stroke="#71717a" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#71717a" fontSize={12} tickLine={false} axisLine={false} />
-                                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                                <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '20px', fontSize: '0.8rem' }} />
-                                <Bar dataKey="creates" name="Creates" stackId="a" fill="#10b981" radius={[2, 2, 0, 0]} />
-                                <Bar dataKey="updates" name="Updates" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-                                <Bar dataKey="deletes" name="Deletes" stackId="a" fill="#ef4444" radius={[0, 0, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+
+                    <div className={`glass-panel ${css.chartCard}`}>
+                        <div className={css.chartHeader}>
+                            <h3 className={css.chartTitle}>Listings Growth</h3>
+                        </div>
+                        <div style={{ height: '260px' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={activityData?.listingGrowth || []}>
+                                    <defs>
+                                        <linearGradient id="listingGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.45} />
+                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                                    <Tooltip
+                                        contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+                                    />
+                                    <Area type="monotone" dataKey="value" name="New Listings" stroke="#10b981" fill="url(#listingGradient)" strokeWidth={2} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className={`glass-panel ${css.chartCard}`}>
+                        <div className={css.chartHeader}>
+                            <h3 className={css.chartTitle}>Favorites Trend</h3>
+                        </div>
+                        <div style={{ height: '260px' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={activityData?.favoritesTrend || []}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                                    <Tooltip
+                                        contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+                                    />
+                                    <Line type="monotone" dataKey="value" stroke="#f43f5e" strokeWidth={2} dot={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className={`glass-panel ${css.chartCard}`}>
+                        <div className={css.chartHeader}>
+                            <h3 className={css.chartTitle}>Messages Activity</h3>
+                        </div>
+                        <div style={{ height: '260px' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={activityData?.messagesActivity || []}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                                    <Tooltip
+                                        contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+                                    />
+                                    <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className={css.section}>
+                <div className={css.sectionHeader}>
+                    <h2>User Engagement</h2>
+                    <button className="btn btn-outline" style={{ padding: '4px 8px' }} onClick={handleRefresh} title="Refresh">
+                        <MoreHorizontal size={16} />
+                    </button>
+                </div>
+                <div className={`glass-panel ${css.chartCard}`}>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className={css.engagementTable}>
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Score</th>
+                                    <th>Houses</th>
+                                    <th>Favorites</th>
+                                    <th>Messages</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {engagementData && engagementData.length > 0 ? (
+                                    engagementData.map(user => (
+                                        <tr key={user.userId}>
+                                            <td>{user.name || user.email}</td>
+                                            <td>{user.score}</td>
+                                            <td>{user.houses}</td>
+                                            <td>{user.favorites}</td>
+                                            <td>{user.messages}</td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={5} style={{ textAlign: 'center', padding: '16px 0' }}>
+                                            No engagement data available for the selected range.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     );
 };
+
+const HeartIcon = () => <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20 }}>❤️</span>;
+const MessageIcon = () => <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20 }}>💬</span>;

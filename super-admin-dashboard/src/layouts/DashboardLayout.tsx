@@ -36,9 +36,20 @@ export const DashboardLayout: React.FC = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const socket = io(resolvedApiBaseUrl, {
-            auth: { token }
-        });
+        if (!resolvedApiBaseUrl) {
+            console.warn('No API base URL configured; skipping notification socket connection.');
+            return;
+        }
+
+        let socket: ReturnType<typeof io> | undefined;
+        try {
+            socket = io(resolvedApiBaseUrl, {
+                auth: { token }
+            });
+        } catch (err) {
+            console.error('Failed to initialize socket.io:', err);
+            return;
+        }
 
         socket.on('connect', () => {
             console.log('Admin connected to notifications gateway');
@@ -54,7 +65,7 @@ export const DashboardLayout: React.FC = () => {
         });
 
         return () => {
-            socket.disconnect();
+            socket?.disconnect();
         };
     }, []);
 

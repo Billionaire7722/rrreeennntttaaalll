@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { parseTimeFilter, TimeFilter } from './analytics.utils';
 import { Role } from '../security/roles.enum';
 import { PresenceService } from '../presence/presence.service';
 import { AuditService } from '../audit/audit.service';
@@ -718,18 +720,29 @@ export class AdminService {
     }
 
     async getSupportRequests(skip = 0, take = 50) {
-        const [items, total] = await Promise.all([
+        const [tickets, total] = await Promise.all([
             this.prisma.supportTicket.findMany({
                 skip: Number(skip),
                 take: Number(take),
                 orderBy: { updatedAt: 'desc' },
                 include: {
                     user: { select: { id: true, name: true, email: true, role: true } },
+                    messages: {
+                        orderBy: { created_at: 'asc' },
+                        take: 1,
+                        select: { content: true }
+                    },
                     _count: { select: { messages: true } }
                 }
             }),
             this.prisma.supportTicket.count()
         ]);
+
+        const items = tickets.map(t => ({
+            ...t,
+            message: t.messages[0]?.content || ''
+        }));
+
         return { items, total, skip: Number(skip), take: Number(take) };
     }
 
@@ -934,6 +947,205 @@ export class AdminService {
                 percentage: total > 0 ? Math.round((count / total) * 100) : 0
             }))
             .sort((a, b) => b.count - a.count);
+    }
+
+    /**
+     * Returns KPI summary metrics for the dashboard.
+     * Supports time filtering and comparison modes (previous period, previous year).
+     */
+    private async countInRange(table: string, column: string, from: Date, to: Date) {
+        const result = await this.prisma.$queryRaw<Array<{ count: bigint }>>(
+            Prisma.sql`
+                SELECT count(*) as count
+                FROM ${Prisma.raw(`"${table}"`)}
+                WHERE ${Prisma.raw(`"${column}"`)} >= ${from}
+                  AND ${Prisma.raw(`"${column}"`)} < ${to}
+            `
+        );
+        return Number(result[0]?.count ?? 0);
+    }
+
+    private async seriesByPeriod(table: string, column: string, filter: { from: Date; to: Date; groupBy: string }) {
+        const groupBy = filter.groupBy;
+        const truncExpr = `date_trunc('${groupBy}', "${column}")`;
+        const rows = await this.prisma.$queryRaw<Array<{ period: Date; count: bigint }>>(
+            Prisma.sql`
+                SELECT ${Prisma.raw(truncExpr)} AS period, count(*) AS count
+                FROM ${Prisma.raw(`"${table}"`)}
+                WHERE ${Prisma.raw(`"${column}"`)} >= ${filter.from}
+                  AND ${Prisma.raw(`"${column}"`)} < ${filter.to}
+                GROUP BY period
+                ORDER BY period
+            `
+        );
+        return rows.map(r => ({ time: r.period.toISOString(), value: Number(r.count) }));
+    }
+
+    async getKpis(filterOpts: { range?: string; from?: string; to?: string; groupBy?: string; compare?: string }) {
+        const filter = parseTimeFilter(filterOpts);
+
+        const previousRange = this.getComparisonRange(filter);
+
+        const currentNewUsers = await this.countInRange('User', 'created_at', filter.from, filter.to);
+        const previousNewUsers = previousRange ? await this.countInRange('User', 'created_at', previousRange.from, previousRange.to) : null;
+
+        const currentNewHouses = await this.countInRange('House', 'created_at', filter.from, filter.to);
+        const previousNewHouses = previousRange ? await this.countInRange('House', 'created_at', previousRange.from, previousRange.to) : null;
+
+        const currentFavorites = await this.countInRange('Favorite', 'created_at', filter.from, filter.to);
+        const previousFavorites = previousRange ? await this.countInRange('Favorite', 'created_at', previousRange.from, previousRange.to) : null;
+
+        const currentMessages = await this.countInRange('Message', 'created_at', filter.from, filter.to);
+        const previousMessages = previousRange ? await this.countInRange('Message', 'created_at', previousRange.from, previousRange.to) : null;
+
+        const currentLoginAttempts = await this.countInRange('LoginLog', 'timestamp', filter.from, filter.to);
+        const previousLoginAttempts = previousRange ? await this.countInRange('LoginLog', 'timestamp', previousRange.from, previousRange.to) : null;
+
+        const totalUsers = await this.prisma.user.count({ where: { role: Role.USER } });
+        const totalListings = await this.prisma.house.count({ where: { deleted_at: null } });
+
+        const makeChange = (current: number, previous: number | null) => {
+            if (previous === null || previous === 0) return null;
+            return Math.round(((current - previous) / previous) * 100);
+        };
+
+        return {
+            totalUsers: {
+                value: totalUsers,
+                changePct: makeChange(currentNewUsers, previousNewUsers),
+                periodCount: currentNewUsers,
+                comparison: previousNewUsers,
+                sparkline: await this.seriesByPeriod('User', 'created_at', filter)
+            },
+            newUsers: {
+                value: currentNewUsers,
+                changePct: makeChange(currentNewUsers, previousNewUsers),
+                comparison: previousNewUsers,
+                sparkline: await this.seriesByPeriod('User', 'created_at', filter)
+            },
+            totalListings: {
+                value: totalListings,
+                changePct: makeChange(currentNewHouses, previousNewHouses),
+                periodCount: currentNewHouses,
+                comparison: previousNewHouses,
+                sparkline: await this.seriesByPeriod('House', 'created_at', filter)
+            },
+            newListings: {
+                value: currentNewHouses,
+                changePct: makeChange(currentNewHouses, previousNewHouses),
+                comparison: previousNewHouses,
+                sparkline: await this.seriesByPeriod('House', 'created_at', filter)
+            },
+            favoritesAdded: {
+                value: currentFavorites,
+                changePct: makeChange(currentFavorites, previousFavorites),
+                comparison: previousFavorites,
+                sparkline: await this.seriesByPeriod('Favorite', 'created_at', filter)
+            },
+            messagesSent: {
+                value: currentMessages,
+                changePct: makeChange(currentMessages, previousMessages),
+                comparison: previousMessages,
+                sparkline: await this.seriesByPeriod('Message', 'created_at', filter)
+            },
+            loginAttempts: {
+                value: currentLoginAttempts,
+                changePct: makeChange(currentLoginAttempts, previousLoginAttempts),
+                comparison: previousLoginAttempts,
+                sparkline: await this.seriesByPeriod('LoginLog', 'timestamp', filter)
+            }
+        };
+    }
+
+    async getPlatformActivity(filterOpts: { range?: string; from?: string; to?: string; groupBy?: string; compare?: string }) {
+        const filter = parseTimeFilter(filterOpts);
+
+        return {
+            userGrowth: await this.seriesByPeriod('User', 'created_at', filter),
+            listingGrowth: await this.seriesByPeriod('House', 'created_at', filter),
+            favoritesTrend: await this.seriesByPeriod('Favorite', 'created_at', filter),
+            messagesActivity: await this.seriesByPeriod('Message', 'created_at', filter),
+        };
+    }
+
+    async getUserEngagement(filterOpts: { range?: string; from?: string; to?: string }) {
+        const filter = parseTimeFilter({ ...filterOpts, groupBy: 'day', compare: 'none' });
+
+        // Rank users by activity score: houses*5 + favorites*2 + messages*1
+        const rows = await this.prisma.$queryRaw<Array<{
+            userId: string;
+            name: string;
+            email: string;
+            houses: bigint;
+            favorites: bigint;
+            messages: bigint;
+            score: number;
+        }>>(
+            Prisma.sql`
+                SELECT
+                    u.id as "userId",
+                    u.name,
+                    u.email,
+                    COALESCE(h.count, 0) as houses,
+                    COALESCE(f.count, 0) as favorites,
+                    COALESCE(m.count, 0) as messages,
+                    (COALESCE(h.count, 0) * 5 + COALESCE(f.count, 0) * 2 + COALESCE(m.count, 0)) as score
+                FROM "User" u
+                LEFT JOIN (
+                    SELECT owner_id, count(*) as count
+                    FROM "House"
+                    WHERE "created_at" >= ${filter.from} AND "created_at" < ${filter.to}
+                    GROUP BY owner_id
+                ) h ON h.owner_id = u.id
+                LEFT JOIN (
+                    SELECT user_id, count(*) as count
+                    FROM "Favorite"
+                    WHERE "created_at" >= ${filter.from} AND "created_at" < ${filter.to}
+                    GROUP BY user_id
+                ) f ON f.user_id = u.id
+                LEFT JOIN (
+                    SELECT user_id, count(*) as count
+                    FROM "Message"
+                    WHERE "created_at" >= ${filter.from} AND "created_at" < ${filter.to}
+                    GROUP BY user_id
+                ) m ON m.user_id = u.id
+                WHERE u.role = 'USER'
+                ORDER BY score DESC
+                LIMIT 20
+            `
+        );
+
+        return rows.map(r => ({
+            userId: r.userId,
+            name: r.name,
+            email: r.email,
+            houses: Number(r.houses),
+            favorites: Number(r.favorites),
+            messages: Number(r.messages),
+            score: Number(r.score),
+        }));
+    }
+
+    private getComparisonRange(filter: TimeFilter) {
+        if (filter.compare === 'none') return null;
+
+        const durationMs = filter.to.getTime() - filter.from.getTime();
+        if (filter.compare === 'previous_period') {
+            const to = new Date(filter.from);
+            const from = new Date(to.getTime() - durationMs);
+            return { from, to };
+        }
+
+        // previous_year
+        if (filter.compare === 'previous_year') {
+            const from = new Date(filter.from);
+            const to = new Date(filter.to);
+            from.setUTCFullYear(from.getUTCFullYear() - 1);
+            to.setUTCFullYear(to.getUTCFullYear() - 1);
+            return { from, to };
+        }
+
+        return null;
     }
 
     private mockGeoIP(ip: string) {

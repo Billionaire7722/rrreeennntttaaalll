@@ -17,41 +17,48 @@ import { SuspiciousIPs } from './pages/SuspiciousIPs';
 import { PropertyFraudAlerts } from './pages/PropertyFraudAlerts';
 import { Growth } from './pages/Growth';
 
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { Login } from './pages/Login';
+
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            <Route index element={<Overview />} />
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/login" element={<Login />} />
             
-            {/* User Management */}
-            <Route path="users" element={<Users />} />
-            
-            {/* Properties Management */}
-            <Route path="houses" element={<HousesSheet />} />
-            <Route path="houses-sheet" element={<HousesSheet />} />
-            
-            {/* Reports & Support */}
-            <Route path="reports/users" element={<UserReports />} />
-            <Route path="reports/properties" element={<PropertyReports />} />
-            <Route path="reports/support" element={<SupportRequests />} />
-            
-            {/* System Monitoring */}
-            <Route path="login-logs" element={<LoginLogs />} />
-            <Route path="fraud-alerts" element={<FraudAlerts />} />
-            <Route path="property-fraud" element={<PropertyFraudAlerts />} />
-            <Route path="suspicious-ips" element={<SuspiciousIPs />} />
-            <Route path="audit-logs" element={<AuditLogs />} />
-            <Route path="live-monitor" element={<LiveMonitor />} />
-            
-            {/* Analytics */}
-            <Route path="metrics" element={<Metrics />} />
-            <Route path="growth" element={<Growth />} />
-          </Route>
+            <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+              <Route index element={<Overview />} />
+              
+              {/* User Management */}
+              <Route path="users" element={<Users />} />
+              
+              {/* Properties Management */}
+              <Route path="houses" element={<HousesSheet />} />
+              <Route path="houses-sheet" element={<HousesSheet />} />
+              
+              {/* Reports & Support */}
+              <Route path="reports/users" element={<UserReports />} />
+              <Route path="reports/properties" element={<PropertyReports />} />
+              <Route path="reports/support" element={<SupportRequests />} />
+              
+              {/* System Monitoring */}
+              <Route path="login-logs" element={<LoginLogs />} />
+              <Route path="fraud-alerts" element={<FraudAlerts />} />
+              <Route path="property-fraud" element={<PropertyFraudAlerts />} />
+              <Route path="suspicious-ips" element={<SuspiciousIPs />} />
+              <Route path="audit-logs" element={<AuditLogs />} />
+              <Route path="live-monitor" element={<LiveMonitor />} />
+              
+              {/* Analytics */}
+              <Route path="metrics" element={<Metrics />} />
+              <Route path="growth" element={<Growth />} />
+            </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </AuthProvider>
     </Router>
   );

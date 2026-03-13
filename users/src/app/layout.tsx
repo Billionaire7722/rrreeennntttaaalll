@@ -12,6 +12,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "YourHome",
   description: "Find your perfect home",
+  icons: {
+    icon: "/assets/images/greenapple.svg",
+  },
 };
 
 export default function RootLayout({

@@ -332,7 +332,7 @@ export default function ProfilePage() {
               </Link>
             </div>
           </div>
-          <p className="text-center text-xs text-slate-400 mt-6">Find your perfect rental home with Your Home</p>
+          <p className="text-center text-xs text-slate-400 mt-6">Find your perfect rental home with YourHome</p>
         </div>
       </div>
     );

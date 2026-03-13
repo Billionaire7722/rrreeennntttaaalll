@@ -159,9 +159,24 @@ export class AdminController {
         return this.adminService.getUserGrowth(range);
     }
 
-    @Get('analytics/property-activity')
-    async getPropertyActivity(@Query('range') range: string) {
-        return this.adminService.getPropertyActivity(range);
+    @Get('analytics/platform-activity')
+    async getPlatformActivity(
+        @Query('range') range?: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string,
+        @Query('groupBy') groupBy?: string,
+        @Query('compare') compare?: string,
+    ) {
+        return this.adminService.getPlatformActivity({ range, from, to, groupBy, compare });
+    }
+
+    @Get('analytics/user-engagement')
+    async getUserEngagement(
+        @Query('range') range?: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string,
+    ) {
+        return this.adminService.getUserEngagement({ range, from, to });
     }
 
     @Get('analytics/login-traffic')
@@ -172,6 +187,17 @@ export class AdminController {
     @Get('analytics/ip-distribution')
     async getIPDistribution() {
         return this.adminService.getIPDistribution();
+    }
+
+    @Get('analytics/kpis')
+    async getKpis(
+        @Query('range') range?: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string,
+        @Query('groupBy') groupBy?: string,
+        @Query('compare') compare?: string,
+    ) {
+        return this.adminService.getKpis({ range, from, to, groupBy, compare });
     }
 
     // --- Management Actions ---

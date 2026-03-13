@@ -10,7 +10,7 @@ if not exist "scripts\deploy-vps.local.ps1" (
 )
 
 echo Starting safe push only...
-powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\deploy-vps.ps1" -Yes -SkipDeploy
+powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\deploy-vps.ps1" -Yes -SkipDeploy -AllowUntracked
 set EXIT_CODE=%ERRORLEVEL%
 
 if not "%EXIT_CODE%"=="0" (

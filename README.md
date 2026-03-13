@@ -45,10 +45,21 @@ This section provides critical context for AI coding assistants working on this 
 -   **Docker**: For PostgreSQL, PostGIS, and Redis.
 -   **NPM**: v10+
 
-### 1. Infrastructure
+### ⚡ One-Click Start (Windows)
+If you are on Windows, you can start everything (Docker, Database, and Apps) by simply double-clicking the `run-local.bat` file in the project root.
+
+---
+
+### 1. Infrastructure (Docker)
+> [!IMPORTANT]
+> Ensure **Docker Desktop** is running before executing these commands.
+
 ```bash
+# Start Database and Redis
 docker-compose -f docker-compose.local.yml up -d postgres redis
 ```
+
+*Note: The database is exposed on port **5433** for local host access.*
 
 ### 2. Backend
 ```bash
@@ -278,16 +289,20 @@ sudo certbot certonly --standalone -d your-domain.com
 ### Other Common Issues
 
 **1. Database Connection Issues:**
-```bash
-# Check if PostgreSQL is running
-docker ps | grep postgres
+> [!TIP]
+> On Windows, ensure Docker Desktop is started. If you see "failed to connect to npipe", Docker is not running.
 
-# Check logs
+```bash
+# Check if containers are running
+docker ps
+
+# If backend cannot connect, ensure port 5433 is used for localhost connections
+# Check logs if containers fail to start
 docker logs rental_postgres
 
 # Reset database (WARNING: Deletes all data)
-docker compose down -v
-docker compose up -d
+docker-compose -f docker-compose.local.yml down -v
+docker-compose -f docker-compose.local.yml up -d
 ```
 
 **2. Redis Connection Issues:**

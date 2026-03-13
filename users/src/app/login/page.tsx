@@ -145,15 +145,19 @@ export default function LoginPage() {
                 <div className="absolute inset-0 flex flex-col justify-center px-12 xl:px-16">
                     <div className="max-w-md">
                         <div className="flex items-center gap-3 mb-8">
-                            <Image
-                                src="/images/yh-logo.jpg"
-                                alt="Your Home Logo"
+                            <video
+                                src="/assets/vid/greenappleHi.mp4"
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
                                 width={56}
                                 height={56}
                                 className="rounded-xl shadow-lg"
+                                style={{ mixBlendMode: 'multiply', filter: 'contrast(1.1) brightness(1.1)' }}
                             />
                             <div>
-                                <h1 className="text-2xl font-bold text-white">Your Home</h1>
+                                <h1 className="text-2xl font-bold text-white">YourHome</h1>
                                 <p className="text-teal-200 text-sm">{t('logo_subtitle')}</p>
                             </div>
                         </div>
@@ -185,15 +189,19 @@ export default function LoginPage() {
                     {/* Mobile logo */}
                     <div className="lg:hidden mb-6 text-center">
                         <div className="flex items-center justify-center gap-3 mb-4">
-                            <Image
-                                src="/images/yh-logo.jpg"
-                                alt="Your Home Logo"
+                            <video
+                                src="/assets/vid/greenappleHi.mp4"
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
                                 width={56}
                                 height={56}
                                 className="rounded-xl shadow-lg"
+                                style={{ mixBlendMode: 'multiply', filter: 'contrast(1.1) brightness(1.1)' }}
                             />
                             <div className="text-left">
-                                <h1 className="text-2xl font-bold text-white">Your Home</h1>
+                                <h1 className="text-2xl font-bold text-white">YourHome</h1>
                                 <p className="text-teal-200 text-sm">{t('logo_subtitle')}</p>
                             </div>
                         </div>

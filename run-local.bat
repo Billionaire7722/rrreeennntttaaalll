@@ -1,0 +1,3 @@
+@echo off
+echo Starting Rental Platform Local Environment...
+call "%~dp0scripts\run-local.bat"

@@ -1,7 +1,5 @@
 import axios from 'axios';
 
-const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
-
 const normalizeApiBaseUrl = (value?: string) => {
     if (!value) return '';
     const trimmed = value.trim();
@@ -20,7 +18,8 @@ const normalizeApiBaseUrl = (value?: string) => {
 
 // Prefer explicit build-time env; otherwise use a same-origin proxy path.
 // This avoids relying on exposing backend port 3000 publicly in VPS deployments.
-export const resolvedApiBaseUrl = normalizeApiBaseUrl(envApiBaseUrl) || '/api';
+const rawEnvUrl = import.meta.env.VITE_API_BASE_URL;
+export const resolvedApiBaseUrl = normalizeApiBaseUrl(rawEnvUrl) || '/api';
 
 const api = axios.create({
     baseURL: resolvedApiBaseUrl,

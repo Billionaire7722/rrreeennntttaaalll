@@ -73,7 +73,7 @@ export default function PrivacyPage() {
                 </div>
 
                 <div className="mt-12 text-center text-slate-500 text-sm">
-                    <p>© {new Date().getFullYear()} Your Home. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} YourHome. All rights reserved.</p>
                 </div>
             </div>
         </div>
