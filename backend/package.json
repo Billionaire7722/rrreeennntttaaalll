@@ -102,7 +102,7 @@
     "testEnvironment": "node"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "if [ -f dist/prisma/seed.js ]; then node dist/prisma/seed.js; else ts-node prisma/seed.ts; fi"
   },
   "overrides": {
     "lodash": "4.17.23"

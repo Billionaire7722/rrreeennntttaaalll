@@ -79,8 +79,8 @@ async function seedUsers() {
 }
 
 async function main() {
-    if (process.env.NODE_ENV !== 'development') {
-        console.log('Skipping seed. Auto-seeding is only allowed in development environment (NODE_ENV=development).');
+    if (process.env.NODE_ENV !== 'development' && process.env.FORCE_SEED !== 'true') {
+        console.log('Skipping seed. Auto-seeding is only allowed in development environment or with FORCE_SEED=true.');
         return;
     }
 
