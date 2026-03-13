@@ -53,9 +53,9 @@ services:
     container_name: rental_backend
     restart: unless-stopped
     env_file:
-      - ./backend/.env.production
+      - .env
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-rental}?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-07072002}@postgres:5432/${POSTGRES_DB:-rental}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - NODE_ENV=production
@@ -82,9 +82,9 @@ services:
     restart: "no"
     command: npx prisma migrate deploy
     env_file:
-      - .env.production
+      - .env
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-rental}?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-07072002}@postgres:5432/${POSTGRES_DB:-rental}?schema=public
     depends_on:
       postgres:
         condition: service_healthy
