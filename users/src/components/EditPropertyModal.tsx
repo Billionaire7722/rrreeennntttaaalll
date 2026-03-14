@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Loader2, Upload, Image as ImageIcon, Video, Trash2, CheckCircle, XCircle, MapPin, Navigation } from 'lucide-react';
 import api from '@/api/axios';
 import dynamic from 'next/dynamic';
+import { getBestAvailableLocation } from '@/utils/location';
 
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
@@ -199,22 +200,15 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
         return () => clearTimeout(timer);
     }, [formData.street_address, formData.ward, formData.district, formData.city, shouldGeocode, house]);
 
-    const handleUseCurrentLocation = useCallback(() => {
-        if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser");
-            return;
+    const handleUseCurrentLocation = useCallback(async () => {
+        try {
+            const location = await getBestAvailableLocation();
+            setFormData(prev => ({ ...prev, latitude: location.lat, longitude: location.lng }));
+            setMapCenter([location.lat, location.lng]);
+        } catch (error) {
+            console.error("Error getting location:", error);
+            alert("Unable to retrieve your location");
         }
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-                setFormData(prev => ({ ...prev, latitude, longitude }));
-                setMapCenter([latitude, longitude]);
-            },
-            (error) => {
-                console.error("Error getting location:", error);
-                alert("Unable to retrieve your location");
-            }
-        );
     }, []);
 
     const handleDragEnd = () => {

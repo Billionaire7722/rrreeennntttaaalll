@@ -136,8 +136,10 @@ services:
 volumes:
   rental_pg_data:
     name: rental_pg_data_prod
+    external: true
   rental_redis_data:
     name: rental_redis_data_prod
+    external: true
 
 networks:
   rental_net:

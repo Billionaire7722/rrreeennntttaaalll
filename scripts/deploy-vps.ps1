@@ -173,6 +173,15 @@ git pull --ff-only origin "$BRANCH"
 if [ ! -f ".env.production" ]; then echo "WARN: Missing .env.production"; fi
 if [ ! -f "backend/.env.production" ]; then echo "WARN: Missing backend/.env.production"; fi
 
+if ! docker volume inspect rental_pg_data_prod > /dev/null 2>&1; then
+  echo "Creating docker volume rental_pg_data_prod"
+  docker volume create rental_pg_data_prod
+fi
+if ! docker volume inspect rental_redis_data_prod > /dev/null 2>&1; then
+  echo "Creating docker volume rental_redis_data_prod"
+  docker volume create rental_redis_data_prod
+fi
+
 if docker compose version > /dev/null 2>&1; then DC='docker compose'; else DC='docker-compose'; fi
 
 $DC --env-file .env.production up -d --build__SERVICES_ARGS__

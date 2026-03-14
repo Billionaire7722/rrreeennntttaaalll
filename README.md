@@ -217,6 +217,10 @@ services:
   prisma-migrate:     # Database migration container
 ```
 
+### Data Persistence (VPS)
+
+Production volumes are external and named (`rental_pg_data_prod`, `rental_redis_data_prod`) to prevent accidental data loss during redeploys. The VPS deploy script creates these volumes if they are missing.
+
 ---
 
 ## 🔧 Configuration

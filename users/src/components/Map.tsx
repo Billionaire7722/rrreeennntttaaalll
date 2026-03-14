@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Bed, Square, MapPin, Locate } from 'lucide-react';
 import { useAuth } from '@/context/useAuth';
 import { useLanguage } from '@/context/LanguageContext';
+import { getBestAvailableLocation } from '@/utils/location';
 
 // Dynamic SVG Icons for Available (Green) and Rented (Red)
 const getMarkerIcon = (status?: string | null) => {
@@ -69,66 +70,20 @@ function MapEvents({ onBoundsChange, setUserLocation }: { onBoundsChange?: (boun
     }, [onBoundsChange]);
 
     useEffect(() => {
-        // Try to get user location on mount
-        const tryGetUserLocation = async () => {
-            try {
-                // First try browser geolocation API
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            const { latitude, longitude } = position.coords;
-                            setUserLocation([latitude, longitude]);
-                            // Center map on user location
-                            map.setView([latitude, longitude], 15);
-                        },
-                        (error) => {
-                            console.warn('Geolocation failed:', error.message);
-                            // Fallback to IP-based location
-                            fetchUserLocationFromIP();
-                        },
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 10000,
-                            maximumAge: 300000 // 5 minutes
-                        }
-                    );
-                } else {
-                    // Fallback to IP-based location
-                    fetchUserLocationFromIP();
-                }
-            } catch (error) {
-                console.warn('Location detection failed:', error);
-                // Fallback to IP-based location
-                fetchUserLocationFromIP();
-            }
+        const resolveLocation = async () => {
+            const location = await getBestAvailableLocation();
+            setUserLocation([location.lat, location.lng]);
+            map.setView([location.lat, location.lng], location.source === 'gps' ? 15 : 12);
         };
 
-        const fetchUserLocationFromIP = async () => {
-            try {
-                // Use a free IP geolocation service
-                const response = await fetch('https://ipapi.co/json/');
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.latitude && data.longitude) {
-                        setUserLocation([data.latitude, data.longitude]);
-                        // Center map on detected location
-                        map.setView([data.latitude, data.longitude], 12);
-                    }
-                }
-            } catch (error) {
-                console.warn('IP-based location failed:', error);
-                // Default to Hanoi center
-                setUserLocation([21.0285, 105.8542]);
-            }
-        };
-
-        tryGetUserLocation();
+        resolveLocation();
 
         const handleLocationFound = (e: L.LocationEvent) => {
             setUserLocation([e.latlng.lat, e.latlng.lng]);
         };
 
         map.on('locationfound', handleLocationFound);
+        map.on('locationerror', resolveLocation);
 
         const handleMoveEnd = () => {
             const cb = onBoundsChangeRef.current;
@@ -146,6 +101,7 @@ function MapEvents({ onBoundsChange, setUserLocation }: { onBoundsChange?: (boun
 
         return () => {
             map.off('locationfound', handleLocationFound);
+            map.off('locationerror', resolveLocation);
             map.off('moveend', handleMoveEnd);
         };
     }, [map, setUserLocation]);
@@ -159,6 +115,12 @@ export default function InteractiveMap({ properties, center = [21.0285, 105.8542
     const { t } = useLanguage();
     const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+    const handleLocateClick = async () => {
+        if (!mapInstance) return;
+        const location = await getBestAvailableLocation();
+        setUserLocation([location.lat, location.lng]);
+        mapInstance.setView([location.lat, location.lng], location.source === 'gps' ? 15 : 12);
+    };
 
     return (
         <div className="w-full h-full relative">
@@ -274,11 +236,7 @@ export default function InteractiveMap({ properties, center = [21.0285, 105.8542
             <div className="absolute bottom-6 right-4 z-10 flex flex-col gap-3">
                 <button
                     className="w-11 h-11 bg-white/95 backdrop-blur rounded-full flex justify-center items-center shadow-lg border border-gray-100 hover:bg-gray-50 transition-colors"
-                    onClick={() => {
-                        if (mapInstance) {
-                            mapInstance.locate({ setView: true, maxZoom: 15 });
-                        }
-                    }}
+                    onClick={handleLocateClick}
                 >
                     <Locate size={20} className="text-blue-600" />
                 </button>
