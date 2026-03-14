@@ -178,7 +178,6 @@ export class AuthService {
     }
 
     private async verifyCaptchaToken(captchaToken?: string) {
-        return; // Temporary disable for local development/testing
         if (process.env.NODE_ENV === 'development') {
             return;
         }
