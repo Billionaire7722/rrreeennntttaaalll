@@ -16,7 +16,7 @@ const normalizeApiBaseUrl = (value?: string) => {
     }
 };
 
-const resolveApiBaseUrl = () => {
+export const resolveApiBaseUrl = () => {
     const rawEnvUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     const envUrl = normalizeApiBaseUrl(rawEnvUrl);
     if (envUrl) return envUrl;
@@ -31,8 +31,10 @@ const resolveApiBaseUrl = () => {
     return '/api';
 };
 
+export const resolvedApiBaseUrl = resolveApiBaseUrl();
+
 const api = axios.create({
-    baseURL: resolveApiBaseUrl(),
+    baseURL: resolvedApiBaseUrl,
     headers: {
         'Content-Type': 'application/json',
     },

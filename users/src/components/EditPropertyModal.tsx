@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Loader2, Upload, Image as ImageIcon, Video, Trash2, CheckCircle, XCircle, MapPin, Navigation } from 'lucide-react';
-import api from '@/api/axios';
+import api, { resolvedApiBaseUrl } from '@/api/axios';
 import dynamic from 'next/dynamic';
 import { getBestAvailableLocation } from '@/utils/location';
 
@@ -69,9 +69,11 @@ interface EditPropertyModalProps {
 }
 
 const API_BASE = () => {
-    const env = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
-    if (env) return env.replace(/\/+$/, '');
-    if (typeof window !== 'undefined') return `${window.location.protocol}//${window.location.hostname}:3000`;
+    if (typeof window !== 'undefined' && resolvedApiBaseUrl.startsWith('/')) {
+        return `${window.location.origin}${resolvedApiBaseUrl}`;
+    }
+    if (resolvedApiBaseUrl) return resolvedApiBaseUrl;
+    if (typeof window !== 'undefined') return `${window.location.origin}/api`;
     return 'http://localhost:3000';
 };
 

@@ -21,6 +21,22 @@ const normalizeApiBaseUrl = (value?: string) => {
 const rawEnvUrl = import.meta.env.VITE_API_BASE_URL;
 export const resolvedApiBaseUrl = normalizeApiBaseUrl(rawEnvUrl) || '/api';
 
+export const resolveSocketBaseUrl = () => {
+    if (resolvedApiBaseUrl.startsWith('http')) {
+        try {
+            return new URL(resolvedApiBaseUrl).origin;
+        } catch {
+            return resolvedApiBaseUrl;
+        }
+    }
+
+    if (typeof window !== 'undefined' && window.location?.origin) {
+        return window.location.origin;
+    }
+
+    return 'http://localhost:3000';
+};
+
 const api = axios.create({
     baseURL: resolvedApiBaseUrl,
     timeout: 10000,

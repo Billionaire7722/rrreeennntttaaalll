@@ -125,7 +125,7 @@ export const Metrics: React.FC = () => {
                         <div className={css.statIcon} style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}><Home size={20} /></div>
                         <span className={css.statTrend} style={{ color: 'var(--success-color)' }}>+8.4% <ArrowUpRight size={14} /></span>
                     </div>
-                    <div className={css.statValue}>{metrics?.totalHouses || 0}</div>
+                    <div className={css.statValue}>{metrics?.totalProperties || 0}</div>
                     <div className={css.statLabel}>Properties Listed</div>
                 </div>
                 <div className={css.statCard}>

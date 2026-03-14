@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
+import { resolvedApiBaseUrl } from '../api/axios';
 
 interface SocketContextType {
     socket: Socket | null;
@@ -38,8 +39,16 @@ const resolveSocketBaseUrl = () => {
     const envUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
     if (envUrl) return envUrl;
 
-    if (typeof window !== 'undefined' && window.location?.hostname) {
-        return `${window.location.protocol}//${window.location.hostname}:3000`;
+    if (resolvedApiBaseUrl.startsWith('http')) {
+        try {
+            return new URL(resolvedApiBaseUrl).origin;
+        } catch {
+            return resolvedApiBaseUrl;
+        }
+    }
+
+    if (typeof window !== 'undefined' && window.location?.origin) {
+        return window.location.origin;
     }
 
     return 'http://localhost:3000';
