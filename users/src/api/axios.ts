@@ -16,10 +16,43 @@ const normalizeApiBaseUrl = (value?: string) => {
     }
 };
 
+const isLocalHostName = (host?: string) => {
+    if (!host) return false;
+    const lowered = host.toLowerCase();
+    return lowered === 'localhost' || lowered === '127.0.0.1' || lowered === '::1';
+};
+
+const shouldIgnoreEnvUrlInBrowser = (envUrl: string) => {
+    if (typeof window === 'undefined') return false;
+    if (!window.location) return false;
+
+    try {
+        const parsed = new URL(envUrl, window.location.origin);
+        const pageProtocol = window.location.protocol;
+        if (pageProtocol === 'https:' && parsed.protocol !== 'https:') {
+            return true; // Mixed content blocked in browsers.
+        }
+
+        const pageHost = window.location.hostname;
+        if (isLocalHostName(parsed.hostname) && !isLocalHostName(pageHost)) {
+            return true; // Localhost env URL is not reachable from a public domain.
+        }
+    } catch {
+        return false;
+    }
+
+    return false;
+};
+
 export const resolveApiBaseUrl = () => {
     const rawEnvUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     const envUrl = normalizeApiBaseUrl(rawEnvUrl);
-    if (envUrl) return envUrl;
+    if (envUrl) {
+        if (shouldIgnoreEnvUrlInBrowser(envUrl)) {
+            return '/api';
+        }
+        return envUrl;
+    }
 
     // Server-side (SSR / Route Handlers): prefer an internal Docker URL if provided.
     if (typeof window === 'undefined') {

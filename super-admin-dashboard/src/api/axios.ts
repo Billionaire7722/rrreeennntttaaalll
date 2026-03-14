@@ -16,10 +16,43 @@ const normalizeApiBaseUrl = (value?: string) => {
     }
 };
 
+const isLocalHostName = (host?: string) => {
+    if (!host) return false;
+    const lowered = host.toLowerCase();
+    return lowered === 'localhost' || lowered === '127.0.0.1' || lowered === '::1';
+};
+
+const shouldIgnoreEnvUrlInBrowser = (envUrl: string) => {
+    if (typeof window === 'undefined') return false;
+    if (!window.location) return false;
+
+    try {
+        const parsed = new URL(envUrl, window.location.origin);
+        const pageProtocol = window.location.protocol;
+        if (pageProtocol === 'https:' && parsed.protocol !== 'https:') {
+            return true;
+        }
+
+        const pageHost = window.location.hostname;
+        if (isLocalHostName(parsed.hostname) && !isLocalHostName(pageHost)) {
+            return true;
+        }
+    } catch {
+        return false;
+    }
+
+    return false;
+};
+
 // Prefer explicit build-time env; otherwise use a same-origin proxy path.
 // This avoids relying on exposing backend port 3000 publicly in VPS deployments.
 const rawEnvUrl = import.meta.env.VITE_API_BASE_URL;
-export const resolvedApiBaseUrl = normalizeApiBaseUrl(rawEnvUrl) || '/api';
+const normalizedEnvUrl = normalizeApiBaseUrl(rawEnvUrl);
+export const resolvedApiBaseUrl = normalizedEnvUrl
+    ? shouldIgnoreEnvUrlInBrowser(normalizedEnvUrl)
+        ? '/api'
+        : normalizedEnvUrl
+    : '/api';
 
 export const resolveSocketBaseUrl = () => {
     if (resolvedApiBaseUrl.startsWith('http')) {
