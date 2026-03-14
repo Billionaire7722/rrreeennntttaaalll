@@ -8,6 +8,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/useAuth';
 import api from '@/api/axios';
 import AddPropertyModal from './AddPropertyModal';
+import LoginPromptModal from './LoginPromptModal';
 
 export default function BottomTabBar() {
     const pathname = usePathname();
@@ -15,6 +16,7 @@ export default function BottomTabBar() {
     const { user } = useAuth();
     const hideOnRoutes = new Set(['/login', '/register', '/chat']);
     const [isAddPropertyOpen, setIsAddPropertyOpen] = useState(false);
+    const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
 
     if (hideOnRoutes.has(pathname)) {
         return null;
@@ -43,7 +45,7 @@ export default function BottomTabBar() {
                         className="absolute -top-8 bg-teal-600 w-15 h-15 w-[60px] h-[60px] rounded-2xl rotate-45 flex items-center justify-center text-white shadow-xl shadow-teal-500/40 hover:bg-teal-700 hover:scale-110 active:scale-90 transition-all outline-none border-4 border-white"
                         onClick={() => {
                             if (!user) {
-                                alert("Please log in to add a property");
+                                setIsLoginPromptOpen(true);
                             } else {
                                 setIsAddPropertyOpen(true);
                             }
@@ -72,6 +74,7 @@ export default function BottomTabBar() {
             </div>
 
             <AddPropertyModal isOpen={isAddPropertyOpen} onClose={() => setIsAddPropertyOpen(false)} />
+            <LoginPromptModal isOpen={isLoginPromptOpen} onClose={() => setIsLoginPromptOpen(false)} />
         </>
     );
 }

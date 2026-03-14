@@ -225,8 +225,12 @@ export default function RegisterPage() {
                                 playsInline
                                 width={56}
                                 height={56}
-                                className="rounded-xl shadow-lg"
-                                style={{ mixBlendMode: 'multiply', filter: 'contrast(1.1) brightness(1.1)' }}
+                                className="object-contain"
+                                style={{ 
+                                    mixBlendMode: 'screen',
+                                    transform: 'translateZ(0)',
+                                    WebkitTransform: 'translateZ(0)'
+                                }}
                             />
                             <div>
                                 <h1 className="text-2xl font-bold text-white">YourHome</h1>
@@ -293,10 +297,14 @@ export default function RegisterPage() {
                                 loop
                                 muted
                                 playsInline
-                                width={48}
-                                height={48}
-                                className="rounded-xl shadow-lg"
-                                style={{ mixBlendMode: 'multiply', filter: 'contrast(1.1) brightness(1.1)' }}
+                                width={56}
+                                height={56}
+                                className="object-contain"
+                                style={{ 
+                                    mixBlendMode: 'screen',
+                                    transform: 'translateZ(0)',
+                                    WebkitTransform: 'translateZ(0)'
+                                }}
                             />
                             <div className="text-left">
                                 <h1 className="text-xl font-bold text-white">YourHome</h1>

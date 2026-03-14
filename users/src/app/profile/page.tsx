@@ -310,29 +310,43 @@ export default function ProfilePage() {
       <div className="min-h-[calc(100vh-60px)] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
         <div className="max-w-sm w-full">
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-teal-100 to-teal-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <UserIcon className="h-10 w-10 text-teal-600" />
+            <div className="w-20 h-20 bg-teal-900 rounded-full flex items-center justify-center mx-auto mb-6 overflow-hidden shadow-inner border-2 border-teal-800/30">
+               <video
+                  src="/assets/vid/greenappleHi.mp4"
+                  autoPlay
+                  loop
+                  muted={true}
+                  playsInline
+                  width={56}
+                  height={56}
+                  className="object-contain"
+                  style={{ 
+                    mixBlendMode: 'screen',
+                    transform: 'translateZ(0)',
+                    WebkitTransform: 'translateZ(0)'
+                  }}
+                />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">{t("welcome_home")}</h2>
             <p className="text-slate-500 text-sm leading-relaxed mb-8">
-              Sign in to save your favorite properties, track your listings, and connect with landlords.
+              {t("profile_welcome_desc")}
             </p>
             <div className="space-y-3">
               <Link
                 href="/login"
                 className="flex w-full items-center justify-center px-6 py-3 text-base font-semibold rounded-xl text-white bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-600/20 transition-all hover:-translate-y-0.5"
               >
-                Sign In
+                {t("sign_in_btn")}
               </Link>
               <Link
                 href="/register"
                 className="flex w-full items-center justify-center px-6 py-3 text-base font-semibold rounded-xl text-teal-600 bg-teal-50 hover:bg-teal-100 transition-colors"
               >
-                Create Account
+                {t("create_account_btn")}
               </Link>
             </div>
           </div>
-          <p className="text-center text-xs text-slate-400 mt-6">Find your perfect rental home with YourHome</p>
+          <p className="text-center text-xs text-slate-400 mt-6">{t("profile_footer_hint")}</p>
         </div>
       </div>
     );

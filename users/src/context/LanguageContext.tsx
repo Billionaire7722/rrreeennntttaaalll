@@ -48,6 +48,8 @@ const dictionaries: Record<Language, Translations> = {
         use_current_location: "Sử dụng vị trí hiện tại",
         geocoding_loading: "Đang tìm vị trí...",
         submit_property: "Xác nhận đăng", submitting_property: "Đang xử lý...", submitted_success: "Đăng tin thành công", submitted_failed: "Đăng tin thất bại", try_again: "Thử lại", login_to_add: "Vui lòng đăng nhập để đăng tin", uploading_cloud: "Đang tải tệp lên máy chủ...",
+        login_prompt_title: "Yêu cầu đăng nhập",
+        login_prompt_desc: "Đăng nhập vào tài khoản của bạn để đăng tin và kết nối với hàng ngàn khách thuê tiềm năng.",
         tour_step1_title: "Khám phá bất động sản trên trang chủ", tour_step1_desc: "Trang chủ hiển thị tất cả bất động sản cho thuê hiện có thông qua bản đồ trực quan.",
         tour_step2_title: "Điểm đánh dấu bất động sản", tour_step2_desc: "Mỗi điểm đánh dấu là một tin đăng. Nhấp để xem chi tiết.",
         tour_step3_title: "Thanh tìm kiếm", tour_step3_desc: "Dùng thanh tìm kiếm để tìm nhà theo địa điểm hoặc từ khoá.",
@@ -183,7 +185,9 @@ const dictionaries: Record<Language, Translations> = {
         privacy_section9_title: "9. Thay đổi đối với Chính sách Bảo mật này",
         privacy_section9_content: "Chúng tôi có thể cập nhật Chính sách Bảo mật này theo thời gian. Khi có thay đổi, chúng tôi sẽ cập nhật ngày \"Cập nhật lần cuối\" ở đầu trang này. Việc tiếp tục sử dụng Nền tảng sau khi cập nhật đồng nghĩa với việc chấp nhận chính sách đã được sửa đổi.",
         privacy_section10_title: "10. Thông tin liên hệ",
-        privacy_section10_content: "Nếu bạn có bất kỳ câu hỏi nào về Chính sách Bảo mật này hoặc các thực hành dữ liệu của chúng tôi, vui lòng liên hệ với chúng tôi:\n\nEmail: support@yourhome.com\nCông ty: Your Home\nĐịa chỉ: Hà Nội, Việt Nam"
+        privacy_section10_content: "Nếu bạn có bất kỳ câu hỏi nào về Chính sách Bảo mật này hoặc các thực hành dữ liệu của chúng tôi, vui lòng liên hệ với chúng tôi:\n\nEmail: support@yourhome.com\nCông ty: Your Home\nĐịa chỉ: Hà Nội, Việt Nam",
+        profile_welcome_desc: "Đăng nhập để lưu những bất động sản yêu thích, theo dõi tin đăng và kết nối với chủ nhà",
+        profile_footer_hint: "Tìm ngôi nhà cho thuê hoàn hảo của bạn với YourHome",
     },
     en: {
         loading: "Loading...", no_info: "Property information not found.", go_back: "Go back",
@@ -225,6 +229,8 @@ const dictionaries: Record<Language, Translations> = {
         use_current_location: "Use my current location",
         geocoding_loading: "Searching location...",
         submit_property: "Submit Property", submitting_property: "Submitting Property...", submitted_success: "Property submitted successfully", submitted_failed: "Property submitted failed", try_again: "Try Again", login_to_add: "Please log in to add a property", uploading_cloud: "Uploading media to Cloudinary...",
+        login_prompt_title: "Login Required",
+        login_prompt_desc: "Sign in to your account to post listings and connect with thousands of potential tenants.",
         tour_step1_title: "Discover Rentals on the Homepage", tour_step1_desc: "The homepage shows all rental properties currently available via our interactive map.",
         tour_step2_title: "Property Markers", tour_step2_desc: "Each marker represents a rental listing. Tap a marker to view details.",
         tour_step3_title: "Search Bar", tour_step3_desc: "Use the search bar to find rentals by location or keyword.",
@@ -361,7 +367,9 @@ const dictionaries: Record<Language, Translations> = {
         privacy_section9_title: "9. Changes to This Privacy Policy",
         privacy_section9_content: "We may update this Privacy Policy from time to time. When changes are made, we will update the \"Last Updated\" date at the top of this page. Continued use of the Platform after updates constitutes acceptance of the revised policy.",
         privacy_section10_title: "10. Contact Information",
-        privacy_section10_content: "If you have any questions about this Privacy Policy or our data practices, please contact us:\n\nEmail: support@yourhome.com\nCompany: Your Home\nAddress: Hanoi, Vietnam"
+        privacy_section10_content: "If you have any questions about this Privacy Policy or our data practices, please contact us:\n\nEmail: support@yourhome.com\nCompany: Your Home\nAddress: Hanoi, Vietnam",
+        profile_welcome_desc: "Sign in to save your favorite properties, track your listings, and connect with landlords",
+        profile_footer_hint: "Find your perfect rental home with YourHome",
     },
     zh: {
         loading: "加载中...", no_info: "未找到房产信息。", go_back: "返回",
@@ -394,6 +402,8 @@ const dictionaries: Record<Language, Translations> = {
         use_current_location: "使用当前位置",
         geocoding_loading: "正在搜索位置...",
         submit_property: "提交房产", submitting_property: "正在提交房产...", submitted_success: "房产提交成功", submitted_failed: "房产提交失败", try_again: "重试", login_to_add: "请登录后添加房产", uploading_cloud: "正在上传媒体上传...",
+        login_prompt_title: "需要登录",
+        login_prompt_desc: "请先登录您的账户，以便发布房源并与成千上万的潜在租客取得联系。",
         tour_step1_title: "在地图上发现租房", tour_step1_desc: "地图显示所有当前可用的租赁房产。",
         tour_step2_title: "房产标记", tour_step2_desc: "每个标记代表一个租赁信息，点击可查看详情。",
         tour_step3_title: "搜索栏", tour_step3_desc: "使用搜索栏按地点或关键词查找租房。",
@@ -529,7 +539,9 @@ const dictionaries: Record<Language, Translations> = {
         privacy_section9_title: "9. 本隐私政策的变更",
         privacy_section9_content: "我们可能会不时更新本隐私政策。发生变更时，我们将更新页面顶部的 “最后更新” 日期。更新后继续使用平台即表示接受修订后的政策。",
         privacy_section10_title: "10. 联系信息",
-        privacy_section10_content: "如果您对本隐私政策或我们的数据处理实践有任何疑问，请联系我们：\n\n电子邮件：support@yourhome.com\n公司：Your Home\n地址：越南河内"
+        privacy_section10_content: "如果您对本隐私政策或我们的数据处理实践有任何疑问，请联系我们：\n\n电子邮件：support@yourhome.com\n公司：Your Home\n地址：越南河内",
+        profile_welcome_desc: "登录以保存您喜爱的房产、跟踪您的房源并与房东联系",
+        profile_footer_hint: "在 YourHome 找到您理想的租屋",
     },
     es: {
         loading: "Cargando...", no_info: "Información de la propiedad no encontrada.", go_back: "Volver",
@@ -572,6 +584,8 @@ const dictionaries: Record<Language, Translations> = {
         use_current_location: "Usar mi ubicación actual",
         geocoding_loading: "Buscando ubicación...",
         submit_property: "Enviar P.", submitting_property: "Enviando...", submitted_success: "Propiedad enviada", submitted_failed: "Fallo al enviar", try_again: "Reintentar", login_to_add: "Inicie sesión para añadir", uploading_cloud: "Subiendo medios...",
+        login_prompt_title: "Inicio de Sesión Requerido",
+        login_prompt_desc: "Inicia sesión en tu cuenta para publicar anuncios y conectarte con miles de inquilinos potenciales.",
         tour_step1_title: "Descubre Alquileres en el Mapa", tour_step1_desc: "Este mapa muestra todas las propiedades de alquiler disponibles.",
         tour_step2_title: "Marcadores de Propiedad", tour_step2_desc: "Cada marcador representa un listado. Toca un marcador para ver detalles.",
         tour_step3_title: "Barra de Búsqueda", tour_step3_desc: "Usa la barra de búsqueda para encontrar propiedades por ubicación.",
@@ -707,7 +721,9 @@ const dictionaries: Record<Language, Translations> = {
         privacy_section9_title: "9. Cambios en esta Política de Privacidad",
         privacy_section9_content: "Podemos actualizar esta Política de Privacidad de vez en cuando. Cuando se realicen cambios, actualizaremos la fecha de \"Última actualización\" en la parte superior de esta página. El uso continuado de la Plataforma después de las actualizaciones constituye la aceptación de la política revisada.",
         privacy_section10_title: "10. Información de Contacto",
-        privacy_section10_content: "Si tiene alguna pregunta sobre esta Política de Privacidad o nuestras prácticas de datos, póngase en contacto con nosotros:\n\nCorreo electrónico: support@yourhome.com\nEmpresa: Your Home\nDirección: Hanoi, Vietnam"
+        privacy_section10_content: "Si tiene alguna pregunta sobre esta Política de Privacidad o nuestras prácticas de datos, póngase en contacto con nosotros:\n\nCorreo electrónico: support@yourhome.com\nEmpresa: Your Home\nDirección: Hanoi, Vietnam",
+        profile_welcome_desc: "Inicie sesión para guardar sus propiedades favoritas, realizar un seguimiento de sus listados y conectarse con los propietarios",
+        profile_footer_hint: "Encuentre su casa de alquiler perfecta con YourHome",
     },
     fr: {
         loading: "Chargement...", no_info: "Information non trouvée.", go_back: "Retour",
@@ -885,7 +901,9 @@ const dictionaries: Record<Language, Translations> = {
         privacy_section9_title: "9. Modifications de cette politique de confidentialité",
         privacy_section9_content: "Nous pouvons mettre à jour cette politique de confidentialité de temps en temps. Lorsque des modifications sont apportées, nous mettrons à jour la date de « Dernière mise à jour » en haut de cette page. L'utilisation continue de la Plateforme après les mises à jour constitue l'acceptation de la politique révisée.",
         privacy_section10_title: "10. Informations de contact",
-        privacy_section10_content: "Si vous avez des questions sur cette politique de confidentialité ou sur nos pratiques en matière de données, veuillez nous contacter :\n\nE-mail : support@yourhome.com\nSociété : Your Home\nAdresse : Hanoi, Vietnam"
+        privacy_section10_content: "Si vous avez des questions sur cette politique de confidentialité ou sur nos pratiques en matière de données, veuillez nous contacter :\n\nE-mail : support@yourhome.com\nSociété : Your Home\nAdresse : Hanoi, Vietnam",
+        profile_welcome_desc: "Connectez-vous pour enregistrer vos propriétés préférées, suivre vos annonces et entrer en contact avec les propriétaires",
+        profile_footer_hint: "Trouvez votre maison de location idéale avec YourHome",
     },
     "zh-TW": {
         loading: "載入中...", no_info: "未找到房產資訊。", go_back: "返回",
@@ -1047,7 +1065,9 @@ const dictionaries: Record<Language, Translations> = {
         privacy_section9_title: "9. 本隱私政策的變更",
         privacy_section9_content: "我們可能會不時更新本隱私政策。發生變更時，我們將更新頁面頂部的 「最後更新」 日期。更新後繼續使用平台即表示接受修訂後的政策。",
         privacy_section10_title: "10. 聯繫信息",
-        privacy_section10_content: "如果您對本隱私政策或我們的數據處理實踐有任何疑問，請聯繫我們：\n\n電子郵件：support@yourhome.com\n公司：Your Home\n地址：越南河內"
+        privacy_section10_content: "如果您對本隱私政策或我們的數據處理實踐有任何疑問，請聯繫我們：\n\n電子郵件：support@yourhome.com\n公司：Your Home\n地址：越南河內",
+        profile_welcome_desc: "登錄以保存您喜愛的房產、跟踪您的房源並與房東聯繫",
+        profile_footer_hint: "在 YourHome 找到您理想的租屋",
     },
     ko: {
         loading: "로딩 중...", no_info: "정보를 찾을 수 없습니다.", go_back: "뒤로",
@@ -1215,7 +1235,9 @@ const dictionaries: Record<Language, Translations> = {
         privacy_section9_title: "9. 개인정보 보호정책의 변경",
         privacy_section9_content: "당사는 때때로 이 개인정보 보호정책을 업데이트할 수 있습니다. 변경 사항이 있을 경우 이 페이지 상단의 \"최종 업데이트\" 날짜를 업데이트합니다. 업데이트 후 플랫폼을 계속 이용하는 것은 수정된 정책을 수락하는 것으로 간주됩니다.",
         privacy_section10_title: "10. 연락처 정보",
-        privacy_section10_content: "본 개인정보 보호정책 또는 당사의 데이터 관행에 대해 궁금한 점이 있으면 당사에 문의하십시오.\n\n이메일: support@yourhome.com\n회사: Your Home\n주소: 베트남 하노이"
+        privacy_section10_content: "본 개인정보 보호정책 또는 당사의 데이터 관행에 대해 궁금한 점이 있으면 당사에 문의하십시오.\n\n이메일: support@yourhome.com\n회사: Your Home\n주소: 베트남 하노이",
+        profile_welcome_desc: "로그인하여 즐겨찾는 숙소를 저장하고, 내 매물을 추적하며, 집주인과 소통하세요",
+        profile_footer_hint: "YourHome과 함께 완벽한 임대 주택을 찾아보세요",
     },
     ja: {
         loading: "読み込み中...", no_info: "物件情報が見つかりません。", go_back: "戻る",
@@ -1383,7 +1405,9 @@ const dictionaries: Record<Language, Translations> = {
         privacy_section9_title: "9. このプライバシーポリシーの変更",
         privacy_section9_content: "当社は、このプライバシーポリシーを随時更新することがあります。変更が行われた場合は、このページの上部にある「最終更新日」を更新します。更新後の本プラットフォームの継続的な利用は、改訂されたポリシーを承諾したものとみなされます。",
         privacy_section10_title: "10. お問い合わせ先",
-        privacy_section10_content: "このプライバシーポリシーまたは当社のデータ慣行についてご質問がある場合は、当社までご連絡ください。\n\nメール：support@yourhome.com\n会社名：Your Home\n住所：ベトナム、ハノイ"
+        privacy_section10_content: "このプライバシーポリシーまたは当社のデータ慣行についてご質問がある場合は、当社までご連絡ください。\n\nメール：support@yourhome.com\n会社名：Your Home\n住所：ベトナム、ハノイ",
+        profile_welcome_desc: "ログインしてお気に入りの物件を保存し、掲載物件を管理し、大家さんとつながりましょう",
+        profile_footer_hint: "YourHomeで理想の賃貸住宅を見つけましょう",
     },
     th: {
         loading: "กำลังโหลด...", no_info: "ไม่พบข้อมูลที่พัก", go_back: "ย้อนกลับ",
@@ -1551,7 +1575,9 @@ const dictionaries: Record<Language, Translations> = {
         privacy_section9_title: "9. การเปลี่ยนแปลงนโยบายความเป็นส่วนตัวนี้",
         privacy_section9_content: "เราอาจอัปเดตนโยบายความเป็นส่วนตัวนี้เป็นครั้งคราว เมื่อมีการเปลี่ยนแปลง เราจะอัปเดตวันที่ “แก้ไขล่าสุด” ที่ด้านบนของหน้านี้ การใช้งานแพลตฟอร์มต่อไปหลังจากมีการอัปเดตถือว่าคุณยอมรับนโยบายที่แก้ไขแล้ว",
         privacy_section10_title: "10. ข้อมูลติดต่อ",
-        privacy_section10_content: "หากคุณมีคำถามใดๆ เกี่ยวกับนโยบายความเป็นส่วนตัวนี้ หรือแนวทางปฏิบัติด้านข้อมูลของเรา โปรดติดต่อเราที่:\n\nอีเมล: support@yourhome.com\nบริษัท: Your Home\nที่อยู่: ฮานอย เวียดนาม"
+        privacy_section10_content: "หากคุณมีคำถามใดๆ เกี่ยวกับนโยบายความเป็นส่วนตัวนี้ หรือแนวทางปฏิบัติด้านข้อมูลของเรา โปรดติดต่อเราที่:\n\nอีเมล: support@yourhome.com\nบริษัท: Your Home\nที่อยู่: ฮานอย เวียดนาม",
+        profile_welcome_desc: "ลงชื่อเข้าใช้เพื่อบันทึกที่พักที่คุณชื่นชอบ ติดตามรายการประกาศของคุณ และติดต่อกับเจ้าของที่พัก",
+        profile_footer_hint: "ค้นหาบ้านเช่าที่สมบูรณ์แบบของคุณด้วย YourHome",
     },
     id: {
         loading: "Memuat...", no_info: "Informasi properti tidak ditemukan.", go_back: "Kembali",
@@ -1719,7 +1745,9 @@ const dictionaries: Record<Language, Translations> = {
         privacy_section9_title: "9. Perubahan pada Kebijakan Privasi Ini",
         privacy_section9_content: "Kami dapat memperbarui Kebijakan Privasi ini dari waktu ke waktu. Ketika perubahan dilakukan, kami akan memperbarui tanggal “Terakhir Diperbarui” di bagian atas halaman ini. Penggunaan platform yang berkelanjutan setelah pembaruan merupakan penerimaan terhadap kebijakan yang revisi.",
         privacy_section10_title: "10. Informasi Kontak",
-        privacy_section10_content: "Jika Anda memiliki pertanyaan tentang Kebijakan Privasi ini atau praktik data kami, silakan hubungi kami di:\n\nEmail: support@yourhome.com\nPerusahaan: Your Home\nAlamat: Hanoi, Vietnam"
+        privacy_section10_content: "Jika Anda memiliki pertanyaan tentang Kebijakan Privasi ini atau praktik data kami, silakan hubungi kami di:\n\nEmail: support@yourhome.com\nPerusahaan: Your Home\nAlamat: Hanoi, Vietnam",
+        profile_welcome_desc: "Masuk untuk menyimpan properti favorit Anda, melacak listing Anda, dan terhubung dengan pemilik properti",
+        profile_footer_hint: "Temukan rumah sewa impian Anda dengan YourHome",
     },
 };
 
