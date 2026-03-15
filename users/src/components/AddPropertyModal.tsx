@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Loader2, Upload, Image as ImageIcon, Video, Trash2, CheckCircle, XCircle, MapPin, Navigation } from 'lucide-react';
+import { X, Loader2, Upload, Image as ImageIcon, Video, Trash2, CheckCircle, XCircle, MapPin, Navigation, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/context/useAuth';
 import api, { resolvedApiBaseUrl } from '@/api/axios';
 import dynamic from 'next/dynamic';
@@ -11,18 +11,14 @@ const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapCo
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
 
-// We define a wrapper for useMap that only gets called inside MapContainer
 const MapViewUpdater = ({ center }: { center: [number, number] }) => {
-    // Import useMap inside the component to avoid SSR issues
     const { useMap: useMapHook } = require('react-leaflet');
     const map = useMapHook();
-    
     useEffect(() => {
         if (center) {
             map.setView(center, 16);
         }
     }, [center, map]);
-    
     return null;
 };
 
@@ -79,11 +75,14 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [uploadingMedia, setUploadingMedia] = useState(false);
     const [isGeocoding, setIsGeocoding] = useState(false);
-    
-    const [images, setImages] = useState<string[]>([]);   // up to 7 Cloudinary URLs
-    const [videos, setVideos] = useState<string[]>([]);   // up to 2 Cloudinary URLs
+
+    const [images, setImages] = useState<string[]>([]);
+    const [videos, setVideos] = useState<string[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-    
+
+    // Image Preview Lightbox State
+    const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+
     const imageInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
     const markerRef = useRef<any>(null);
@@ -92,7 +91,6 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
         name: '',
         property_type: 'house',
         street_address: '',
-        ward: '',
         district: '',
         city: '',
         price: '',
@@ -100,7 +98,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
         bedrooms: '',
         description: '',
         contact_phone: '',
-        latitude: 21.0285, // Default Hanoi
+        latitude: 21.0285,
         longitude: 105.8542
     });
 
@@ -109,21 +107,16 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     // Handle geocoding with debounce
     useEffect(() => {
         if (!isOpen) return;
-        
-        const { street_address, ward, district, city } = formData;
-        if (!street_address && !ward && !district && !city) return;
+        const { street_address, district, city } = formData;
+        if (!street_address && !district && !city) return;
 
         const timer = setTimeout(async () => {
             setIsGeocoding(true);
             try {
-                const fullAddress = `${street_address}, ${ward}, ${district}, ${city}, Vietnam`;
+                const fullAddress = `${street_address}, ${district}, ${city}, Vietnam`;
                 const cleanAddress = removeVietnameseTones(fullAddress);
                 const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddress)}&format=json&limit=1`;
-                
-                const response = await fetch(url, {
-                    headers: { 'User-Agent': 'RentalApp/1.0' }
-                });
-                
+                const response = await fetch(url, { headers: { 'User-Agent': 'RentalApp/1.0' } });
                 if (response.ok) {
                     const data = await response.json();
                     if (data && data.length > 0) {
@@ -141,7 +134,19 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
         }, 800);
 
         return () => clearTimeout(timer);
-    }, [formData.street_address, formData.ward, formData.district, formData.city, isOpen]);
+    }, [formData.street_address, formData.district, formData.city, isOpen]);
+
+    // Keyboard navigation for preview
+    useEffect(() => {
+        if (previewIndex === null) return;
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setPreviewIndex(null);
+            if (e.key === 'ArrowRight') setPreviewIndex(i => (i !== null && i < imagePreviews.length - 1 ? i + 1 : i));
+            if (e.key === 'ArrowLeft') setPreviewIndex(i => (i !== null && i > 0 ? i - 1 : i));
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [previewIndex, imagePreviews.length]);
 
     const handleUseCurrentLocation = useCallback(async () => {
         try {
@@ -225,7 +230,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
         if (!user) { alert(t('login_to_add')); return; }
         setSubmitState('loading');
         try {
-            const fullAddressString = `${formData.street_address}, ${formData.ward}, ${formData.district}, ${formData.city}`.replace(/^, |, $/g, '');
+            const fullAddressString = `${formData.street_address}, ${formData.district}, ${formData.city}`.replace(/^, |, $/g, '');
             const payload: Record<string, any> = {
                 ...formData,
                 address: fullAddressString,
@@ -236,7 +241,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
             };
             images.forEach((url, i) => { payload[`image_url_${i + 1}`] = url; });
             videos.forEach((url, i) => { payload[`video_url_${i + 1}`] = url; });
-            
+
             await api.post('/houses', payload);
             setSubmitState('success');
             setTimeout(() => {
@@ -251,6 +256,70 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     };
 
     return (
+        <>
+        {/* ── Image Preview Lightbox ─────────────────────────────────────── */}
+        {previewIndex !== null && (
+            <div
+                className="fixed inset-0 z-[99999] bg-black/95 flex flex-col items-center justify-center"
+                onClick={() => setPreviewIndex(null)}
+            >
+                {/* Close */}
+                <button
+                    onClick={() => setPreviewIndex(null)}
+                    className="absolute top-5 right-5 z-10 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
+                >
+                    <X size={22} className="text-white" />
+                </button>
+
+                {/* Prev */}
+                {previewIndex > 0 && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setPreviewIndex(i => (i !== null ? i - 1 : 0)); }}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
+                    >
+                        <ChevronLeft size={24} className="text-white" />
+                    </button>
+                )}
+
+                {/* Image */}
+                <div className="max-w-[92vw] max-h-[82vh] flex items-center justify-center" onClick={e => e.stopPropagation()}>
+                    <img
+                        src={imagePreviews[previewIndex]}
+                        alt={t('preview_image')}
+                        className="max-w-full max-h-[82vh] object-contain rounded-xl shadow-2xl"
+                    />
+                </div>
+
+                {/* Next */}
+                {previewIndex < imagePreviews.length - 1 && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setPreviewIndex(i => (i !== null ? i + 1 : 0)); }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
+                    >
+                        <ChevronRight size={24} className="text-white" />
+                    </button>
+                )}
+
+                {/* Dots */}
+                {imagePreviews.length > 1 && (
+                    <div className="absolute bottom-6 flex gap-2">
+                        {imagePreviews.map((_, idx) => (
+                            <button
+                                key={idx}
+                                onClick={e => { e.stopPropagation(); setPreviewIndex(idx); }}
+                                className={`h-2 rounded-full transition-all ${idx === previewIndex ? 'w-5 bg-white' : 'w-2 bg-white/40 hover:bg-white/70'}`}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {/* Counter */}
+                <div className="absolute bottom-6 right-5 text-white/70 text-xs font-semibold">
+                    {previewIndex + 1} / {imagePreviews.length}
+                </div>
+            </div>
+        )}
+
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative">
                 <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
@@ -310,24 +379,18 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                         </div>
                     </div>
 
-                    {/* Ward + Street Address */}
-                    <div className="space-y-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('ward')} <span className="text-red-500">*</span></label>
-                            <input required name="ward" value={formData.ward} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder={t('ward')} />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('street_address')} <span className="text-red-500">*</span></label>
-                            <input required name="street_address" value={formData.street_address} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12 ngo 34 Tran Phu" />
-                        </div>
+                    {/* Street Address */}
+                    <div className="space-y-1">
+                        <label className="text-sm font-medium text-gray-700">{t('street_address')} <span className="text-red-500">*</span></label>
+                        <input required name="street_address" value={formData.street_address} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12 ngo 34 Tran Phu" />
                     </div>
 
                     {/* Map Pin Picker */}
                     <div className="space-y-1">
                         <div className="flex items-center justify-between mb-1">
                             <label className="text-sm font-medium text-gray-700">{t('exact_location')} <span className="text-red-500">*</span></label>
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 onClick={handleUseCurrentLocation}
                                 className="flex items-center gap-1.5 text-xs text-blue-600 font-medium hover:text-blue-700 transition-colors"
                             >
@@ -340,7 +403,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                                 {typeof window !== 'undefined' && (
                                     <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
                                         <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
-                                        <Marker 
+                                        <Marker
                                             draggable={true}
                                             eventHandlers={{ dragend: handleDragEnd }}
                                             position={[formData.latitude, formData.longitude]}
@@ -373,7 +436,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                             <input type="text" name="price" value={formData.price} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0" />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('area_m2')}</label>
+                            <label className="text-sm font-medium text-gray-700">{t('area')}</label>
                             <input type="number" name="square" value={formData.square} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0.0" />
                         </div>
                     </div>
@@ -412,9 +475,24 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                                 {imagePreviews.map((src, i) => (
                                     <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
                                         <img src={src} alt="" className="w-full h-full object-cover" />
-                                        <button type="button" onClick={() => removeImage(i)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                            <Trash2 size={16} className="text-white" />
-                                        </button>
+                                        {/* Overlay with preview + delete */}
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setPreviewIndex(i)}
+                                                title={t('preview_image')}
+                                                className="w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors shadow"
+                                            >
+                                                <Eye size={14} className="text-gray-700" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeImage(i)}
+                                                className="w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors shadow"
+                                            >
+                                                <Trash2 size={14} className="text-red-500" />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -478,5 +556,6 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                 )}
             </div>
         </div>
+        </>
     );
 }

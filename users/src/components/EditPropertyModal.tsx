@@ -112,7 +112,6 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
         name: '',
         property_type: 'house',
         street_address: '',
-        ward: '',
         district: '',
         city: '',
         price: '',
@@ -132,7 +131,6 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
                 name: house.name || '',
                 property_type: house.property_type || 'house',
                 street_address: house.address || '',
-                ward: house.ward || '',
                 district: house.district || '',
                 city: house.city || '',
                 price: house.price != null ? String(house.price).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : '',
@@ -170,13 +168,13 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
     useEffect(() => {
         if (!house || !shouldGeocode) return;
         
-        const { street_address, ward, district, city } = formData;
-        if (!street_address && !ward && !district && !city) return;
+        const { street_address, district, city } = formData;
+        if (!street_address && !district && !city) return;
 
         const timer = setTimeout(async () => {
             setIsGeocoding(true);
             try {
-                const fullAddress = `${street_address}, ${ward}, ${district}, ${city}, Vietnam`;
+                const fullAddress = `${street_address}, ${district}, ${city}, Vietnam`;
                 const cleanAddress = removeVietnameseTones(fullAddress);
                 const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddress)}&format=json&limit=1`;
                 
@@ -200,7 +198,7 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
         }, 800);
 
         return () => clearTimeout(timer);
-    }, [formData.street_address, formData.ward, formData.district, formData.city, shouldGeocode, house]);
+    }, [formData.street_address, formData.district, formData.city, shouldGeocode, house]);
 
     const handleUseCurrentLocation = useCallback(async () => {
         try {
@@ -232,7 +230,7 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
         setFormData(prev => ({ ...prev, [e.target.name]: value }));
         
         // Trigger geocoding when address fields change
-        if (['street_address', 'ward', 'district', 'city'].includes(e.target.name)) {
+        if (['street_address', 'district', 'city'].includes(e.target.name)) {
             setShouldGeocode(true);
         }
     };
@@ -288,7 +286,7 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
         e.preventDefault();
         setSubmitState('loading');
         try {
-            const fullAddressString = `${formData.street_address}, ${formData.ward}, ${formData.district}, ${formData.city}`.replace(/^, |, $/g, '');
+            const fullAddressString = `${formData.street_address}, ${formData.district}, ${formData.city}`.replace(/^, |, $/g, '');
             const payload: Record<string, any> = {
                 ...formData,
                 address: fullAddressString,
@@ -384,16 +382,10 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
                         </div>
                     </div>
 
-                    {/* Ward + Street Address */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('ward')} <span className="text-red-500">*</span></label>
-                            <input required name="ward" value={formData.ward} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder={t('ward')} />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('street_address')} <span className="text-red-500">*</span></label>
-                            <input required name="street_address" value={formData.street_address} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12 ngo 34 Tran Phu" />
-                        </div>
+                    {/* Street Address */}
+                    <div className="space-y-1">
+                        <label className="text-sm font-medium text-gray-700">{t('street_address')} <span className="text-red-500">*</span></label>
+                        <input required name="street_address" value={formData.street_address} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12 ngo 34 Tran Phu" />
                     </div>
 
                     {/* Map Pin Picker */}
@@ -435,7 +427,7 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
                             <input type="text" name="price" value={formData.price} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0" />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('area_m2')}</label>
+                            <label className="text-sm font-medium text-gray-700">{t('area')}</label>
                             <input type="number" name="square" value={formData.square} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0.0" />
                         </div>
                     </div>

@@ -354,7 +354,7 @@ export default function PropertyDetailsPage() {
                         <div className="w-[50px] h-[50px] rounded-full bg-[#EEF2F7] flex justify-center items-center">
                             <Square size={20} className="text-blue-600" />
                         </div>
-                        <span className="text-[15px] font-bold text-gray-900">{property.area || 0} m²</span>
+                        <span className="text-[15px] font-bold text-gray-900">{property.square || 0} m²</span>
                         <span className="text-[13px] text-gray-500">{t("area")}</span>
                     </div>
                 </div>

@@ -9,7 +9,6 @@ export type FilterOptions = {
     minPrice: number | null;
     maxPrice: number | null;
     province: string | null;
-    ward: string | null;
     minBedrooms: number | null;
     minArea: number | null;
     maxArea: number | null;
@@ -21,7 +20,6 @@ export const DEFAULT_FILTERS: FilterOptions = {
     minPrice: null,
     maxPrice: null,
     province: null,
-    ward: null,
     minBedrooms: null,
     minArea: null,
     maxArea: null,
@@ -145,27 +143,15 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
                     {/* Area Dropdowns */}
                     <div className="space-y-3">
                         <h3 className="font-semibold text-gray-800 text-sm">{t("location_area")}</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3">
                             <select
                                 className="w-full border border-gray-300 bg-gray-50 text-gray-900 text-sm rounded-lg px-3 py-2 focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none"
                                 value={localFilters.province || ""}
-                                onChange={(e) => setLocalFilters(p => ({ ...p, province: e.target.value || null, ward: null }))}
+                                onChange={(e) => setLocalFilters(p => ({ ...p, province: e.target.value || null }))}
                             >
                                 <option value="">{t("province_city")}</option>
                                 {provincesList.map(p => (
                                     <option key={p.code} value={p.name}>{p.name}</option>
-                                ))}
-                            </select>
-
-                            <select
-                                className="w-full border border-gray-300 bg-gray-50 text-gray-900 text-sm rounded-lg px-3 py-2 focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
-                                value={localFilters.ward || ""}
-                                onChange={(e) => setLocalFilters(p => ({ ...p, ward: e.target.value || null }))}
-                                disabled={!localFilters.province}
-                            >
-                                <option value="">{t("ward_commune")}</option>
-                                {availableWards.map(w => (
-                                    <option key={w.code} value={w.name}>{w.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -192,7 +178,7 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
 
                     {/* Room Area */}
                     <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-800 text-sm">{t("area_m2")}</h3>
+                        <h3 className="font-semibold text-gray-800 text-sm">{t("area")}</h3>
                         <div className="flex items-center gap-3 max-w-[220px]">
                             <input
                                 type="number"
