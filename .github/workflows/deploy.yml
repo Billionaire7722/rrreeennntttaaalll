@@ -1,0 +1,86 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate ${{ matrix.app.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - name: backend
+            path: backend
+          - name: users
+            path: users
+          - name: super-admin-dashboard
+            path: super-admin-dashboard
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.app.path }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ${{ matrix.app.path }}
+
+      - name: Run lint
+        run: npm run lint --if-present
+        working-directory: ${{ matrix.app.path }}
+
+      - name: Run build
+        run: npm run build --if-present
+        working-directory: ${{ matrix.app.path }}
+
+  deploy:
+    name: Deploy on VPS
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Deploy application
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          PROJECT_PATH: ${{ secrets.PROJECT_PATH }}
+        run: |
+          # Required GitHub Secrets:
+          # VPS_HOST: Public IP or hostname of the production VPS.
+          # VPS_USER: SSH user with access to the project directory and Docker.
+          # VPS_SSH_KEY: Private SSH key used by GitHub Actions to connect to the VPS.
+          # VPS_PORT: SSH port for the VPS, usually 22.
+          # PROJECT_PATH: Absolute path to the project directory on the VPS.
+          # Next hardening step: replace StrictHostKeyChecking=no with host key pinning.
+          ssh -o StrictHostKeyChecking=no -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" <<EOF
+          set -eu
+          cd "$PROJECT_PATH"
+          git fetch origin main
+          git reset --hard origin/main
+          if docker compose version >/dev/null 2>&1; then
+            DC="docker compose"
+          else
+            DC="docker-compose"
+          fi
+          \$DC --env-file .env.production up -d --build
+          EOF
