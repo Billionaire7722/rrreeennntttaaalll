@@ -1,735 +1,175 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  Camera, Heart, MessageCircle, Building2, Settings, Menu, UserCog, Globe, HelpCircle, Info, X, Clock, ChevronRight
-} from "lucide-react";
+import { BedDouble, Building2, Camera, ChevronRight, Clock3, Globe, Heart, HelpCircle, Home, Info, MapPin, Menu, MessageCircle, Pencil, Plus, Settings, Square, Trash2, UserCog, X } from "lucide-react";
 import api from "@/api/axios";
-import PropertyList from "@/components/PropertyList";
 import { useAuth } from "@/context/useAuth";
-import { useLanguage, Language } from "@/context/LanguageContext";
+import { Language, useLanguage } from "@/context/LanguageContext";
 import EditPropertyModal from "@/components/EditPropertyModal";
+import EditProfileForm from "./components/EditProfileForm";
+import ProfileAbout from "./components/ProfileAbout";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileStats from "./components/ProfileStats";
-import ProfileAbout from "./components/ProfileAbout";
-import EditProfileForm from "./components/EditProfileForm";
 import SafeImage from "@/components/SafeImage";
 
-const FLAGS: Record<Language, { url: string, label: string }> = {
-    vi: { url: "https://flagcdn.com/w20/vn.png", label: "Tiếng Việt" },
-    en: { url: "https://flagcdn.com/w20/gb.png", label: "English" },
-    es: { url: "https://flagcdn.com/w20/es.png", label: "Español" },
-    fr: { url: "https://flagcdn.com/w20/fr.png", label: "Français" },
-    zh: { url: "https://flagcdn.com/w20/cn.png", label: "简体中文" },
-    "zh-TW": { url: "https://flagcdn.com/w20/tw.png", label: "繁體中文" },
-    ko: { url: "https://flagcdn.com/w20/kr.png", label: "한국어" },
-    ja: { url: "https://flagcdn.com/w20/jp.png", label: "日本語" },
-    th: { url: "https://flagcdn.com/w20/th.png", label: "ไทย" },
-    id: { url: "https://flagcdn.com/w20/id.png", label: "Bahasa Indonesia" },
+const FLAGS: Record<Language, { url: string; label: string }> = {
+  vi: { url: "https://flagcdn.com/w20/vn.png", label: "Tieng Viet" },
+  en: { url: "https://flagcdn.com/w20/gb.png", label: "English" },
+  es: { url: "https://flagcdn.com/w20/es.png", label: "Espanol" },
+  fr: { url: "https://flagcdn.com/w20/fr.png", label: "Francais" },
+  zh: { url: "https://flagcdn.com/w20/cn.png", label: "Chinese" },
+  "zh-TW": { url: "https://flagcdn.com/w20/tw.png", label: "Traditional Chinese" },
+  ko: { url: "https://flagcdn.com/w20/kr.png", label: "Korean" },
+  ja: { url: "https://flagcdn.com/w20/jp.png", label: "Japanese" },
+  th: { url: "https://flagcdn.com/w20/th.png", label: "Thai" },
+  id: { url: "https://flagcdn.com/w20/id.png", label: "Bahasa Indonesia" },
 };
 
-function getInitials(name: string): string {
-  return (name || '')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || '')
-    .join('');
-}
+type ProfileTabKey = "favorites" | "my-properties" | "messages";
+interface Conversation { otherUser: { id: string; name: string; avatarUrl?: string | null }; lastMessage: { senderId: string; content: string; created_at: string }; unreadCount: number }
+interface FavoriteProperty { id: string; title: string; property_type?: string; address: string; city: string; price?: number; bedrooms?: number; area?: number; status?: string; image_url: string }
+interface MyHouse { id: string; name: string; property_type?: string; address: string; district: string; city: string; price?: number; square?: number; bedrooms?: number; description?: string; contact_phone?: string; image_url_1?: string; image_url_2?: string; image_url_3?: string; image_url_4?: string; image_url_5?: string; image_url_6?: string; image_url_7?: string; video_url_1?: string; video_url_2?: string; status?: string; created_at: string }
+interface FavoriteApiItem { house: { id: string; name: string; property_type?: string; district?: string; city: string; price?: number; bedrooms?: number; square?: number; status?: string; image_url_1?: string; image_url_2?: string } }
+interface ApiErrorShape { response?: { status?: number; data?: { message?: string } } }
 
-interface ViewerMessage {
-  id: string;
-  content: string;
-  senderId: string;
-  senderRole: string;
-  created_at: string;
-  adminId?: string | null;
-  seen_at?: string | null;
-  seen_by_role?: string | null;
-  admin?: { id: string; name: string; username?: string; avatarUrl?: string | null } | null;
-}
-
-interface MyHouse {
-  id: string;
-  name: string;
-  property_type?: string;
-  address: string;
-  district: string;
-  city: string;
-  price?: number;
-  square?: number;
-  bedrooms?: number;
-  description?: string;
-  contact_phone?: string;
-  image_url_1?: string;
-  image_url_2?: string;
-  image_url_3?: string;
-  image_url_4?: string;
-  image_url_5?: string;
-  image_url_6?: string;
-  image_url_7?: string;
-  video_url_1?: string;
-  video_url_2?: string;
-  status?: string;
-  created_at: string;
-}
-
-const resolveUploadImageUrl = () => {
-  const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (envUrl) return `${envUrl.replace(/\/+$/, "")}/upload/image`;
-  if (typeof window !== "undefined" && window.location?.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:3000/upload/image`;
-  }
-  return "http://localhost:3000/upload/image";
-};
-
-function formatPrice(price?: number) {
-  if (!price) return "N/A";
-  if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(1)}M VND`;
-  if (price >= 1_000) return `${(price / 1_000).toFixed(0)}K VND`;
-  return `${price} VND`;
-}
-
-function resolvePropertyLabel(house: { property_type?: string | null; name: string }) {
-  if (house.property_type) return house.property_type;
-  // Fallback: extract type from auto-generated name like "house at ..."
-  const atIndex = house.name?.indexOf(' at ');
-  if (atIndex > 0) return house.name.slice(0, atIndex);
-  return house.name;
-}
-
-function getStatusColor(status?: string) {
-  switch (status?.toUpperCase()) {
-    case "AVAILABLE": return "bg-emerald-100 text-emerald-700";
-    case "RENTED": return "bg-rose-100 text-rose-700";
-    case "PENDING": return "bg-amber-100 text-amber-700";
-    default: return "bg-gray-100 text-gray-600";
-  }
+const getInitials = (name: string) => (name || "").split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase() || "").join("");
+const resolvePropertyLabel = (house: { property_type?: string | null; name: string }) => house.property_type || (house.name?.includes(" at ") ? house.name.slice(0, house.name.indexOf(" at ")) : house.name);
+const compactPrice = (price?: number) => !price ? "N/A" : price >= 1_000_000 ? `${(price / 1_000_000).toFixed(1)}M VND` : `${price.toLocaleString("vi-VN")} VND`;
+const fullPrice = (price?: number) => !price ? "Contact for pricing" : `${price.toLocaleString("vi-VN")} VND`;
+const statusTone = (status?: string) => status?.toUpperCase() === "AVAILABLE" ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : status?.toUpperCase() === "RENTED" ? "bg-rose-50 text-rose-700 ring-1 ring-rose-200" : status?.toUpperCase() === "PENDING" ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200" : "bg-slate-100 text-slate-600 ring-1 ring-slate-200";
+function chatTime(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / 86400000);
+  if (diffDays === 0) return date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  if (diffDays < 7) return date.toLocaleDateString("vi-VN", { weekday: "short" });
+  return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
 }
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const { t, language, setLanguage } = useLanguage();
-  const [favorites, setFavorites] = useState<any[]>([]);
-  const [conversations, setConversations] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteProperty[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [myHouses, setMyHouses] = useState<MyHouse[]>([]);
   const [loadingFavs, setLoadingFavs] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [loadingMyHouses, setLoadingMyHouses] = useState(false);
-  const [activeTab, setActiveTab] = useState<"favorites" | "messages" | "my-properties">("favorites");
+  const [activeTab, setActiveTab] = useState<ProfileTabKey>("favorites");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  
-  // Profile Edit State
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [editBio, setEditBio] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
-  const [settingsMessage, setSettingsMessage] = useState({ type: '', text: '' });
+  const [settingsMessage, setSettingsMessage] = useState({ type: "", text: "" });
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [editingHouse, setEditingHouse] = useState<MyHouse | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
-  
-  // Drawer State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLangExpanded, setIsLangExpanded] = useState(false);
-
-
-  const fetchFavorites = async () => {
-    try {
-      const res = await api.get("/users/favorites");
-      const formatted = res.data.map((fav: any) => {
-        const h = fav.house;
-        const propertyLabel = h.property_type || (h.name?.indexOf(' at ') > 0 ? h.name.slice(0, h.name.indexOf(' at ')) : h.name);
-        return {
-          id: h.id, title: propertyLabel, address: `${h.district ? `${h.district}, ` : ""}${h.city}`,
-          city: h.city, latitude: h.latitude, longitude: h.longitude, price: h.price,
-          bedrooms: h.bedrooms, bathrooms: h.bathrooms || 1, hasPrivateBathroom: h.is_private_bathroom,
-          area: h.square, description: h.description, status: h.status || "AVAILABLE",
-          image_url: h.image_url_1 || h.image_url_2 || "/images/defaultimage.jpg",
-        };
-      });
-      setFavorites(formatted);
-    } catch { } finally { setLoadingFavs(false); }
-  };
-
-  const fetchConversations = async () => {
-    if (!user) return;
-    setLoadingMessages(true);
-    try {
-      const res = await api.get("/users/conversations");
-      setConversations(res.data || []);
-    } catch { } finally { setLoadingMessages(false); }
-  };
-
-  const fetchMyHouses = async () => {
-    setLoadingMyHouses(true);
-    try {
-      const res = await api.get("/houses/me");
-      setMyHouses(res.data?.data || []);
-    } catch { } finally { setLoadingMyHouses(false); }
-  };
-
-  const handleDeleteHouse = async (houseId: string) => {
-    if (!confirm("Are you sure you want to delete this property? This cannot be undone.")) return;
-    try {
-      await api.delete(`/houses/${houseId}`);
-      setMyHouses(prev => prev.filter(h => h.id !== houseId));
-    } catch { alert("Failed to delete property."); }
-  };
-
-  useEffect(() => {
-    if (!authLoading && user) {
-      fetchFavorites();
-      fetchMyHouses();
-      api.get("/users/profile").then(res => {
-        if (res.data.avatarUrl) {
-          setAvatarUrl(res.data.avatarUrl);
-          localStorage.setItem(`avatar_${user.id}`, res.data.avatarUrl);
-        } else {
-          const saved = localStorage.getItem(`avatar_${user.id}`);
-          if (saved) setAvatarUrl(saved);
-        }
-        if (res.data.coverUrl) {
-          setCoverUrl(res.data.coverUrl);
-          localStorage.setItem(`cover_${user.id}`, res.data.coverUrl);
-        } else {
-          const savedCover = localStorage.getItem(`cover_${user.id}`);
-          if (savedCover) setCoverUrl(savedCover);
-        }
-        setEditFirstName(res.data.firstName || "");
-        setEditLastName(res.data.lastName || "");
-        setEditBio(res.data.bio || "");
-      }).catch(() => {
-        const saved = localStorage.getItem(`avatar_${user.id}`);
-        if (saved) setAvatarUrl(saved);
-        const savedCover = localStorage.getItem(`cover_${user.id}`);
-        if (savedCover) setCoverUrl(savedCover);
-      });
-    }
-  }, [user, authLoading]);
-
-  useEffect(() => {
-    if (!user) return;
-    if (activeTab === "messages") fetchConversations();
-  }, [activeTab, user]);
-
-  const handleRemoveFavorite = async (propertyId: string) => {
-    try {
-      await api.post("/users/favorites/toggle", { houseId: propertyId });
-      setFavorites(prev => prev.filter(p => p.id !== propertyId));
-    } catch { }
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      // Remove manual Content-Type to let axios/browser set boundary correctly
-      const response = await api.post("/upload/image", formData);
-
-      if (response.data && response.data.url) {
-        setAvatarUrl(response.data.url);
-        if (user) {
-          localStorage.setItem(`avatar_${user.id}`, response.data.url);
-          try { await api.post("/users/avatar", { url: response.data.url }); } catch (err) {
-            console.error("Failed to save avatar URL to user profile", err);
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Profile picture upload failed:", err);
-      alert("Failed to upload profile picture. Please try again.");
-    } finally { setIsUploading(false); }
-  };
-
-  const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingCover(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await api.post("/upload/image", formData);
-
-      if (response.data && response.data.url) {
-        setCoverUrl(response.data.url);
-        if (user) {
-          localStorage.setItem(`cover_${user.id}`, response.data.url);
-          try { await api.post("/users/cover", { url: response.data.url }); } catch (err) {
-            console.error("Failed to save cover URL to user profile", err);
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Cover image upload failed:", err);
-      alert("Failed to upload cover image.");
-    } finally { setIsUploadingCover(false); }
-  };
-
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavingSettings(true);
-    setSettingsMessage({ type: '', text: '' });
-    try {
-      await api.post("/users/profile", { 
-        firstName: editFirstName, 
-        lastName: editLastName, 
-        bio: editBio 
-      });
-      setSettingsMessage({ type: 'success', text: 'changed successful' });
-      setIsEditingProfile(false);
-      setTimeout(() => setSettingsMessage({ type: '', text: '' }), 3000);
-    } catch (err: any) {
-      if (err.response?.status === 403) {
-        setSettingsMessage({ type: 'error', text: err.response.data.message || 'You can only change your name once every 30 days.' });
-      } else {
-        setSettingsMessage({ type: 'error', text: 'Failed to update profile.' });
-      }
-    } finally {
-      setSavingSettings(false);
-    }
-  };
-
-
-  // ─── Not logged in ────────────────────────────────────────────────────────
-  if (authLoading) {
-    return (
-      <div className="min-h-[calc(100vh-60px)] flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-teal-100 animate-pulse" />
-          <div className="h-4 w-32 bg-gray-200 rounded-full animate-pulse" />
-          <div className="h-3 w-24 bg-gray-100 rounded-full animate-pulse" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-[calc(100vh-60px)] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
-        <div className="max-w-sm w-full">
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
-            <div className="w-20 h-20 bg-teal-900 rounded-full flex items-center justify-center mx-auto mb-6 overflow-hidden shadow-inner border-2 border-teal-800/30">
-               <video
-                  src="/assets/vid/greenappleHi.mp4"
-                  autoPlay
-                  loop
-                  muted={true}
-                  playsInline
-                  width={56}
-                  height={56}
-                  className="object-contain"
-                  style={{ 
-                    mixBlendMode: 'screen',
-                    transform: 'translateZ(0)',
-                    WebkitTransform: 'translateZ(0)'
-                  }}
-                />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">{t("welcome_home")}</h2>
-            <p className="text-slate-500 text-sm leading-relaxed mb-8">
-              {t("profile_welcome_desc")}
-            </p>
-            <div className="space-y-3">
-              <Link
-                href="/login"
-                className="flex w-full items-center justify-center px-6 py-3 text-base font-semibold rounded-xl text-white bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-600/20 transition-all hover:-translate-y-0.5"
-              >
-                {t("sign_in_btn")}
-              </Link>
-              <Link
-                href="/register"
-                className="flex w-full items-center justify-center px-6 py-3 text-base font-semibold rounded-xl text-teal-600 bg-teal-50 hover:bg-teal-100 transition-colors"
-              >
-                {t("create_account_btn")}
-              </Link>
-            </div>
-          </div>
-          <p className="text-center text-xs text-slate-400 mt-6">{t("profile_footer_hint")}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ─── Tabs config ──────────────────────────────────────────────────────────
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const unreadChatCount = useMemo(() => conversations.reduce((acc, item) => acc + (item.unreadCount || 0), 0), [conversations]);
   const tabs = [
     { key: "favorites" as const, label: t("saved"), icon: Heart, count: favorites.length },
     { key: "my-properties" as const, label: t("my_listings"), icon: Building2, count: myHouses.length },
-    { key: "messages" as const, label: t("chats"), icon: MessageCircle, count: conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0) },
+    { key: "messages" as const, label: t("chats"), icon: MessageCircle, count: unreadChatCount },
   ];
 
-  // ─── Main layout ──────────────────────────────────────────────────────────
+  const fetchFavorites = useCallback(async () => {
+    setLoadingFavs(true);
+    try {
+      const res = await api.get("/users/favorites");
+      const payload = res.data as FavoriteApiItem[];
+      setFavorites(payload.map((fav) => ({ id: fav.house.id, title: resolvePropertyLabel(fav.house), property_type: fav.house.property_type, address: `${fav.house.district ? `${fav.house.district}, ` : ""}${fav.house.city}`, city: fav.house.city, price: fav.house.price, bedrooms: fav.house.bedrooms, area: fav.house.square, status: fav.house.status || "AVAILABLE", image_url: fav.house.image_url_1 || fav.house.image_url_2 || "/images/defaultimage.jpg" })));
+    } catch { setFavorites([]); } finally { setLoadingFavs(false); }
+  }, []);
+  const fetchConversations = useCallback(async () => { if (!user) return; setLoadingMessages(true); try { const res = await api.get("/users/conversations"); setConversations((res.data || []) as Conversation[]); } catch { setConversations([]); } finally { setLoadingMessages(false); } }, [user]);
+  const fetchMyHouses = useCallback(async () => { setLoadingMyHouses(true); try { const res = await api.get("/houses/me"); setMyHouses((res.data?.data || []) as MyHouse[]); } catch { setMyHouses([]); } finally { setLoadingMyHouses(false); } }, []);
+  const handleDeleteHouse = async (houseId: string) => { if (!confirm("Are you sure you want to delete this property? This cannot be undone.")) return; try { await api.delete(`/houses/${houseId}`); setMyHouses((prev) => prev.filter((house) => house.id !== houseId)); } catch { alert("Failed to delete property."); } };
+  const openEdit = () => { setIsEditingProfile(true); setSettingsMessage({ type: "", text: "" }); };
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      fetchFavorites(); fetchMyHouses(); fetchConversations();
+      api.get("/users/profile").then((res) => {
+        if (res.data.avatarUrl) { setAvatarUrl(res.data.avatarUrl); localStorage.setItem(`avatar_${user.id}`, res.data.avatarUrl); } else { const saved = localStorage.getItem(`avatar_${user.id}`); if (saved) setAvatarUrl(saved); }
+        if (res.data.coverUrl) { setCoverUrl(res.data.coverUrl); localStorage.setItem(`cover_${user.id}`, res.data.coverUrl); } else { const saved = localStorage.getItem(`cover_${user.id}`); if (saved) setCoverUrl(saved); }
+        setEditFirstName(res.data.firstName || ""); setEditLastName(res.data.lastName || ""); setEditBio(res.data.bio || "");
+      }).catch(() => {
+        const savedAvatar = localStorage.getItem(`avatar_${user.id}`); const savedCover = localStorage.getItem(`cover_${user.id}`);
+        if (savedAvatar) setAvatarUrl(savedAvatar); if (savedCover) setCoverUrl(savedCover);
+      });
+    }
+  }, [authLoading, fetchConversations, fetchFavorites, fetchMyHouses, user]);
+  useEffect(() => { if (user && activeTab === "messages") fetchConversations(); }, [activeTab, fetchConversations, user]);
+
+  const handleRemoveFavorite = async (propertyId: string) => { try { await api.post("/users/favorites/toggle", { houseId: propertyId }); setFavorites((prev) => prev.filter((item) => item.id !== propertyId)); } catch {} };
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return; setIsUploading(true);
+    try { const formData = new FormData(); formData.append("file", file); const response = await api.post("/upload/image", formData); if (response.data?.url && user) { setAvatarUrl(response.data.url); localStorage.setItem(`avatar_${user.id}`, response.data.url); try { await api.post("/users/avatar", { url: response.data.url }); } catch (error) { console.error(error); } } } catch (error) { console.error(error); alert("Failed to upload profile picture. Please try again."); } finally { setIsUploading(false); }
+  };
+  const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return; setIsUploadingCover(true);
+    try { const formData = new FormData(); formData.append("file", file); const response = await api.post("/upload/image", formData); if (response.data?.url && user) { setCoverUrl(response.data.url); localStorage.setItem(`cover_${user.id}`, response.data.url); try { await api.post("/users/cover", { url: response.data.url }); } catch (error) { console.error(error); } } } catch (error) { console.error(error); alert("Failed to upload cover image."); } finally { setIsUploadingCover(false); }
+  };
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault(); setSavingSettings(true); setSettingsMessage({ type: "", text: "" });
+    try { await api.post("/users/profile", { firstName: editFirstName, lastName: editLastName, bio: editBio }); setSettingsMessage({ type: "success", text: "changed successful" }); setIsEditingProfile(false); setTimeout(() => setSettingsMessage({ type: "", text: "" }), 3000); }
+    catch (err) { const error = err as ApiErrorShape; setSettingsMessage({ type: "error", text: error.response?.status === 403 ? error.response.data?.message || "You can only change your name once every 30 days." : "Failed to update profile." }); }
+    finally { setSavingSettings(false); }
+  };
+
+  if (authLoading) return <div className="min-h-[calc(100vh-60px)] bg-slate-950 px-4 py-12"><div className="mx-auto max-w-5xl space-y-4"><div className="h-56 animate-pulse rounded-[2rem] bg-white/10" /><div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]"><div className="h-72 animate-pulse rounded-[2rem] bg-white/10" /><div className="h-96 animate-pulse rounded-[2rem] bg-white/10" /></div></div></div>;
+  if (!user) return <div className="min-h-[calc(100vh-60px)] bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.18),transparent_32%),linear-gradient(180deg,#f8fafc_0%,#eef2f7_100%)] px-4 py-12"><div className="mx-auto max-w-sm rounded-[2rem] border border-white/80 bg-white/85 p-8 text-center shadow-[0_30px_90px_rgba(15,23,42,0.12)] backdrop-blur"><div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-inner shadow-slate-950/50"><video src="/assets/vid/greenappleHi.mp4" autoPlay loop muted playsInline width={56} height={56} className="object-contain" style={{ mixBlendMode: "screen", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }} /></div><h2 className="text-2xl font-black text-slate-900">{t("welcome_home")}</h2><p className="mt-3 text-sm leading-6 text-slate-500">{t("profile_welcome_desc")}</p><div className="mt-8 space-y-3"><Link href="/login" className="flex w-full items-center justify-center rounded-2xl bg-slate-900 px-6 py-3 text-base font-semibold text-white">{t("sign_in_btn")}</Link><Link href="/register" className="flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-6 py-3 text-base font-semibold text-slate-700">{t("create_account_btn")}</Link></div></div></div>;
+
   return (
-    <div className="min-h-[calc(100vh-60px)] bg-gray-50 pb-28">
-
-      {/* ── Hero / Cover ─────────────────────────────────────────────────── */}
-        <div className="relative w-full h-44 sm:h-56 md:h-64 overflow-hidden group">
-          <SafeImage
-            src={coverUrl || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80"}
-            alt="Cover"
-            className={`w-full h-full object-cover transition-opacity ${isUploadingCover ? "opacity-60" : ""}`}
-            fallbackSrc="/images/defaultimage.jpg"
-          />
-        <div className="absolute inset-0 bg-gradient-to-b from-teal-900/30 via-teal-800/20 to-gray-900/60" />
-        
-        {/* Navigation Drawer Trigger */}
-        <div className="absolute top-4 right-4 z-10">
-          <button
-            onClick={() => setIsDrawerOpen(true)}
-            className="p-2 text-white/90 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-sm rounded-full transition-all focus:outline-none shadow-sm"
-            aria-label="Open menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Edit Cover Overlay — always available on hover */}
-        <div
-          className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-          onClick={() => coverInputRef.current?.click()}
-        >
-          {isUploadingCover ? (
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
-              <span className="text-white text-sm font-bold">{t("loading")}</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg text-white font-medium">
-              <Camera className="w-5 h-5" />
-              <span className="text-sm">{t("edit_cover")}</span>
-            </div>
-          )}
+    <div className="min-h-[calc(100vh-60px)] bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.20),transparent_24%),linear-gradient(180deg,#eff6ff_0%,#f8fafc_24%,#f8fafc_100%)]" style={{ paddingBottom: "calc(8.5rem + env(safe-area-inset-bottom))" }}>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(15,23,42,0.9),rgba(13,148,136,0.72),rgba(255,255,255,0.08))]" />
+        <SafeImage src={coverUrl || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80"} alt="Profile cover" className={`h-[240px] w-full object-cover opacity-45 sm:h-[280px] lg:h-[320px] ${isUploadingCover ? "opacity-30" : ""}`} fallbackSrc="/images/defaultimage.jpg" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.16),transparent_30%),linear-gradient(180deg,rgba(15,23,42,0.1),rgba(15,23,42,0.6))]" />
+        <div className="absolute left-0 right-0 top-0 z-10 mx-auto flex max-w-6xl items-start justify-between px-4 pt-4 sm:px-6 lg:px-8">
+          <button type="button" onClick={() => coverInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-2 text-xs font-semibold text-white backdrop-blur"><Camera className="h-4 w-4" />{isUploadingCover ? t("loading") : t("edit_cover")}</button>
+          <button type="button" onClick={() => setIsDrawerOpen(true)} className="rounded-full border border-white/20 bg-black/20 p-3 text-white backdrop-blur" aria-label="Open menu"><Menu className="h-5 w-5" /></button>
         </div>
         <input type="file" accept="image/*" ref={coverInputRef} className="hidden" onChange={handleCoverFileChange} />
-      </div>
+      </section>
 
-      {/* ── Profile card (overlapping hero) ──────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative -mt-16 sm:-mt-20 mb-6">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-
-            {/* Modular Profile Content */}
-            <div className="transition-all duration-300 ease-in-out">
-              {!isEditingProfile ? (
-                <>
-                  <ProfileHeader
-                    user={user}
-                    avatarUrl={avatarUrl}
-                    isUploading={isUploading}
-                    onAvatarClick={() => fileInputRef.current?.click()}
-                    isEditing={false}
-                    onEditToggle={() => {
-                      setIsEditingProfile(true);
-                      setSettingsMessage({ type: '', text: '' });
-                    }}
-                    t={t}
-                  />
-                  <ProfileAbout 
-                    bio={editBio} 
-                    t={t} 
-                  />
-                  <ProfileStats
-                    favoritesCount={favorites.length}
-                    listingsCount={myHouses.length}
-                    t={t}
-                  />
-                </>
-              ) : (
-                <EditProfileForm
-                  firstName={editFirstName}
-                  lastName={editLastName}
-                  bio={editBio}
-                  setFirstName={setEditFirstName}
-                  setLastName={setEditLastName}
-                  setBio={setEditBio}
-                  onSave={handleSaveSettings}
-                  onCancel={() => {
-                    setIsEditingProfile(false);
-                    setSettingsMessage({ type: '', text: '' });
-                  }}
-                  isSaving={savingSettings}
-                  message={settingsMessage}
-                  t={t}
-                />
-              )}
-            </div>
-
+      <div className="mx-auto -mt-20 max-w-6xl px-4 sm:-mt-24 sm:px-6 lg:px-8">
+        <ProfileHeader user={user} avatarUrl={avatarUrl} coverUrl={coverUrl} isUploading={isUploading} onAvatarClick={() => fileInputRef.current?.click()} onEditToggle={openEdit} t={t} />
+        <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+        <div className="mt-6 grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+          <div className="space-y-6">
+            {isEditingProfile ? <EditProfileForm firstName={editFirstName} lastName={editLastName} bio={editBio} setFirstName={setEditFirstName} setLastName={setEditLastName} setBio={setEditBio} onSave={handleSaveSettings} onCancel={() => { setIsEditingProfile(false); setSettingsMessage({ type: "", text: "" }); }} isSaving={savingSettings} message={settingsMessage} t={t} /> : <><ProfileAbout bio={editBio} onEdit={openEdit} t={t} /><ProfileStats favoritesCount={favorites.length} listingsCount={myHouses.length} chatsCount={conversations.length} activeTab={activeTab} onTabSelect={setActiveTab} t={t} /></>}
           </div>
-        </div>
-
-        {/* ── Tab navigation ──────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* Tab bar */}
-          <div className="flex border-b border-gray-100 overflow-x-auto scrollbar-hide">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 px-4 py-4 text-sm font-semibold transition-all relative whitespace-nowrap
-                  ${activeTab === tab.key
-                    ? "text-teal-600 bg-teal-50/50"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                  }`}
-              >
-                <tab.icon className="w-4 h-4 flex-shrink-0" />
-                <span>{tab.label}</span>
-                {tab.count > 0 && (
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center
-                    ${activeTab === tab.key ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-500"}`}>
-                    {tab.count}
-                  </span>
-                )}
-                {activeTab === tab.key && (
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-500 rounded-t-full" />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab content */}
-          <div className="p-4 sm:p-6">
-
-            {/* ── Favorites ─────────────────────────────────────────────── */}
-            {activeTab === "favorites" && (
-              <div>
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-base font-bold text-gray-900">{t("saved_properties") || "Saved Properties"}</h2>
-                </div>
-
-                {loadingFavs ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="h-64 bg-gray-100 rounded-2xl animate-pulse" />
-                    ))}
-                  </div>
-                ) : (
-                  <PropertyList
-                    properties={favorites}
-                    onToggleFavorite={handleRemoveFavorite}
-                    favorites={new Set(favorites.map(f => f.id))}
-                    emptyIcon={<Heart className="w-10 h-10" />}
-                    emptyTitle={t("no_saved_properties") || "No saved properties"}
-                    emptyDescription={t("save_properties_hint") || "Tap the heart icon on any property to save it here."}
-                    storageKey="saved_properties_view_mode"
-                  />
-                )}
-              </div>
-            )}
-
-            {/* ── My Properties ─────────────────────────────────────────── */}
-            {activeTab === "my-properties" && (
-              <div>
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-base font-bold text-gray-900">{t("my_listings_title") || "My Listings"}</h2>
-                </div>
-
-                {loadingMyHouses ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {[1, 2].map(i => (
-                      <div key={i} className="h-52 bg-gray-100 rounded-2xl animate-pulse" />
-                    ))}
-                  </div>
-                ) : (
-                  <PropertyList
-                    properties={myHouses.map(h => ({
-                        ...h,
-                        title: h.name,
-                        image_url: h.image_url_1 || '',
-                        area: h.square || 0,
-                        bedrooms: h.bedrooms || 0,
-                        price: h.price || 0,
-                        status: h.status || 'AVAILABLE'
-                    }))}
-                    onEdit={(property) => setEditingHouse(property as any)}
-                    onDelete={(id) => handleDeleteHouse(id)}
-                    emptyIcon={<Building2 className="w-10 h-10" />}
-                    emptyTitle={t("no_listings_yet") || "No listings yet"}
-                    emptyDescription={t("add_listing_hint") || "Use the + button at the bottom to add your first property."}
-                    storageKey="my_listings_view_mode"
-                  />
-                )}
-              </div>
-            )}
-
-            {/* ── Messages ──────────────────────────────────────────────── */}
-            {activeTab === "messages" && (
-              <div>
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-base font-bold text-gray-900">{t("conversations")}</h2>
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
-                    {conversations.length} {conversations.length === 1 ? t("chat_count_singular") : t("chat_count_plural")}
-                  </span>
-                </div>
-
-                {loadingMessages ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />
-                    ))}
-                  </div>
-                ) : conversations.length === 0 ? (
-                  <EmptyState
-                    icon={<MessageCircle className="w-10 h-10 text-gray-300" />}
-                    title={t("no_conversations")}
-                    description={t("no_conversations_desc")}
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    {conversations.map(conv => {
-                      const latest = conv.lastMessage;
-                      const other = conv.otherUser;
-                      const query = new URLSearchParams({ recipientId: other.id }).toString();
-                      const timeStr = new Date(latest.created_at).toLocaleString("vi-VN", {
-                        day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
-                      });
-
-                      return (
-                        <Link
-                          key={other.id}
-                          href={`/chat?${query}`}
-                          className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 hover:border-teal-200 hover:shadow-md transition-all duration-200 group"
-                        >
-                          {/* Avatar */}
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-100 to-teal-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                            {other.avatarUrl ? (
-                              <SafeImage src={other.avatarUrl} alt={other.name} className="w-full h-full object-cover" fallbackSrc="/images/defaultimage.jpg" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-teal-600 font-bold bg-teal-50">
-                                {getInitials(other.name)}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2 mb-0.5">
-                              <p className="text-sm font-bold text-gray-900 truncate">{other.name}</p>
-                              <span className="text-xs text-gray-400 flex-shrink-0 flex items-center gap-1">
-                                <Clock className="w-3 h-3" />{timeStr}
-                              </span>
-                            </div>
-                            <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'text-gray-900 font-bold' : 'text-gray-500'}`}>
-                              {latest.senderId === user.id ? t("you_prefix") : ""}{latest.content}
-                            </p>
-                          </div>
-
-                          {/* Unread badge + chevron */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {conv.unreadCount > 0 && (
-                              <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 text-xs font-bold text-white bg-teal-500 rounded-full">
-                                {conv.unreadCount}
-                              </span>
-                            )}
-                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-teal-500 transition-colors" />
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
+          <div className="space-y-4">
+            <section className="rounded-[1.75rem] border border-white/70 bg-white/85 p-3 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+              <div className="grid grid-cols-3 gap-2">{tabs.map((tab) => <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key)} className={`rounded-[1.25rem] px-3 py-3 text-left transition-all ${activeTab === tab.key ? "bg-slate-900 text-white shadow-lg shadow-slate-900/15" : "bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700"}`}><div className="flex items-center justify-between gap-2"><tab.icon className="h-4 w-4 flex-shrink-0" />{tab.count > 0 ? <span className={`inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-bold ${activeTab === tab.key ? "bg-white/15 text-white" : "bg-white text-slate-600"}`}>{tab.count}</span> : null}</div><p className="mt-3 text-sm font-semibold leading-5 sm:text-[15px]">{tab.label}</p></button>)}</div>
+            </section>
+            <section className="rounded-[2rem] border border-white/70 bg-white/92 p-4 shadow-[0_20px_70px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6">
+              {activeTab === "favorites" ? <div className="space-y-5"><SectionHeader eyebrow={t("saved")} title={t("saved_properties") || "Saved properties"} description={t("save_properties_hint") || "Properties you save appear here for quick revisit."} action={favorites.length > 0 ? <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"><Home className="h-4 w-4" />Browse</Link> : undefined} />{loadingFavs ? <div className="grid gap-4 lg:grid-cols-2">{[1, 2, 3, 4].map((item) => <div key={item} className="overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white"><div className="h-48 animate-pulse bg-slate-100" /><div className="space-y-3 p-5"><div className="h-5 w-2/3 animate-pulse rounded-full bg-slate-100" /><div className="h-4 w-1/2 animate-pulse rounded-full bg-slate-100" /><div className="grid grid-cols-3 gap-2"><div className="h-10 animate-pulse rounded-2xl bg-slate-100" /><div className="h-10 animate-pulse rounded-2xl bg-slate-100" /><div className="h-10 animate-pulse rounded-2xl bg-slate-100" /></div></div></div>)}</div> : favorites.length === 0 ? <PremiumEmptyState icon={<Heart className="h-6 w-6" />} title={t("no_saved_properties") || "No saved properties yet"} description={t("save_properties_hint") || "Tap the heart on any property to build a shortlist you can come back to."} ctaLabel="Browse listings" ctaHref="/" /> : <div className="grid gap-4 lg:grid-cols-2">{favorites.map((property) => <article key={property.id} className="overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white shadow-[0_16px_50px_rgba(15,23,42,0.06)] transition-all hover:-translate-y-1 hover:shadow-[0_24px_80px_rgba(15,23,42,0.12)]"><Link href={`/properties/${property.id}`} className="block"><div className="relative h-48 overflow-hidden bg-slate-100"><SafeImage src={property.image_url} alt={property.title} className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" fallbackSrc="/images/defaultimage.jpg" /><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/75 to-transparent px-4 pb-4 pt-10"><div className="flex items-end justify-between gap-3"><span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${statusTone(property.status)}`}>{property.status || "AVAILABLE"}</span><span className="rounded-full bg-white/15 px-3 py-1 text-sm font-semibold text-white backdrop-blur">{compactPrice(property.price)}</span></div></div></div></Link><div className="p-5"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><Link href={`/properties/${property.id}`} className="text-lg font-bold text-slate-900 hover:text-teal-700"><span className="line-clamp-2">{property.property_type || property.title}</span></Link><p className="mt-2 flex items-start gap-2 text-sm text-slate-500"><MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" /><span className="line-clamp-2">{property.address}</span></p></div><button type="button" onClick={() => handleRemoveFavorite(property.id)} className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-rose-50 text-rose-500 hover:bg-rose-100"><Heart className="h-4 w-4 fill-current" /></button></div><div className="mt-4 grid grid-cols-3 gap-2"><MetricPill icon={<BedDouble className="h-3.5 w-3.5" />} label={`${property.bedrooms || 0} BR`} /><MetricPill icon={<Square className="h-3.5 w-3.5" />} label={`${property.area || 0} m2`} /><MetricPill icon={<Building2 className="h-3.5 w-3.5" />} label={property.city || "City"} /></div><div className="mt-4 flex items-center justify-between gap-3"><p className="text-sm font-semibold text-slate-900">{fullPrice(property.price)}</p><Link href={`/properties/${property.id}`} className="inline-flex items-center gap-2 text-sm font-semibold text-teal-700">View<ChevronRight className="h-4 w-4" /></Link></div></div></article>)}</div>}</div> : null}
+              {activeTab === "my-properties" ? <div className="space-y-5"><SectionHeader eyebrow={t("my_listings")} title={t("my_listings_title") || "My listings"} description={t("add_listing_hint") || "Track your active properties, pricing, and next actions in one place."} action={<div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700"><Plus className="h-4 w-4" />{t("post_listing_tab")}</div>} />{loadingMyHouses ? <div className="space-y-4">{[1, 2, 3].map((item) => <div key={item} className="overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white md:flex"><div className="h-56 animate-pulse bg-slate-100 md:w-[280px]" /><div className="flex-1 space-y-4 p-6"><div className="h-6 w-1/2 animate-pulse rounded-full bg-slate-100" /><div className="h-4 w-2/3 animate-pulse rounded-full bg-slate-100" /><div className="grid gap-3 sm:grid-cols-3"><div className="h-20 animate-pulse rounded-[1.25rem] bg-slate-100" /><div className="h-20 animate-pulse rounded-[1.25rem] bg-slate-100" /><div className="h-20 animate-pulse rounded-[1.25rem] bg-slate-100" /></div></div></div>)}</div> : myHouses.length === 0 ? <PremiumEmptyState icon={<Building2 className="h-6 w-6" />} title={t("no_listings_yet") || "No listings yet"} description={t("add_listing_hint") || "Use the floating Post Listing button below to publish your first property."} ctaLabel="Browse the app" ctaHref="/" /> : <div className="space-y-4">{myHouses.map((house) => <article key={house.id} className="overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white shadow-[0_16px_50px_rgba(15,23,42,0.06)]"><div className="flex flex-col md:flex-row"><Link href={`/properties/${house.id}`} className="relative block md:w-[280px] md:flex-shrink-0"><div className="h-56 bg-slate-100 md:h-full"><SafeImage src={house.image_url_1 || house.image_url_2 || "/images/defaultimage.jpg"} alt={house.name} className="h-full w-full object-cover" fallbackSrc="/images/defaultimage.jpg" /></div><div className="absolute left-4 top-4"><span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${statusTone(house.status)}`}>{house.status || "AVAILABLE"}</span></div></Link><div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6"><div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"><div className="min-w-0"><Link href={`/properties/${house.id}`} className="text-xl font-bold text-slate-900 hover:text-teal-700"><span className="line-clamp-2">{house.name}</span></Link><p className="mt-2 flex items-start gap-2 text-sm text-slate-500"><MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" /><span className="line-clamp-2">{[house.address, house.district, house.city].filter(Boolean).join(", ")}</span></p></div><div className="rounded-[1.25rem] bg-slate-900 px-4 py-3 text-white"><p className="text-xs uppercase tracking-[0.24em] text-white/60">Price</p><p className="mt-1 text-lg font-black">{compactPrice(house.price)}</p></div></div><div className="mt-5 grid gap-3 sm:grid-cols-3"><DashboardMetric title="Type" value={house.property_type || "Property"} /><DashboardMetric title="Area" value={`${house.square || 0} m2`} /><DashboardMetric title="Bedrooms" value={`${house.bedrooms || 0}`} /></div><div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between"><p className="text-sm text-slate-500">Created {new Date(house.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })}</p><div className="flex flex-wrap gap-2"><button type="button" onClick={() => setEditingHouse(house)} className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"><Pencil className="h-4 w-4" />Edit</button><button type="button" onClick={() => handleDeleteHouse(house.id)} className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"><Trash2 className="h-4 w-4" />Delete</button></div></div></div></div></article>)}</div>}</div> : null}
+              {activeTab === "messages" ? <div className="space-y-5"><SectionHeader eyebrow={t("chats")} title={t("conversations")} description={t("no_conversations_desc") || "Stay close to inquiries, replies, and renter interest from one inbox."} action={<span className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600"><MessageCircle className="h-4 w-4" />{conversations.length} {conversations.length === 1 ? t("chat_count_singular") : t("chat_count_plural")}</span>} />{loadingMessages ? <div className="space-y-3">{[1, 2, 3, 4].map((item) => <div key={item} className="flex items-center gap-4 rounded-[1.5rem] border border-slate-100 bg-white p-4"><div className="h-14 w-14 animate-pulse rounded-[1.25rem] bg-slate-100" /><div className="flex-1 space-y-3"><div className="h-4 w-1/3 animate-pulse rounded-full bg-slate-100" /><div className="h-4 w-2/3 animate-pulse rounded-full bg-slate-100" /></div></div>)}</div> : conversations.length === 0 ? <PremiumEmptyState icon={<MessageCircle className="h-6 w-6" />} title={t("no_conversations") || "No conversations yet"} description={t("no_conversations_desc") || "Start a chat from any property to keep questions and interest organized here."} ctaLabel="Find a listing" ctaHref="/" /> : <div className="space-y-3">{conversations.map((conversation) => { const query = new URLSearchParams({ recipientId: conversation.otherUser.id }).toString(); const youPrefix = conversation.lastMessage.senderId === user.id ? t("you_prefix") : ""; return <Link key={conversation.otherUser.id} href={`/chat?${query}`} className={`group flex items-center gap-4 rounded-[1.5rem] border p-4 transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_60px_rgba(15,23,42,0.08)] ${conversation.unreadCount > 0 ? "border-emerald-200 bg-emerald-50/60" : "border-slate-100 bg-white"}`}><div className="relative"><div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-slate-900 via-teal-700 to-emerald-400 text-lg font-black text-white shadow-lg shadow-slate-900/10">{conversation.otherUser.avatarUrl ? <SafeImage src={conversation.otherUser.avatarUrl} alt={conversation.otherUser.name} className="h-full w-full object-cover" fallbackSrc="/images/defaultimage.jpg" /> : getInitials(conversation.otherUser.name)}</div>{conversation.unreadCount > 0 ? <span className="absolute -right-1 -top-1 flex min-h-[22px] min-w-[22px] items-center justify-center rounded-full bg-slate-900 px-1.5 text-[11px] font-bold text-white">{conversation.unreadCount}</span> : null}</div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900 sm:text-base">{conversation.otherUser.name}</p><p className={`mt-1 truncate text-sm ${conversation.unreadCount > 0 ? "font-semibold text-slate-900" : "text-slate-500"}`}>{youPrefix}{conversation.lastMessage.content}</p></div><div className="flex flex-shrink-0 items-center gap-1 text-xs text-slate-400"><Clock3 className="h-3.5 w-3.5" />{chatTime(conversation.lastMessage.created_at)}</div></div></div><ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-300 transition-colors group-hover:text-teal-600" /></Link>; })}</div>}</div> : null}
+            </section>
           </div>
         </div>
       </div>
 
-      {/* Edit Modal */}
-      {editingHouse && (
-        <EditPropertyModal
-          house={editingHouse}
-          onClose={() => setEditingHouse(null)}
-          onSuccess={() => { setEditingHouse(null); fetchMyHouses(); }}
-        />
-      )}
-
-      {/* Navigation Drawer Overlay */}
-      {isDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={() => setIsDrawerOpen(false)} />
-          <div className="w-80 bg-white h-full shadow-2xl relative z-50 flex flex-col pt-16 animate-in slide-in-from-right duration-300">
-            {/* Drawer Header Layout */}
-            <div className="absolute top-4 right-4">
-              <button onClick={() => setIsDrawerOpen(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="px-6 pb-4 border-b border-gray-100">
-              <h2 className="text-xl font-bold flex items-center gap-2"><Settings className="w-5 h-5 text-gray-500" /> {t("settings")}</h2>
-            </div>
-            
-            {/* Drawer Links */}
-            <div className="flex-1 overflow-y-auto py-2">
-              <div className="px-4 space-y-1">
-                <Link href="/profile/accounts-center" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
-                  <UserCog className="w-5 h-5 text-gray-400" />
-                  {t("accounts_center")}
-                </Link>
-
-                <div className="rounded-xl overflow-hidden transition-all">
-                  <button 
-                    onClick={() => setIsLangExpanded(!isLangExpanded)}
-                    className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Globe className="w-5 h-5 text-gray-400" />
-                      {t("app_language")}
-                    </div>
-                    <ChevronRight className={`w-4 h-4 text-gray-300 transition-transform ${isLangExpanded ? 'rotate-90' : ''}`} />
-                  </button>
-                  {isLangExpanded && (
-                    <div className="bg-gray-50/50 pt-1 pb-2">
-                      {(Object.entries(FLAGS) as [Language, { url: string, label: string }][]).map(([key, flag]) => (
-                          <button
-                              key={key}
-                              onClick={() => { setLanguage(key); setIsDrawerOpen(false); setIsLangExpanded(false); }}
-                              className={`w-full flex items-center gap-3 px-11 py-2.5 text-sm hover:bg-teal-50 hover:text-teal-700 transition-colors ${language === key ? 'text-teal-600 font-semibold' : 'text-gray-600'}`}
-                          >
-                              <img src={flag.url} alt={key} className="w-5 h-auto rounded-sm shadow-sm" />
-                              <span>{flag.label}</span>
-                          </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <Link href="/profile/help-support" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
-                  <HelpCircle className="w-5 h-5 text-gray-400" />
-                  {t("help_support")}
-                </Link>
-                
-                <Link href="/about" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
-                  <Info className="w-5 h-5 text-gray-400" />
-                  {t("about")}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {editingHouse ? <EditPropertyModal house={editingHouse} onClose={() => setEditingHouse(null)} onSuccess={() => { setEditingHouse(null); fetchMyHouses(); }} /> : null}
+      {isDrawerOpen ? <div className="fixed inset-0 z-50 flex justify-end"><div className="fixed inset-0 bg-slate-950/45 backdrop-blur-sm" onClick={() => setIsDrawerOpen(false)} /><div className="relative z-50 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl"><div className="flex items-center justify-between border-b border-slate-100 px-6 py-5"><h2 className="flex items-center gap-2 text-lg font-bold text-slate-900"><Settings className="h-5 w-5 text-slate-400" />{t("settings")}</h2><button type="button" onClick={() => setIsDrawerOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"><X className="h-5 w-5" /></button></div><div className="flex-1 overflow-y-auto px-4 py-4"><div className="space-y-2"><DrawerLink href="/profile/accounts-center" icon={<UserCog className="h-5 w-5" />} label={t("accounts_center")} /><div className="overflow-hidden rounded-[1.25rem] border border-slate-100 bg-slate-50/70"><button type="button" onClick={() => setIsLangExpanded((value) => !value)} className="flex w-full items-center justify-between px-4 py-4 text-left text-sm font-semibold text-slate-700"><span className="flex items-center gap-3"><Globe className="h-5 w-5 text-slate-400" />{t("app_language")}</span><ChevronRight className={`h-4 w-4 text-slate-400 transition-transform ${isLangExpanded ? "rotate-90" : ""}`} /></button>{isLangExpanded ? <div className="border-t border-slate-100 bg-white py-2">{(Object.entries(FLAGS) as [Language, { url: string; label: string }][]).map(([key, flag]) => <button key={key} type="button" onClick={() => { setLanguage(key); setIsDrawerOpen(false); setIsLangExpanded(false); }} className={`flex w-full items-center gap-3 px-4 py-3 text-sm ${language === key ? "bg-teal-50 font-semibold text-teal-700" : "text-slate-600 hover:bg-slate-50"}`}><SafeImage src={flag.url} alt={flag.label} className="h-auto w-5 rounded-sm shadow-sm" fallbackSrc="/images/defaultimage.jpg" /><span>{flag.label}</span></button>)}</div> : null}</div><DrawerLink href="/profile/help-support" icon={<HelpCircle className="h-5 w-5" />} label={t("help_support")} /><DrawerLink href="/about" icon={<Info className="h-5 w-5" />} label={t("about")} /></div></div></div></div> : null}
     </div>
   );
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
-
-function EmptyState({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-      <div className="mb-4 text-gray-300">{icon}</div>
-      <h3 className="text-base font-bold text-gray-800 mb-1">{title}</h3>
-      <p className="text-sm text-gray-400 max-w-xs">{description}</p>
-    </div>
-  );
-}
+function SectionHeader({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: ReactNode }) { return <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-end sm:justify-between"><div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">{eyebrow}</p><h2 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">{title}</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{description}</p></div>{action ? <div className="flex-shrink-0">{action}</div> : null}</div>; }
+function PremiumEmptyState({ icon, title, description, ctaLabel, ctaHref }: { icon: ReactNode; title: string; description: string; ctaLabel: string; ctaHref: string }) { return <div className="rounded-[1.75rem] border border-dashed border-emerald-200 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.14),transparent_40%),linear-gradient(180deg,#ffffff_0%,#f0fdf4_100%)] p-8 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-900/10">{icon}</div><h3 className="mt-5 text-lg font-bold text-slate-900">{title}</h3><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{description}</p><Link href={ctaHref} className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700"><Home className="h-4 w-4" />{ctaLabel}</Link></div>; }
+function MetricPill({ icon, label }: { icon: ReactNode; label: string }) { return <div className="flex items-center justify-center gap-1.5 rounded-2xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600"><span className="text-teal-600">{icon}</span><span className="truncate">{label}</span></div>; }
+function DashboardMetric({ title, value }: { title: string; value: string }) { return <div className="rounded-[1.25rem] bg-slate-50 p-4"><p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">{title}</p><p className="mt-2 text-sm font-bold text-slate-900">{value}</p></div>; }
+function DrawerLink({ href, icon, label }: { href: string; icon: ReactNode; label: string }) { return <Link href={href} className="flex items-center justify-between rounded-[1.25rem] border border-slate-100 bg-white px-4 py-4 text-sm font-semibold text-slate-700 hover:border-teal-100 hover:bg-teal-50 hover:text-teal-700"><span className="flex items-center gap-3"><span className="text-slate-400">{icon}</span>{label}</span><ChevronRight className="h-4 w-4 text-slate-300" /></Link>; }

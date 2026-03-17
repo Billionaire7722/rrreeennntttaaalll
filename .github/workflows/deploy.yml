@@ -83,4 +83,8 @@ jobs:
             DC="docker-compose"
           fi
           \$DC --env-file .env.production up -d --build
+          \$DC ps
+          if command -v curl >/dev/null 2>&1; then
+            curl --fail --silent --show-error --max-time 20 http://127.0.0.1:3002/profile >/dev/null
+          fi
           EOF
