@@ -1,0 +1,544 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "goBack": "Go back",
+    "hello": "Hello",
+    "guest": "Guest",
+    "search": "Search",
+    "searchPlaceholder": "Search properties...",
+    "from": "From...",
+    "to": "To...",
+    "reset": "Reset",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "saveChanges": "Save Changes",
+    "upload": "Upload",
+    "tryAgain": "Try Again",
+    "saving": "Saving...",
+    "loadMore": "Load more",
+    "showingOf": "Showing {shown} of {total}",
+    "showingRange": "Showing {start}-{end} of {total}",
+    "theme": "Theme",
+    "view": "View",
+    "edit": "Edit",
+    "delete": "Delete",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode",
+    "switchToDarkMode": "Switch to dark mode",
+    "switchToLightMode": "Switch to light mode"
+  },
+  "property": {
+    "detail": {
+      "notFound": "Property information not found.",
+      "postedBy": "Posted by",
+      "noPosterInfo": "No poster info",
+      "noDescription": "No description available.",
+      "contactNow": "Contact Now",
+      "manageListing": "Manage Listing"
+    },
+    "status": {
+      "available": "Available",
+      "rented": "Rented",
+      "pending": "Pending"
+    },
+    "units": {
+      "million": "million",
+      "vndPerMonth": "VND / month",
+      "monthAbbr": "/mo"
+    },
+    "fields": {
+      "bedrooms": "Bedrooms",
+      "privateBath": "Private",
+      "sharedBath": "Shared",
+      "bathrooms": "Bathrooms",
+      "area": "Area (m²)",
+      "description": "Description"
+    },
+    "filters": {
+      "title": "Advanced Filter",
+      "priceRange": "Price Range (VND)",
+      "minBedrooms": "Minimum Bedrooms",
+      "locationArea": "Location",
+      "provinceCity": "Province / City",
+      "bathroomType": "Bathroom Type"
+    },
+    "list": {
+      "countLabel": "properties",
+      "displayMode": "Display mode",
+      "emptyTitle": "No properties found",
+      "viewModes": {
+        "grid": "Grid",
+        "list": "List",
+        "compact": "Compact"
+      }
+    },
+    "actions": {
+      "viewDetails": "View details"
+    },
+    "add": {
+      "title": "Add Property",
+      "submitButton": "Submit Property",
+      "submitting": "Submitting Property...",
+      "submitSuccess": "Property submitted successfully",
+      "submitError": "Property submitted failed",
+      "loginRequired": "Please log in to add a property"
+    },
+    "form": {
+      "propertyTypeLabel": "Property Type",
+      "cityLabel": "City",
+      "districtLabel": "District",
+      "addressLabel": "Address",
+      "exactLocationLabel": "Exact Location",
+      "dragPinHint": "Drag the pin to the exact property location",
+      "priceLabel": "Price (VND)",
+      "contactPhoneLabel": "Contact Phone",
+      "photosLabel": "Photos",
+      "videosLabel": "Videos",
+      "addPhotosHint": "Click to add photos (max 7)",
+      "addVideosHint": "Click to add videos (max 2)",
+      "streetAddressLabel": "Street Address",
+      "useCurrentLocation": "Use my current location",
+      "geocodingLoading": "Searching location...",
+      "uploadingMedia": "Uploading photos and videos...",
+      "previewImage": "Preview Image",
+      "locationError": "Unable to retrieve your location.",
+      "invalidImageType": "Please upload PNG, JPG, GIF, WebP, BMP, or AVIF images only.",
+      "imageUploadError": "Failed to upload one or more images.",
+      "videoUploadError": "Failed to upload one or more videos."
+    },
+    "types": {
+      "house": "House",
+      "commercialSpace": "Commercial Space",
+      "apartment": "Apartment",
+      "condominium": "Condominium",
+      "hotel": "Hotel"
+    },
+    "labels": {
+      "price": "Price"
+    },
+    "edit": {
+      "title": "Edit property",
+      "submitSuccess": "Property updated successfully!",
+      "submitError": "Failed to update property",
+      "nameLabel": "Property name"
+    },
+    "messages": {
+      "deleteConfirm": "Are you sure you want to delete this property? This action cannot be undone.",
+      "deleteFailed": "Failed to delete property."
+    },
+    "media": {
+      "videoUploaded": "Video {index} uploaded"
+    }
+  },
+  "navigation": {
+    "home": "Homepage",
+    "settings": "Settings",
+    "accountsCenter": "Accounts Center",
+    "appLanguage": "App Language",
+    "helpSupport": "Help & Support",
+    "about": "About",
+    "logOut": "Log Out",
+    "saved": "Saved",
+    "myProperties": "My Listings",
+    "chats": "Chats",
+    "profile": "Personal",
+    "postListing": "Post an ad"
+  },
+  "chat": {
+    "conversationsTitle": "Conversations",
+    "online": "Online",
+    "offline": "Offline",
+    "viewProperty": "View Property",
+    "startTitle": "Start a conversation",
+    "startDescription": "Say hello to start chatting",
+    "seen": "Seen",
+    "sent": "Sent",
+    "youPrefix": "You: ",
+    "selectConversationTitle": "Select a conversation",
+    "selectConversationDescription": "Modern messenger style, connect with landlords and customers instantly.",
+    "typeMessagePlaceholder": "Type a message...",
+    "countSingular": "chat",
+    "countPlural": "chats",
+    "signInRequiredTitle": "Please Sign In",
+    "signInRequiredDescription": "You need to sign in to see your chat history.",
+    "emptyTitle": "No conversations yet",
+    "emptyDescription": "Your chat history will appear here.",
+    "initialPropertyMessage": "Hello, I'd like to contact you about the listing \"{title}\" (ID: {id}).",
+    "loadingMessages": "Loading messages..."
+  },
+  "profile": {
+    "editProfile": "Edit Profile",
+    "displayName": "Display Name",
+    "bio": "Bio",
+    "changeLimit": "Change once / 30 days.",
+    "bioPlaceholder": "Tell us a bit about yourself...",
+    "account": {
+      "firstNameLabel": "First Name",
+      "lastNameLabel": "Last Name",
+      "personalInfoTitle": "Personal Information",
+      "securityTitle": "Security & Password",
+      "currentPasswordLabel": "Current Password",
+      "newPasswordLabel": "New Password",
+      "confirmPasswordLabel": "Confirm New Password",
+      "updatePasswordButton": "Update Password",
+      "emailLabel": "Email Address",
+      "heroTitle": "Account & Security",
+      "heroDescription": "Manage your personal information and security settings here."
+    },
+    "messages": {
+      "editSuccess": "Profile updated successfully",
+      "editFailed": "Profile update failed",
+      "nameChangeLimit": "You can only change your name once every 30 days.",
+      "profileUpdated": "Profile updated successfully!",
+      "passwordUpdated": "Password updated successfully!"
+    },
+    "editCover": "Edit Cover",
+    "welcomeTitle": "Welcome Home",
+    "myPropertiesTitle": "List of Listings",
+    "savedEmptyTitle": "No saved properties",
+    "savedSectionDescription": "Save listings you like here",
+    "myPropertiesEmptyTitle": "No listings yet",
+    "myPropertiesSectionDescription": "Start posting your first listing",
+    "savedSectionTitle": "Saved Properties",
+    "welcomeDescription": "Sign in to save your favorite properties, track your listings, and connect with landlords",
+    "footerHint": "Find your perfect rental home with YourHome",
+    "noBioYet": "Tell renters a bit about yourself",
+    "sectionsTitle": "Sections",
+    "sectionsDescription": "Choose one area to manage at a time.",
+    "uploadAvatarError": "Failed to upload profile picture. Please try again.",
+    "uploadCoverError": "Failed to upload cover image.",
+    "createdOn": "Created {date}",
+    "summaryTitle": "Summary"
+  },
+  "auth": {
+    "loginPrompt": {
+      "title": "Login Required",
+      "description": "Sign in to your account to post listings and connect with thousands of potential tenants."
+    },
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to continue exploring rental homes",
+      "emailOrUsernamePlaceholder": "Email or username",
+      "submitting": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "createOne": "Create one",
+      "heroTitle": "Discover your next rental home",
+      "heroDescription": "Browse thousands of verified listings, connect with landlords, and find the perfect space that feels like home."
+    },
+    "shared": {
+      "passwordPlaceholder": "Password",
+      "signInButton": "Sign In",
+      "signInLink": "Sign in",
+      "logoSubtitle": "Find your perfect place"
+    },
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Join thousands of happy renters today",
+      "usernamePlaceholder": "Username",
+      "emailPlaceholder": "Email address",
+      "phonePlaceholder": "Phone number",
+      "firstNamePlaceholder": "First name",
+      "lastNamePlaceholder": "Last name",
+      "confirmPasswordPlaceholder": "Confirm password",
+      "createAccountButton": "Create Account",
+      "creatingAccount": "Creating account...",
+      "alreadyHaveAccount": "Already have an account?",
+      "heroTitle": "Start your journey to the perfect home",
+      "heroDescription": "Create an account to save your favorite listings, contact landlords directly, and receive personalized recommendations.",
+      "passwordRequirements": "Password requirements:",
+      "passwordRules": {
+        "length": "8-12 characters",
+        "uppercase": "Uppercase letter (A-Z)",
+        "lowercase": "Lowercase letter (a-z)",
+        "number": "Number (0-9)",
+        "special": "Special character (@$!%*?&)"
+      },
+      "acceptTermsLabel": "I agree to the Terms of Service and Privacy Policy"
+    },
+    "validation": {
+      "emailOrUsernameRequired": "Please enter your email or username",
+      "passwordRequired": "Please enter your password",
+      "loginFailed": "Login failed. Please try again.",
+      "firstNameRequired": "Please enter your first name",
+      "lastNameRequired": "Please enter your last name",
+      "fullNameRequired": "Please enter your full name",
+      "usernameRequired": "Please enter a username",
+      "usernameLength": "Username must be at least 3 characters",
+      "emailRequired": "Please enter your email",
+      "emailInvalid": "Invalid email format",
+      "phoneRequired": "Please enter your phone number",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordsMismatch": "Passwords do not match",
+      "captchaRequired": "Please complete the captcha",
+      "acceptTermsRequired": "Please accept the terms of service to continue"
+    }
+  },
+  "home": {
+    "onboarding": {
+      "steps": [
+        {
+          "title": "Discover Rentals on the Homepage",
+          "description": "The homepage shows all rental properties currently available via our interactive map."
+        },
+        {
+          "title": "Property Markers",
+          "description": "Each marker represents a rental listing. Tap a marker to view details."
+        },
+        {
+          "title": "Search Bar",
+          "description": "Use the search bar to find rentals by location or keyword."
+        },
+        {
+          "title": "Filters",
+          "description": "Use filters to narrow down listings by price, type, or other criteria."
+        },
+        {
+          "title": "Post a New Listing",
+          "description": "Click here to post a new rental listing."
+        }
+      ],
+      "complete": {
+        "title": "You're all set! 🎉",
+        "description": "You're ready to start exploring and posting rentals!"
+      },
+      "skip": "Skip tour",
+      "next": "Next",
+      "finish": "Get Started"
+    }
+  },
+  "help": {
+    "centerTitle": "Help Center",
+    "centerSubtitle": "How can we help you?",
+    "searchPlaceholder": "Search for help articles...",
+    "faqTitle": "Frequently Asked Questions",
+    "faq": {
+      "items": [
+        {
+          "question": "How do I post a listing?",
+          "answer": "Simply click the + button on the home page or in your profile."
+        },
+        {
+          "question": "How do I change my account details?",
+          "answer": "Go to your Profile, open the Settings drawer, and select 'Accounts Center' to update your information or password."
+        },
+        {
+          "question": "Is my data secure?",
+          "answer": "Yes, we use industry-standard encryption and security protocols to ensure your personal data and listing information are kept private."
+        },
+        {
+          "question": "How do I contact a landlord?",
+          "answer": "Once you find a property you like, click 'Contact Now' to start a direct chat with the landlord or agent."
+        }
+      ]
+    },
+    "contact": {
+      "title": "Contact Us",
+      "email": "Email Support",
+      "chat": "Live Chat",
+      "call": "Hotline",
+      "avgResponseTime": "Average response: 5m",
+      "stillNeedHelp": "Still need help? Our team is available 24/7."
+    },
+    "ticket": {
+      "title": "Submit Support Ticket",
+      "successMessage": "Your support request has been submitted successfully. We'll get back to you soon.",
+      "errorMessage": "We couldn't submit your request. Please try again.",
+      "subjectLabel": "Subject",
+      "subjectPlaceholder": "Tell us what you need help with",
+      "priorityLabel": "Priority",
+      "priorities": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "messageLabel": "Message",
+      "messagePlaceholder": "Describe the issue in as much detail as possible",
+      "submitButton": "Submit ticket",
+      "submittingButton": "Submitting...",
+      "submittedTitle": "Submitted!",
+      "redirectingBack": "Redirecting back..."
+    }
+  },
+  "legal": {
+    "terms": {
+      "linkLabel": "Terms of Service",
+      "title": "TERMS OF SERVICE",
+      "updated": "Last Updated: March 12, 2026",
+      "intro": "Welcome to Your Home. These Terms of Service (\"Terms\") govern your access to and use of the Your Home website, mobile application, and related services (collectively referred to as the “Platform”). By accessing or using the Platform, creating an account, or posting content, you agree to be bound by these Terms. If you do not agree with these Terms, please do not use the Platform.",
+      "sections": [
+        {
+          "title": "1. Description of the Service",
+          "content": "Your Home is an online platform that enables users to: Post rental property listings, Search for rental properties, and Connect landlords with potential tenants. The Platform acts solely as an intermediary for listing and information purposes. We do not own, manage, sell, rent, or control any of the properties listed on the Platform. Any agreements or transactions made between landlords and tenants are solely between those parties."
+        },
+        {
+          "title": "2. Eligibility",
+          "content": "To use the Platform, you must: Be at least 18 years old, Have the legal capacity to enter into binding agreements, and Provide accurate and truthful information when registering an account. By using the Platform, you represent and warrant that you meet these requirements."
+        },
+        {
+          "title": "3. User Accounts",
+          "content": "To access certain features of the Platform, you may be required to create an account. You agree that: The information you provide during registration is accurate and up-to-date; You are responsible for maintaining the confidentiality of your account credentials; You are responsible for all activities that occur under your account. If you suspect unauthorized access to your account, you must notify us immediately. We reserve the right to suspend or terminate accounts that violate these Terms."
+        },
+        {
+          "title": "4. User Content",
+          "content": "Users may upload, post, or publish content on the Platform, including: property descriptions, photos, contact information, pricing, and location details. You retain ownership of the content you submit. However, by posting content on the Platform, you grant Your Home a worldwide, non-exclusive, royalty-free license to: display, distribute, reproduce, and promote your content for the purpose of operating and improving the Platform. You are solely responsible for the accuracy and legality of the content you publish."
+        },
+        {
+          "title": "5. Prohibited Activities",
+          "content": "Users agree not to: Post false or misleading property listings; Advertise properties that do not exist; Post illegal, offensive, or harmful content; Use the Platform for fraud or scams; Attempt to gain unauthorized access to the Platform; Interfere with the security or operation of the Platform; Use automated systems to scrape or collect data from the Platform. We reserve the right to remove content or suspend accounts that violate these rules."
+        },
+        {
+          "title": "6. Property Listings",
+          "content": "Users who post property listings agree that: The listing information is accurate and truthful; The user has the legal right to rent or advertise the property; The listing does not violate any applicable laws. Your Home does not verify the accuracy of property listings and is not responsible for disputes between landlords and tenants. Users are encouraged to verify all information independently before entering into any rental agreement."
+        },
+        {
+          "title": "7. Platform Role and Disclaimer",
+          "content": "The Platform only provides a space for users to publish and view rental listings. Your Home does not: guarantee the accuracy of listings; participate in rental agreements; act as a real estate broker; verify property ownership; guarantee payments or transactions. All agreements between landlords and tenants are made at the users' own risk."
+        },
+        {
+          "title": "8. Content Moderation",
+          "content": "We reserve the right to: review and remove any content; suspend or terminate accounts; restrict access to the Platform; if we believe the content or activity violates these Terms or applicable laws. However, we are not obligated to monitor all user content."
+        },
+        {
+          "title": "9. Intellectual Property",
+          "content": "All intellectual property rights related to the Platform, including but not limited to: design, software, logos, trademarks, and interface are owned by Your Home or its licensors. Users may not copy, distribute, modify, or reproduce any part of the Platform without prior written permission."
+        },
+        {
+          "title": "10. Privacy",
+          "content": "Your use of the Platform is also governed by our Privacy Policy, which explains how we collect, use, and protect user data. By using the Platform, you consent to the data practices described in the Privacy Policy."
+        },
+        {
+          "title": "11. Limitation of Liability",
+          "content": "To the maximum extent permitted by law, Your Home shall not be liable for: disputes between landlords and tenants; inaccurate or misleading property listings; damages resulting from rental agreements; financial losses related to property transactions; user misconduct on the Platform. Users agree that they use the Platform at their own risk."
+        },
+        {
+          "title": "12. Indemnification",
+          "content": "You agree to defend, indemnify, and hold harmless Your Home, its owners, employees, and affiliates from any claims, damages, losses, or legal expenses arising from: your use of the Platform; your posted content; violation of these Terms; or violation of applicable laws."
+        },
+        {
+          "title": "13. Service Availability",
+          "content": "We strive to keep the Platform available at all times. However, we do not guarantee uninterrupted service. We may modify, suspend, or discontinue any part of the Platform at any time without prior notice."
+        },
+        {
+          "title": "14. Changes to These Terms",
+          "content": "We reserve the right to update or modify these Terms at any time. When changes occur, the updated Terms will be posted on the Platform with a revised \"Last Updated\" date. Continued use of the Platform after changes constitutes acceptance of the updated Terms."
+        },
+        {
+          "title": "15. Governing Law",
+          "content": "These Terms shall be governed and interpreted in accordance with the laws of Vietnam. Any disputes arising from these Terms shall be resolved in the courts of the applicable jurisdiction."
+        },
+        {
+          "title": "16. Contact Information",
+          "content": "If you have any questions regarding these Terms, please contact us at support@yourhome.com."
+        }
+      ]
+    },
+    "privacy": {
+      "linkLabel": "Privacy Policy",
+      "title": "PRIVACY POLICY",
+      "updated": "Last Updated: March 12, 2026",
+      "welcome": "Welcome to Your Home.",
+      "intro": "This Privacy Policy explains how Your Home (“we”, “our”, or “us”) collects, uses, stores, and protects your personal information when you use our website, mobile application, and related services (collectively referred to as the “Platform”).",
+      "agreement": "By using the Platform, you agree to the collection and use of information in accordance with this Privacy Policy.",
+      "sections": [
+        {
+          "title": "1. Information We Collect",
+          "content": "We may collect the following types of information when you use the Platform.\n\n1.1 Personal Information\nWhen you create an account or use our services, we may collect personal information such as: Full name, Email address, Phone number, Account credentials (encrypted password), Profile information, Property listing information.\n\n1.2 Property Listing Information\nIf you post rental listings, we may collect: Property address, Property description, Rental price, Photos of the property, Contact information, Location data related to the property. This information is displayed publicly on the Platform.\n\n1.3 Usage Information\nWe may automatically collect certain technical information, including: IP address, Browser type, Device information, Operating system, Pages visited, Time spent on the Platform, Interaction with listings. This helps us understand how users interact with the Platform.\n\n1.4 Cookies and Tracking Technologies\nWe may use cookies and similar technologies to: maintain user sessions, remember preferences, analyze traffic and user behavior, improve platform performance. Users may disable cookies through their browser settings, though some features of the Platform may not function properly."
+        },
+        {
+          "title": "2. How We Use Your Information",
+          "content": "We use the collected information for the following purposes: To create and manage user accounts; To display rental listings on the Platform; To connect landlords and tenants; To improve platform performance and features; To prevent fraud, abuse, and illegal activities; To communicate with users about their accounts or listings; To comply with legal obligations."
+        },
+        {
+          "title": "3. How We Share Information",
+          "content": "We do not sell your personal information. However, we may share information in the following situations:\n\n3.1 With Other Users\nInformation you include in property listings (such as contact details or property information) may be visible to other users.\n\n3.2 Service Providers\nWe may share information with trusted third-party service providers that help operate the Platform, such as cloud hosting services, analytics providers, email delivery services. These providers are required to protect your information.\n\n3.3 Legal Requirements\nWe may disclose information if required to do so by law or in response to valid legal requests from authorities."
+        },
+        {
+          "title": "4. Data Storage and Security",
+          "content": "We take reasonable technical and organizational measures to protect your personal information from unauthorized access, loss, misuse, or alteration. Security measures may include: encrypted passwords, secure servers, restricted database access, monitoring for suspicious activities. However, no method of internet transmission or electronic storage is completely secure."
+        },
+        {
+          "title": "5. Data Retention",
+          "content": "We retain your personal information for as long as necessary to: provide our services, maintain your account, comply with legal obligations, resolve disputes, enforce agreements. If you delete your account, we may retain certain information where required by law or for legitimate business purposes."
+        },
+        {
+          "title": "6. Your Rights",
+          "content": "Depending on applicable laws, users may have the right to: access their personal data, correct inaccurate information, request deletion of personal data, object to certain types of data processing, withdraw consent where applicable. Requests can be sent to our contact email listed below."
+        },
+        {
+          "title": "7. Third-Party Links",
+          "content": "The Platform may contain links to third-party websites or services. We are not responsible for the privacy practices or content of those external sites. Users are encouraged to review the privacy policies of any third-party services they visit."
+        },
+        {
+          "title": "8. Children's Privacy",
+          "content": "The Platform is not intended for individuals under the age of 18. We do not knowingly collect personal information from children. If we become aware that personal information from a minor has been collected, we will take steps to remove such information."
+        },
+        {
+          "title": "9. Changes to This Privacy Policy",
+          "content": "We may update this Privacy Policy from time to time. When changes are made, we will update the \"Last Updated\" date at the top of this page. Continued use of the Platform after updates constitutes acceptance of the revised policy."
+        },
+        {
+          "title": "10. Contact Information",
+          "content": "If you have any questions about this Privacy Policy or our data practices, please contact us:\n\nEmail: support@yourhome.com\nCompany: Your Home\nAddress: Hanoi, Vietnam"
+        }
+      ]
+    },
+    "footerCopyright": "© {year} YourHome. All rights reserved."
+  },
+  "about": {
+    "header": "About",
+    "title": "Helping renters and landlords connect with confidence",
+    "intro": "YourHome makes rental discovery simpler, faster, and more trustworthy for everyone involved.",
+    "founder": {
+      "title": "Founder",
+      "nameLabel": "Built by",
+      "name": "Vuong Trung Kien",
+      "description": "We care about making rental discovery feel clear, human, and dependable."
+    },
+    "hiring": {
+      "title": "We're growing",
+      "descriptionPrimary": "We're always excited to meet thoughtful people who care about product quality, trust, and the renter experience.",
+      "descriptionSecondary": "If that sounds like you, we'd love to hear from you."
+    },
+    "product": {
+      "title": "What YourHome helps you do",
+      "items": [
+        "Browse verified rental listings on an interactive map.",
+        "Filter by price, area, and location in seconds.",
+        "Save properties and revisit them later.",
+        "Message owners directly without leaving the app.",
+        "Post and manage your own listings with ease."
+      ]
+    },
+    "mission": {
+      "title": "Our mission",
+      "descriptionPrimary": "We want rental discovery to feel practical and transparent instead of stressful and fragmented.",
+      "descriptionSecondary": "Clearer listings, faster conversations, and better tools help both renters and landlords move with confidence."
+    },
+    "contact": {
+      "title": "Contact",
+      "description": "Questions, feedback, or partnership ideas? Reach out any time and we'll get back to you.",
+      "homeButton": "Back to home"
+    }
+  },
+  "user": {
+    "profileTitle": "User profile",
+    "notFoundTitle": "User not found",
+    "notFoundDescription": "This user could not be found or may have been removed.",
+    "messageUser": "Message user",
+    "propertiesByName": "Properties by {name}",
+    "noPropertiesTitle": "No properties yet",
+    "noPropertiesDescription": "This user hasn't posted any rental properties yet.",
+    "selfMessageError": "You cannot message yourself."
+  },
+  "errors": {
+    "global": {
+      "title": "Something went wrong!",
+      "defaultDescription": "An unexpected error occurred."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "The page you are looking for does not exist.",
+      "action": "Go home"
+    }
+  }
+}

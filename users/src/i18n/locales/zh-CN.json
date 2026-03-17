@@ -1,0 +1,544 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "goBack": "返回",
+    "hello": "你好",
+    "guest": "游客",
+    "search": "搜索",
+    "searchPlaceholder": "搜索房产...",
+    "from": "从...",
+    "to": "到...",
+    "reset": "重置",
+    "apply": "应用",
+    "cancel": "取消",
+    "saveChanges": "保存更改",
+    "upload": "上传",
+    "tryAgain": "重试",
+    "saving": "正在保存...",
+    "loadMore": "加载更多",
+    "showingOf": "已显示 {shown}/{total}",
+    "showingRange": "已显示 {start}-{end}/{total}",
+    "theme": "主题",
+    "view": "查看",
+    "edit": "编辑",
+    "delete": "删除",
+    "darkMode": "深色模式",
+    "lightMode": "浅色模式",
+    "switchToDarkMode": "切换到深色模式",
+    "switchToLightMode": "切换到浅色模式"
+  },
+  "property": {
+    "detail": {
+      "notFound": "未找到房产信息。",
+      "postedBy": "发布者",
+      "noPosterInfo": "无发布者信息",
+      "noDescription": "暂无描述。",
+      "contactNow": "立即联系",
+      "manageListing": "管理房源"
+    },
+    "status": {
+      "available": "可租",
+      "rented": "已租",
+      "pending": "待处理"
+    },
+    "units": {
+      "million": "百万",
+      "vndPerMonth": "越南盾 / 月",
+      "monthAbbr": "/月"
+    },
+    "fields": {
+      "bedrooms": "卧室",
+      "privateBath": "独立",
+      "sharedBath": "共用",
+      "bathrooms": "浴室",
+      "area": "面积 (m²)",
+      "description": "详细描述"
+    },
+    "filters": {
+      "title": "高级筛选",
+      "priceRange": "价格范围（VND）",
+      "minBedrooms": "最少卧室数",
+      "locationArea": "区域",
+      "provinceCity": "省 / 城市",
+      "bathroomType": "浴室类型"
+    },
+    "list": {
+      "countLabel": "房源",
+      "displayMode": "显示模式",
+      "emptyTitle": "未找到房源",
+      "viewModes": {
+        "grid": "网格",
+        "list": "列表",
+        "compact": "紧凑"
+      }
+    },
+    "actions": {
+      "viewDetails": "查看详情"
+    },
+    "add": {
+      "title": "新增房源",
+      "submitButton": "提交房产",
+      "submitting": "正在提交房产...",
+      "submitSuccess": "房产提交成功",
+      "submitError": "房产提交失败",
+      "loginRequired": "请登录后添加房产"
+    },
+    "form": {
+      "propertyTypeLabel": "房源类型",
+      "cityLabel": "城市",
+      "districtLabel": "地区",
+      "addressLabel": "地址",
+      "exactLocationLabel": "精确位置",
+      "dragPinHint": "拖动图钉选择房源的准确位置",
+      "priceLabel": "价格（VND）",
+      "contactPhoneLabel": "联系电话",
+      "photosLabel": "图片",
+      "videosLabel": "视频",
+      "addPhotosHint": "点击添加图片（最多 7 张）",
+      "addVideosHint": "点击添加视频（最多 2 个）",
+      "streetAddressLabel": "详细地址",
+      "useCurrentLocation": "使用我的当前位置",
+      "geocodingLoading": "正在查找位置...",
+      "uploadingMedia": "正在上传图片和视频...",
+      "previewImage": "预览图片",
+      "locationError": "无法获取你的位置。",
+      "invalidImageType": "请仅上传 PNG、JPG、GIF、WebP、BMP 或 AVIF 图片。",
+      "imageUploadError": "上传一张或多张图片失败。",
+      "videoUploadError": "上传一个或多个视频失败。"
+    },
+    "types": {
+      "house": "房屋",
+      "commercialSpace": "商业空间",
+      "apartment": "公寓",
+      "condominium": "共管公寓",
+      "hotel": "酒店"
+    },
+    "labels": {
+      "price": "价格"
+    },
+    "edit": {
+      "title": "编辑房源",
+      "submitSuccess": "房源更新成功！",
+      "submitError": "更新房源失败",
+      "nameLabel": "房源名称"
+    },
+    "messages": {
+      "deleteConfirm": "确定要删除此房源吗？此操作无法撤销。",
+      "deleteFailed": "删除房源失败。"
+    },
+    "media": {
+      "videoUploaded": "视频 {index} 已上传"
+    }
+  },
+  "navigation": {
+    "home": "首页",
+    "settings": "设置",
+    "accountsCenter": "账户中心",
+    "appLanguage": "应用语言",
+    "helpSupport": "帮助与支持",
+    "about": "关于",
+    "logOut": "登出",
+    "saved": "已保存",
+    "myProperties": "我的房源",
+    "chats": "聊天",
+    "profile": "个人资料",
+    "postListing": "发布房源"
+  },
+  "chat": {
+    "conversationsTitle": "对话",
+    "online": "在线",
+    "offline": "离线",
+    "viewProperty": "查看房源",
+    "startTitle": "开始聊天",
+    "startDescription": "发送一条问候消息开始聊天",
+    "seen": "已读",
+    "sent": "已发送",
+    "youPrefix": "您： ",
+    "selectConversationTitle": "选择一个对话",
+    "selectConversationDescription": "现代聊天体验，立即连接房东和客户。",
+    "typeMessagePlaceholder": "输入消息...",
+    "countSingular": "聊天",
+    "countPlural": "聊天",
+    "signInRequiredTitle": "请先登录",
+    "signInRequiredDescription": "你需要登录后才能查看聊天记录。",
+    "emptyTitle": "还没有对话",
+    "emptyDescription": "你的聊天记录会显示在这里。",
+    "initialPropertyMessage": "你好，我想咨询一下房源“{title}”（ID：{id}）。",
+    "loadingMessages": "正在加载消息..."
+  },
+  "profile": {
+    "editProfile": "编辑资料",
+    "displayName": "显示名称",
+    "bio": "个人简介",
+    "changeLimit": "修改限制：每30天一次。",
+    "bioPlaceholder": "写点什么介绍一下自己...",
+    "account": {
+      "firstNameLabel": "名",
+      "lastNameLabel": "姓",
+      "personalInfoTitle": "个人信息",
+      "securityTitle": "安全与密码",
+      "currentPasswordLabel": "当前密码",
+      "newPasswordLabel": "新密码",
+      "confirmPasswordLabel": "确认新密码",
+      "updatePasswordButton": "更新密码",
+      "emailLabel": "电子邮箱地址",
+      "heroTitle": "账号与安全",
+      "heroDescription": "在此管理您的个人详情并保护您的账号设置。"
+    },
+    "messages": {
+      "editSuccess": "个人资料更新成功",
+      "editFailed": "个人资料更新失败",
+      "nameChangeLimit": "你每 30 天只能修改一次姓名。",
+      "profileUpdated": "个人资料更新成功！",
+      "passwordUpdated": "密码更改成功！"
+    },
+    "editCover": "编辑封面图像",
+    "welcomeTitle": "欢迎回家",
+    "myPropertiesTitle": "已发布房源列表",
+    "savedEmptyTitle": "暂无已保存房源",
+    "savedSectionDescription": "把你喜欢的房源保存在这里",
+    "myPropertiesEmptyTitle": "还没有房源",
+    "myPropertiesSectionDescription": "开始发布你的第一条房源",
+    "savedSectionTitle": "已保存的房产",
+    "welcomeDescription": "登录以保存您喜爱的房产、跟踪您的房源并与房东联系",
+    "footerHint": "在 YourHome 找到您理想的租屋",
+    "noBioYet": "向租客简单介绍一下你自己",
+    "sectionsTitle": "分区",
+    "sectionsDescription": "一次选择一个区域进行管理。",
+    "uploadAvatarError": "上传头像失败，请重试。",
+    "uploadCoverError": "上传封面图片失败。",
+    "createdOn": "发布于 {date}",
+    "summaryTitle": "概览"
+  },
+  "auth": {
+    "loginPrompt": {
+      "title": "需要登录",
+      "description": "登录后即可发布房源并与成千上万的潜在租客联系。"
+    },
+    "login": {
+      "title": "欢迎回来",
+      "subtitle": "登录以继续探索房源",
+      "emailOrUsernamePlaceholder": "邮箱或用户名",
+      "submitting": "正在登录...",
+      "noAccount": "没有账号？",
+      "createOne": "立即注册",
+      "heroTitle": "发现您的下一个租房地点",
+      "heroDescription": "浏览数千个经过验证的房源，寻找像家一样的完美空间。"
+    },
+    "shared": {
+      "passwordPlaceholder": "密码",
+      "signInButton": "登录",
+      "signInLink": "登录",
+      "logoSubtitle": "找到您理想的住所"
+    },
+    "register": {
+      "title": "创建您的账号",
+      "subtitle": "加入数千名快乐的租客",
+      "usernamePlaceholder": "用户名",
+      "emailPlaceholder": "电子邮箱",
+      "phonePlaceholder": "电话号码",
+      "firstNamePlaceholder": "名",
+      "lastNamePlaceholder": "姓",
+      "confirmPasswordPlaceholder": "确认密码",
+      "createAccountButton": "创建账号",
+      "creatingAccount": "正在创建...",
+      "alreadyHaveAccount": "已有账号？",
+      "heroTitle": "开启寻找完美家园之旅",
+      "heroDescription": "创建账号以保存收藏并获得推荐。",
+      "passwordRequirements": "密码要求：",
+      "passwordRules": {
+        "length": "8-12个字符",
+        "uppercase": "大写字母 (A-Z)",
+        "lowercase": "小写字母 (a-z)",
+        "number": "数字 (0-9)",
+        "special": "特殊字符 (@$!%*?&)"
+      },
+      "acceptTermsLabel": "我同意服务条款和隐私政策"
+    },
+    "validation": {
+      "emailOrUsernameRequired": "请输入邮箱或用户名",
+      "passwordRequired": "请输入密码",
+      "loginFailed": "登录失败，请重试。",
+      "firstNameRequired": "请输入名字",
+      "lastNameRequired": "请输入姓氏",
+      "fullNameRequired": "请输入您的全名",
+      "usernameRequired": "请输入用户名",
+      "usernameLength": "用户名至少3个字符",
+      "emailRequired": "请输入您的邮箱",
+      "emailInvalid": "邮箱格式不正确",
+      "phoneRequired": "请输入电话号码",
+      "confirmPasswordRequired": "请确认密码",
+      "passwordsMismatch": "密码不匹配",
+      "captchaRequired": "请完成验证码",
+      "acceptTermsRequired": "请接受服务条款以继续"
+    }
+  },
+  "home": {
+    "onboarding": {
+      "steps": [
+        {
+          "title": "在地图上发现租房",
+          "description": "地图显示所有当前可用的租赁房产。"
+        },
+        {
+          "title": "房产标记",
+          "description": "每个标记代表一个租赁信息，点击可查看详情。"
+        },
+        {
+          "title": "搜索栏",
+          "description": "使用搜索栏按地点或关键词查找租房。"
+        },
+        {
+          "title": "筛选器",
+          "description": "按价格、类型或其他条件筛选房源。"
+        },
+        {
+          "title": "发布新房源",
+          "description": "点击此处发布新的出租信息。"
+        }
+      ],
+      "complete": {
+        "title": "准备好了！🎉",
+        "description": "您已准备好开始浏览和发布租房信息！"
+      },
+      "skip": "跳过",
+      "next": "下一步",
+      "finish": "开始"
+    }
+  },
+  "help": {
+    "centerTitle": "帮助中心",
+    "centerSubtitle": "今天我们能为您提供什么帮助？",
+    "searchPlaceholder": "搜索帮助文章...",
+    "faqTitle": "常见问题",
+    "faq": {
+      "items": [
+        {
+          "question": "如何发布房源？",
+          "answer": "只需点击首页或个人资料中的 + 按钮。"
+        },
+        {
+          "question": "如何更改我的账户详情？",
+          "answer": "前往“个人资料”，打开“设置”，选择“账户中心”以更新您的信息或密码。"
+        },
+        {
+          "question": "我的数据安全吗？",
+          "answer": "是的，我们使用行业标准的加密和安全协议来确保您的个人数据和房源信息保持私密。"
+        },
+        {
+          "question": "如何联系房东？",
+          "answer": "一旦您找到心仪的房源，点击“立即联系”即可与房东或经纪人开始直接聊天。"
+        }
+      ]
+    },
+    "contact": {
+      "title": "联系我们",
+      "email": "邮件支持",
+      "chat": "在线聊天",
+      "call": "拨打热线",
+      "avgResponseTime": "平均响应时间：5分钟",
+      "stillNeedHelp": "仍然需要帮助？我们的团队全天候为您服务。"
+    },
+    "ticket": {
+      "title": "提交支持工单",
+      "successMessage": "你的支持请求已成功提交，我们会尽快回复你。",
+      "errorMessage": "提交请求失败，请重试。",
+      "subjectLabel": "主题",
+      "subjectPlaceholder": "告诉我们你需要什么帮助",
+      "priorityLabel": "优先级",
+      "priorities": {
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      },
+      "messageLabel": "内容",
+      "messagePlaceholder": "请尽可能详细地描述你的问题",
+      "submitButton": "提交工单",
+      "submittingButton": "提交中...",
+      "submittedTitle": "已提交！",
+      "redirectingBack": "正在返回..."
+    }
+  },
+  "legal": {
+    "terms": {
+      "linkLabel": "服务条款",
+      "title": "服务条款",
+      "updated": "最后更新：2026年3月12日",
+      "intro": "欢迎使用 Your Home。本服务条款（“条款”）适用于您访问和使用 Your Home 网站、移动应用程序及相关服务（统称为“平台”）。通过访问或使用平台、创建账户或发布内容，您同意受本条款的约束。如果您不同意本条款，请勿使用平台。",
+      "sections": [
+        {
+          "title": "1. 服务说明",
+          "content": "Your Home 是一个在线平台，使用户能够：发布房屋租赁信息、搜索租赁房产，并连接房东与潜在租客。平台仅作为发布和信息目的的中介。我们不拥有、管理、出售、出租或控制平台上列出的任何房产。房东与租客之间达成的任何协议或交易仅发生在相关方之间。"
+        },
+        {
+          "title": "2. 资格",
+          "content": "要使用平台，您必须：年满18周岁；具有签订约束性协议的法律行为能力；在注册账户时提供准确和真实的信息。通过使用平台，您声明并保证您符合这些要求。"
+        },
+        {
+          "title": "3. 用户账户",
+          "content": "要访问平台的某些功能，您可能需要创建一个账户。您同意：您在注册期间提供的信息是准确且最新的；您负责维护账户凭据的机密性；您对您账户下发生的所有活动负责。如果您怀疑账户被未经授权访问，必须立即通知我们。我们保留暂停或终止违反本条款的账户的权利。"
+        },
+        {
+          "title": "4. 用户内容",
+          "content": "用户可以在平台上上传、发布内容，包括：房产描述、照片、联系信息、价格和位置详情。您保留您提交内容的所有权。但是，通过在平台上发布内容，您授予 Your Home 全球范围内的、非独占的、免版税的许可，以便：展示、分发、复制和推广您的内容，用于运营和改进平台。您对您发布的内容的准确性和合法性负全部责任。"
+        },
+        {
+          "title": "5. 禁止行为",
+          "content": "用户同意不：发布虚假或误导性的房产信息；发布不存在的房产广告；发布非法、冒犯性或有害内容；利用平台进行欺诈或诈骗；尝试未经授权访问平台；干预平台的安全或运营；使用自动化系统抓取或收集平台数据。我们保留删除内容或暂停违反规则账户的权利。"
+        },
+        {
+          "title": "6. 房产列表",
+          "content": "发布房产信息的用户同意：列表信息准确真实；用户拥有合法的出租或广告权利；列表不违反任何适用法律。Your Home 不验证房产列表的准确性，也不对房东与租客之间的纠纷负责。鼓励用户在签订任何租赁协议前独立验证所有信息。"
+        },
+        {
+          "title": "7. 平台角色与免责声明",
+          "content": "平台仅为用户提供发布和查看租赁列表的空间。Your Home 不：保证列表的准确性；参与租赁协议；充当房地产经纪人；验证房产权属；保证支付或交易。房东与租客之间的所有协议均由用户自行承担风险。"
+        },
+        {
+          "title": "8. 内容审核",
+          "content": "如果我们认为内容或活动违反了本条款或适用法律，我们保留以下权利：审查并删除任何内容；暂停或终止账户；限制访问平台。但是，我们没有义务监控所有用户内容。"
+        },
+        {
+          "title": "9. 知识产权",
+          "content": "与平台相关的所有知识产权，包括但不限于：设计、软件、标志、商標和界面，均归 Your Home 或其许可方所有。未经事先书面许可，用户不得复制、分发、修改或再造平台的任何部分。"
+        },
+        {
+          "title": "10. 隐私",
+          "content": "您对平台的使用也受我们的隐私政策约束，该政策解释了我们如何收集、使用和保护用户数据。通过使用平台，您同意隐私政策中描述的数据实践。"
+        },
+        {
+          "title": "11. 责任限制",
+          "content": "在法律允许的最大范围内，Your Home 不对以下情况负责：房东与租客之间的纠纷；不准确或误导性的房产列表；由租赁协议导致的损失；与房产交易相关的财务损失；用户在平台上的不当行为。用户同意自担风险使用平台。"
+        },
+        {
+          "title": "12. 賠償",
+          "content": "您同意为 Your Home 及其所有者、员工和关联公司提供辩护、赔偿并使其免受因以下原因产生的任何索赔、损害、损失或法律费用：您对平台的使用；您发布的内容；违反本条款；或违反适用法律。"
+        },
+        {
+          "title": "13. 服务可用性",
+          "content": "我们努力保持平台的持续可用。但是，我们不保证服务不中断。我们可能随时修改、暂停或停止平台的任何部分，恕不另行通知。"
+        },
+        {
+          "title": "14. 条款变更",
+          "content": "我们保留随时更新或修改本条款的权利。发生变更时，更新后的条款将发布在平台上，并附带修改后的“最后更新”日期。变更后继续使用平台即表示接受更新后的条款。"
+        },
+        {
+          "title": "15. 适用法律",
+          "content": "本条款应根据越南法律进行解释和管辖。因本条款产生的任何纠纷应在适用司法管辖区的法院解决。"
+        },
+        {
+          "title": "16. 联系信息",
+          "content": "如果您对本条款有任何疑问，请通过 support@yourhome.com 联系我们。"
+        }
+      ]
+    },
+    "privacy": {
+      "linkLabel": "隐私政策",
+      "title": "隐私政策",
+      "updated": "最后更新：2026年3月12日",
+      "welcome": "欢迎来到 Your Home。",
+      "intro": "本隐私政策解释了 Your Home（“我们”、“我们的”）在您使用我们的网站、移动应用程序及相关服务（统称为“平台”）时如何收集、使用、存储和保护您的个人信息。",
+      "agreement": "通过使用平台，您同意按照本隐私政策收集和使用信息。",
+      "sections": [
+        {
+          "title": "1. 我们收集的信息",
+          "content": "在您使用平台时，我们可能会收集以下类型的信息。\n\n1.1 个人信息\n当您创建账户或使用我们的服务时，我们可能会收集个人信息，如：姓名、电子邮件地址、电话号码、账户凭据（加密密码）、个人资料信息、房源信息。\n\n1.2 房源信息\n如果您发布出租信息，我们可能会收集：房产地址、房产描述、租金价格、房产照片、联系信息、与房产相关的地理位置数据。这些信息将在平台上公开显示。\n\n1.3 使用信息\n我们可能会自动收集某些技术信息，包括：IP 地址、浏览器类型、设备信息、操作系统、访问过的页面、在平台上停留的时间、与房源的互动。这有助于我们了解用户如何与平台互动。\n\n1.4 Cookies 和跟踪技术\n我们可能会使用 Cookies 来维护用户会话、记住偏好、分析流量和用户行为、提高平台性能。用户可以通过浏览器设置禁用 Cookies。"
+        },
+        {
+          "title": "2. 我们如何使用您的信息",
+          "content": "我们将收集的信息用于以下目的：创建和管理用户账户；在平台上显示出租信息；连接房东和房客；提高平台性能和功能；防止欺诈、滥用和非法活动；就账户或房源与用户沟通；遵守法律义务。"
+        },
+        {
+          "title": "3. 我们如何共享信息",
+          "content": "我们不会出售您的个人信息。但是，在以下情况下我们可能会共享信息：\n\n3.1 与其他用户共享\n您在房源信息中包含的信息（如联系详情或房产信息）可能对其他用户可见。\n\n3.2 服务提供商\n我们可能会与帮助运营平台的受信任第三方服务提供商共享信息，如云托管服务、分析提供商、电子邮件投递服务。这些提供商被要求保护您的信息。\n\n3.3 法律要求\n如果法律要求，或为了响应法律程序的正当要求，我们可能会披露信息。"
+        },
+        {
+          "title": "4. 数据存储与安全",
+          "content": "我们采取合理的内部技术和组织措施来保护您的个人信息，防止未经授权的访问、丢失、滥用或篡改。安全措施可能包括：加密密码、安全服务器、限制数据库访问、监控可疑活动。但是，互联网传输或电子存储方法都不是绝对安全的。"
+        },
+        {
+          "title": "5. 数据保留",
+          "content": "只要是为了提供我们的服务、维护您的账户、遵守法律义务、解决纠纷、执行协议所必需，我们就会保留您的个人信息。如果您注销账户，我们可能会根据法律要求或出于合法商业目的保留某些信息。"
+        },
+        {
+          "title": "6. 您的权利",
+          "content": "根据适用法律，用户可能拥有以下权利：访问其个人数据、纠正不准确的信息、要求删除个人数据、反对某些类型的数据处理、在适用情况下撤回同意。请求可以发送到下面列出的我们的联系邮箱。"
+        },
+        {
+          "title": "7. 第三方链接",
+          "content": "平台可能包含指向第三方网站或服务的链接。我们对这些外部网站的隐私惯例或内容不承担责任。建议用户查看其访问的任何第三方服务的隐私政策。"
+        },
+        {
+          "title": "8. 儿童隐私权益",
+          "content": "本平台不面向 18 岁以下的人群。我们不会故意收集儿童的个人信息。如果我们意识到收集了未成年人的个人信息，我们将采取措施删除此类信息。"
+        },
+        {
+          "title": "9. 本隐私政策的变更",
+          "content": "我们可能会不时更新本隐私政策。发生变更时，我们将更新页面顶部的 “最后更新” 日期。更新后继续使用平台即表示接受修订后的政策。"
+        },
+        {
+          "title": "10. 联系信息",
+          "content": "如果您对本隐私政策或我们的数据处理实践有任何疑问，请联系我们：\n\n电子邮件：support@yourhome.com\n公司：Your Home\n地址：越南河内"
+        }
+      ]
+    },
+    "footerCopyright": "© {year} YourHome。保留所有权利。"
+  },
+  "about": {
+    "header": "关于",
+    "title": "让租客和房东更安心地建立联系",
+    "intro": "YourHome 让租房搜索对每个人来说都更简单、更快速、更值得信赖。",
+    "founder": {
+      "title": "创始人",
+      "nameLabel": "创建者",
+      "name": "Vuong Trung Kien",
+      "description": "我们希望租房发现的过程更加清晰、更有人情味，也更可靠。"
+    },
+    "hiring": {
+      "title": "我们正在成长",
+      "descriptionPrimary": "我们一直期待认识重视产品质量、信任以及租客体验的人。",
+      "descriptionSecondary": "如果这也符合你的想法，我们很乐意听到你的声音。"
+    },
+    "product": {
+      "title": "YourHome 可以帮你做什么",
+      "items": [
+        "在互动地图上浏览已验证的租赁房源。",
+        "几秒内按价格、面积和位置筛选房源。",
+        "保存房源，方便之后再次查看。",
+        "无需离开应用即可直接联系房东。",
+        "轻松发布并管理你自己的房源。"
+      ]
+    },
+    "mission": {
+      "title": "我们的使命",
+      "descriptionPrimary": "我们希望租房发现变得务实、透明，而不是紧张和零散。",
+      "descriptionSecondary": "更清晰的房源信息、更快的沟通以及更好的工具，让租客和房东都能更有信心地做决定。"
+    },
+    "contact": {
+      "title": "联系",
+      "description": "如果你有问题、反馈或合作想法，欢迎随时联系，我们会尽快回复。",
+      "homeButton": "返回首页"
+    }
+  },
+  "user": {
+    "profileTitle": "用户资料",
+    "notFoundTitle": "未找到用户",
+    "notFoundDescription": "找不到该用户，或者该用户已被移除。",
+    "messageUser": "发送消息",
+    "propertiesByName": "{name} 的房源",
+    "noPropertiesTitle": "还没有房源",
+    "noPropertiesDescription": "该用户还没有发布任何出租房源。",
+    "selfMessageError": "你不能给自己发消息。"
+  },
+  "errors": {
+    "global": {
+      "title": "出错了！",
+      "defaultDescription": "发生了意外错误。"
+    },
+    "notFound": {
+      "title": "页面不存在",
+      "description": "你访问的页面不存在。",
+      "action": "返回首页"
+    }
+  }
+}

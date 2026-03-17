@@ -1,0 +1,544 @@
+{
+  "common": {
+    "loading": "Memuat...",
+    "goBack": "Kembali",
+    "hello": "Halo",
+    "guest": "Tamu",
+    "search": "Cari",
+    "searchPlaceholder": "Cari properti...",
+    "from": "Dari...",
+    "to": "Hingga...",
+    "reset": "Atur ulang",
+    "apply": "Terapkan",
+    "cancel": "Batal",
+    "saveChanges": "Simpan perubahan",
+    "upload": "Unggah",
+    "tryAgain": "Coba Lagi",
+    "saving": "Menyimpan...",
+    "loadMore": "Muat lagi",
+    "showingOf": "Menampilkan {shown} dari {total}",
+    "showingRange": "Menampilkan {start}-{end} dari {total}",
+    "theme": "Tema",
+    "view": "Lihat",
+    "edit": "Edit",
+    "delete": "Hapus",
+    "darkMode": "Mode gelap",
+    "lightMode": "Mode terang",
+    "switchToDarkMode": "Beralih ke mode gelap",
+    "switchToLightMode": "Beralih ke mode terang"
+  },
+  "property": {
+    "detail": {
+      "notFound": "Informasi properti tidak ditemukan.",
+      "postedBy": "Diposting oleh",
+      "noPosterInfo": "Tidak ada info pemasang",
+      "noDescription": "Tidak ada deskripsi.",
+      "contactNow": "Hubungi Sekarang",
+      "manageListing": "Kelola iklan"
+    },
+    "status": {
+      "available": "Tersedia",
+      "rented": "Disewakan",
+      "pending": "Menunggu"
+    },
+    "units": {
+      "million": "juta",
+      "vndPerMonth": "VND / bulan",
+      "monthAbbr": "/bln"
+    },
+    "fields": {
+      "bedrooms": "Kamar Tidur",
+      "privateBath": "Pribadi",
+      "sharedBath": "Bersama",
+      "bathrooms": "Kamar Mandi",
+      "area": "Luas (m²)",
+      "description": "Deskripsi"
+    },
+    "filters": {
+      "title": "Filter lanjutan",
+      "priceRange": "Rentang harga (VND)",
+      "minBedrooms": "Jumlah kamar minimum",
+      "locationArea": "Lokasi",
+      "provinceCity": "Provinsi / Kota",
+      "bathroomType": "Tipe kamar mandi"
+    },
+    "list": {
+      "countLabel": "properti",
+      "displayMode": "Mode tampilan",
+      "emptyTitle": "Properti tidak ditemukan",
+      "viewModes": {
+        "grid": "Grid",
+        "list": "Daftar",
+        "compact": "Ringkas"
+      }
+    },
+    "actions": {
+      "viewDetails": "Lihat detail"
+    },
+    "add": {
+      "title": "Tambah properti",
+      "submitButton": "Kirim Properti",
+      "submitting": "Mengirim...",
+      "submitSuccess": "Properti berhasil dikirim",
+      "submitError": "Gagal mengirim properti",
+      "loginRequired": "Silakan login untuk menambah"
+    },
+    "form": {
+      "propertyTypeLabel": "Jenis properti",
+      "cityLabel": "Kota",
+      "districtLabel": "Distrik",
+      "addressLabel": "Alamat",
+      "exactLocationLabel": "Lokasi tepat",
+      "dragPinHint": "Seret pin ke lokasi properti yang tepat",
+      "priceLabel": "Harga (VND)",
+      "contactPhoneLabel": "Nomor telepon kontak",
+      "photosLabel": "Foto",
+      "videosLabel": "Video",
+      "addPhotosHint": "Klik untuk menambahkan foto (maks. 7)",
+      "addVideosHint": "Klik untuk menambahkan video (maks. 2)",
+      "streetAddressLabel": "Alamat lengkap",
+      "useCurrentLocation": "Gunakan lokasi saya saat ini",
+      "geocodingLoading": "Mencari lokasi...",
+      "uploadingMedia": "Mengunggah foto dan video...",
+      "previewImage": "Pratinjau gambar",
+      "locationError": "Tidak dapat mengambil lokasi Anda.",
+      "invalidImageType": "Harap unggah hanya gambar PNG, JPG, GIF, WebP, BMP, atau AVIF.",
+      "imageUploadError": "Gagal mengunggah satu atau lebih gambar.",
+      "videoUploadError": "Gagal mengunggah satu atau lebih video."
+    },
+    "types": {
+      "house": "Rumah",
+      "commercialSpace": "Ruang komersial",
+      "apartment": "Apartemen",
+      "condominium": "Kondominium",
+      "hotel": "Hotel"
+    },
+    "labels": {
+      "price": "Harga"
+    },
+    "edit": {
+      "title": "Edit properti",
+      "submitSuccess": "Properti berhasil diperbarui!",
+      "submitError": "Gagal memperbarui properti",
+      "nameLabel": "Nama properti"
+    },
+    "messages": {
+      "deleteConfirm": "Apakah Anda yakin ingin menghapus properti ini? Tindakan ini tidak dapat dibatalkan.",
+      "deleteFailed": "Gagal menghapus properti."
+    },
+    "media": {
+      "videoUploaded": "Video {index} berhasil diunggah"
+    }
+  },
+  "navigation": {
+    "home": "Beranda",
+    "settings": "Pengaturan",
+    "accountsCenter": "Pusat Akun",
+    "appLanguage": "Bahasa Aplikasi",
+    "helpSupport": "Bantuan & Dukungan",
+    "about": "Tentang",
+    "logOut": "Keluar",
+    "saved": "Simpan",
+    "myProperties": "Iklan Saya",
+    "chats": "Chat",
+    "profile": "Profil",
+    "postListing": "Pasang"
+  },
+  "chat": {
+    "conversationsTitle": "Percakapan",
+    "online": "Online",
+    "offline": "Offline",
+    "viewProperty": "Lihat properti",
+    "startTitle": "Mulai percakapan",
+    "startDescription": "Kirim sapaan untuk mulai mengobrol",
+    "seen": "Dilihat",
+    "sent": "Terkirim",
+    "youPrefix": "Anda: ",
+    "selectConversationTitle": "Pilih percakapan",
+    "selectConversationDescription": "Gaya messenger modern untuk terhubung dengan pemilik dan pelanggan secara instan.",
+    "typeMessagePlaceholder": "Ketik pesan...",
+    "countSingular": "chat",
+    "countPlural": "chat",
+    "signInRequiredTitle": "Silakan masuk",
+    "signInRequiredDescription": "Anda perlu masuk untuk melihat riwayat obrolan.",
+    "emptyTitle": "Belum ada percakapan",
+    "emptyDescription": "Riwayat obrolan Anda akan muncul di sini.",
+    "initialPropertyMessage": "Halo, saya ingin menghubungi Anda mengenai iklan \"{title}\" (ID: {id}).",
+    "loadingMessages": "Memuat pesan..."
+  },
+  "profile": {
+    "editProfile": "Edit Profil",
+    "displayName": "Nama tampilan",
+    "bio": "Bio",
+    "changeLimit": "Batas perubahan: Sekali setiap 30 hari.",
+    "bioPlaceholder": "Ceritakan sedikit tentang dirimu...",
+    "account": {
+      "firstNameLabel": "Nama Depan",
+      "lastNameLabel": "Nama Belakang",
+      "personalInfoTitle": "Informasi Pribadi",
+      "securityTitle": "Keamanan & Kata Sandi",
+      "currentPasswordLabel": "Kata Sandi Saat Ini",
+      "newPasswordLabel": "Kata Sandi Baru",
+      "confirmPasswordLabel": "Konfirmasi Kata Sandi Baru",
+      "updatePasswordButton": "Perbarui Kata Sandi",
+      "emailLabel": "Alamat Email",
+      "heroTitle": "Akun & Keamanan",
+      "heroDescription": "Kelola detail pribadi dan pengaturan keamanan akun Anda di sini."
+    },
+    "messages": {
+      "editSuccess": "Profil berhasil diperbarui",
+      "editFailed": "Gagal memperbarui profil",
+      "nameChangeLimit": "Anda hanya dapat mengubah nama satu kali setiap 30 hari.",
+      "profileUpdated": "Profil berhasil diperbarui!",
+      "passwordUpdated": "Kata sandi berhasil diubah!"
+    },
+    "editCover": "Edit Foto Sampul",
+    "welcomeTitle": "Selamat Datang di Rumah",
+    "myPropertiesTitle": "Daftar Rumah yang Terdaftar",
+    "savedEmptyTitle": "Belum ada properti tersimpan",
+    "savedSectionDescription": "Simpan iklan yang Anda sukai di sini",
+    "myPropertiesEmptyTitle": "Belum ada iklan",
+    "myPropertiesSectionDescription": "Mulai posting iklan pertama Anda",
+    "savedSectionTitle": "Properti Disimpan",
+    "welcomeDescription": "Masuk untuk menyimpan properti favorit Anda, melacak listing Anda, dan terhubung dengan pemilik properti",
+    "footerHint": "Temukan rumah sewa impian Anda dengan YourHome",
+    "noBioYet": "Ceritakan sedikit tentang diri Anda kepada penyewa",
+    "sectionsTitle": "Bagian",
+    "sectionsDescription": "Pilih satu area untuk dikelola pada satu waktu.",
+    "uploadAvatarError": "Gagal mengunggah foto profil. Silakan coba lagi.",
+    "uploadCoverError": "Gagal mengunggah gambar sampul.",
+    "createdOn": "Diposting pada {date}",
+    "summaryTitle": "Ringkasan"
+  },
+  "auth": {
+    "loginPrompt": {
+      "title": "Login diperlukan",
+      "description": "Masuk untuk memposting iklan dan terhubung dengan ribuan calon penyewa."
+    },
+    "login": {
+      "title": "Selamat datang kembali",
+      "subtitle": "Masuk untuk lanjut mencari rumah sewa",
+      "emailOrUsernamePlaceholder": "Email atau username",
+      "submitting": "Masuk...",
+      "noAccount": "Belum punya akun?",
+      "createOne": "Buat akun",
+      "heroTitle": "Temukan rumah sewa Anda berikutnya",
+      "heroDescription": "Cari ribuan iklan terverifikasi dan temukan ruang yang tepat."
+    },
+    "shared": {
+      "passwordPlaceholder": "Kata sandi",
+      "signInButton": "Masuk",
+      "signInLink": "Masuk",
+      "logoSubtitle": "Temukan tempat ideal Anda"
+    },
+    "register": {
+      "title": "Buat akun Anda",
+      "subtitle": "Bergabunglah dengan ribuan penyewa bahagia",
+      "usernamePlaceholder": "Username",
+      "emailPlaceholder": "Alamat email",
+      "phonePlaceholder": "Nomor telepon",
+      "firstNamePlaceholder": "Nama depan",
+      "lastNamePlaceholder": "Nama belakang",
+      "confirmPasswordPlaceholder": "Konfirmasi kata sandi",
+      "createAccountButton": "Buat Akun",
+      "creatingAccount": "Membuat...",
+      "alreadyHaveAccount": "Sudah punya akun?",
+      "heroTitle": "Mulai perjalanan menuju rumah impian",
+      "heroDescription": "Buat akun untuk simpan favorit dan hubungi pemilik.",
+      "passwordRequirements": "Persyaratan kata sandi:",
+      "passwordRules": {
+        "length": "8-12 karakter",
+        "uppercase": "Huruf besar (A-Z)",
+        "lowercase": "Huruf kecil (a-z)",
+        "number": "Angka (0-9)",
+        "special": "Karakter khusus (@$!%*?&)"
+      },
+      "acceptTermsLabel": "Saya setuju dengan Ketentuan Layanan dan Kebijakan Privasi"
+    },
+    "validation": {
+      "emailOrUsernameRequired": "Silakan masukkan email atau username",
+      "passwordRequired": "Silakan masukkan kata sandi",
+      "loginFailed": "Gagal masuk. Silakan coba lagi.",
+      "firstNameRequired": "Silakan masukkan nama depan Anda",
+      "lastNameRequired": "Silakan masukkan nama belakang Anda",
+      "fullNameRequired": "Silakan masukkan nama lengkap Anda",
+      "usernameRequired": "Silakan masukkan username",
+      "usernameLength": "Username minimal 3 karakter",
+      "emailRequired": "Silakan masukkan email Anda",
+      "emailInvalid": "Format email tidak valid",
+      "phoneRequired": "Silakan masukkan nomor telepon",
+      "confirmPasswordRequired": "Silakan konfirmasi kata sandi",
+      "passwordsMismatch": "Kata sandi tidak cocok",
+      "captchaRequired": "Silakan selesaikan captcha",
+      "acceptTermsRequired": "Silakan setujui ketentuan layanan untuk melanjutkan"
+    }
+  },
+  "home": {
+    "onboarding": {
+      "steps": [
+        {
+          "title": "Temukan Sewaan di Peta",
+          "description": "Beranda menampilkan semua properti sewa melalui peta interaktif kami."
+        },
+        {
+          "title": "Penanda Properti",
+          "description": "Setiap penanda mewakili iklan sewa. Ketuk penanda untuk lihat detail."
+        },
+        {
+          "title": "Kolom Pencarian",
+          "description": "Gunakan kolom pencarian untuk mencari berdasarkan lokasi."
+        },
+        {
+          "title": "Filter",
+          "description": "Gunakan filter untuk mempersempit iklan berdasarkan harga, tipe, dll."
+        },
+        {
+          "title": "Pasang Iklan Baru",
+          "description": "Klik di sini untuk memasang iklan sewa baru."
+        }
+      ],
+      "complete": {
+        "title": "Selesai! 🎉",
+        "description": "Anda siap untuk mulai menjelajah dan memasang iklan!"
+      },
+      "skip": "Lewati",
+      "next": "Berikutnya",
+      "finish": "Mulai"
+    }
+  },
+  "help": {
+    "centerTitle": "Pusat Bantuan",
+    "centerSubtitle": "Ada yang bisa kami bantu?",
+    "searchPlaceholder": "Cari artikel bantuan...",
+    "faqTitle": "Tanya Jawab",
+    "faq": {
+      "items": [
+        {
+          "question": "Bagaimana cara pasang iklan?",
+          "answer": "Cukup klik tombol + di halaman utama atau di profil Anda."
+        },
+        {
+          "question": "Bagaimana cara mengubah detail akun saya?",
+          "answer": "Buka Profil Anda, buka Pengaturan, dan pilih 'Pusat Akun' untuk memperbarui informasi atau kata sandi Anda."
+        },
+        {
+          "question": "Apakah data saya aman?",
+          "answer": "Ya, kami menggunakan enkripsi standar industri dan protokol keamanan untuk memastikan data pribadi dan informasi iklan Anda tetap pribadi."
+        },
+        {
+          "question": "Bagaimana cara menghubungi pemilik properti?",
+          "answer": "Setelah Anda menemukan properti yang Anda sukai, klik 'Hubungi Sekarang' untuk memulai obrolan langsung dengan pemilik properti."
+        }
+      ]
+    },
+    "contact": {
+      "title": "Hubungi Kami",
+      "email": "Dukungan Email",
+      "chat": "Chat Langsung",
+      "call": "Hotline",
+      "avgResponseTime": "Rata-rata tanggapan: 5 menit",
+      "stillNeedHelp": "Masih butuh bantuan? Tim kami siap sedia 24/7."
+    },
+    "ticket": {
+      "title": "Kirim Tiket Dukungan",
+      "successMessage": "Permintaan dukungan Anda berhasil dikirim. Kami akan segera menghubungi Anda.",
+      "errorMessage": "Kami tidak dapat mengirim permintaan Anda. Silakan coba lagi.",
+      "subjectLabel": "Subjek",
+      "subjectPlaceholder": "Beri tahu kami bantuan apa yang Anda butuhkan",
+      "priorityLabel": "Prioritas",
+      "priorities": {
+        "low": "Rendah",
+        "medium": "Sedang",
+        "high": "Tinggi"
+      },
+      "messageLabel": "Pesan",
+      "messagePlaceholder": "Jelaskan masalahnya sedetail mungkin",
+      "submitButton": "Kirim tiket",
+      "submittingButton": "Mengirim...",
+      "submittedTitle": "Terkirim!",
+      "redirectingBack": "Mengalihkan kembali..."
+    }
+  },
+  "legal": {
+    "terms": {
+      "linkLabel": "Ketentuan Layanan",
+      "title": "Ketentuan Layanan",
+      "updated": "Terakhir Diperbarui: 12 Maret 2026",
+      "intro": "Selamat datang di Your Home. Ketentuan Layanan (\"Ketentuan\") ini mengatur akses dan penggunaan Anda terhadap situs web, aplikasi seluler, dan layanan terkait Your Home (secara kolektif disebut sebagai \"Platform\"). Dengan mengakses atau menggunakan Platform, membuat akun, atau memposting konten, Anda setuju untuk terikat oleh Ketentuan ini. Jika Anda tidak setuju dengan Ketentuan ini, mohon jangan gunakan Platform.",
+      "sections": [
+        {
+          "title": "1. Deskripsi Layanan",
+          "content": "Your Home adalah platform daring yang memungkinkan pengguna untuk: memposting iklan sewa properti, mencari properti sewa, dan menghubungkan pemilik properti dengan calon penyewa. Platform bertindak semata-mata sebagai perantara untuk tujuan pendaftaran dan informasi. Kami tidak memiliki, mengelola, menjual, menyewakan, atau mengendalikan properti apa pun yang terdaftar di Platform. Setiap perjanjian atau transaksi yang dibuat antara pemilik properti dan penyewa sepenuhnya merupakan tanggung jawab pihak-pihak tersebut."
+        },
+        {
+          "title": "2. Kelayakan",
+          "content": "Untuk menggunakan Platform, Anda harus: Berusia setidaknya 18 tahun; Memiliki kapasitas hukum untuk membuat perjanjian yang mengikat; Memberikan informasi yang akurat dan benar saat mendaftarkan akun. Dengan menggunakan Platform, Anda menyatakan dan menjamin bahwa Anda memenuhi persyaratan ini."
+        },
+        {
+          "title": "3. Akun Pengguna",
+          "content": "Untuk mengakses fitur-fitur tertentu dari Platform, Anda mungkin perlu membuat akun. Anda setuju bahwa: Informasi yang Anda berikan selama pendaftaran adalah akurat dan terkini; Anda bertanggung jawab untuk menjaga kerahasiaan kredensial akun Anda; Anda bertanggung jawab atas semua aktivitas yang terjadi di bawah akun Anda. Anda harus segera memberi tahu kami jika Anda mencurigai adanya akses tidak sah ke akun Anda. Kami berhak menangguhkan atau menghentikan akun yang melanggar Ketentuan ini."
+        },
+        {
+          "title": "4. Konten Pengguna",
+          "content": "Pengguna dapat mengunggah, memposting, atau menerbitkan konten di Platform, termasuk: deskripsi properti, foto, informasi kontak, harga, dan detail lokasi. Anda tetap memiliki kepemilikan atas konten apa pun yang Anda kirimkan. Namun, dengan memposting konten di Platform, Anda memberikan izin kepada Your Home lisensi di seluruh dunia, non-eksklusif, dan bebas royalti untuk: menampilkan, mendistribusikan, memproduksi ulang, dan mempromosikan konten Anda untuk tujuan mengoperasikan dan meningkatkan Platform. Anda bertanggung jawab penuh atas keakuratan dan legalitas konten yang Anda posting."
+        },
+        {
+          "title": "5. Perilaku yang Dilarang",
+          "content": "Pengguna setuju untuk tidak: Memposting informasi properti yang palsu atau menyesatkan; Mengiklankan properti yang tidak ada; Memposting konten ilegal, menyinggung, atau berbahaya; Menggunakan Platform untuk penipuan atau scam; Mencoba mendapatkan akses tidak sah ke Platform; Mengganggu keamanan atau operasional Platform; Menggunakan sistem otomatis untuk mengambil data dari Platform. Kami berhak menghapus konten atau menangguhkan akun yang melanggar aturan ini."
+        },
+        {
+          "title": "6. Daftar Properti",
+          "content": "Pengguna yang memposting informasi properti setuju bahwa: Informasi daftar tersebut akurat dan benar; Pengguna memiliki hak hukum untuk menyewakan atau mengiklankan properti tersebut; Daftar tidak melanggar hukum yang berlaku. Your Home tidak memverifikasi keakuratan daftar properti dan tidak bertanggung jawab atas perselisihan antara pemilik properti dan penyewa. Pengguna disarankan untuk memverifikasi secara independen semua informasi sebelum membuat perjanjian sewa apa pun."
+        },
+        {
+          "title": "7. Peran Platform dan Penafian",
+          "content": "Platform hanya menyediakan ruang bagi pengguna untuk memposting dan melihat daftar sewa. Your Home tidak: Menjamin keakuratan daftar; Berpartisipasi dalam perjanjian sewa; Bertindak sebagai agen real estat; Memverifikasi kepemilikan properti; Menjamin pembayaran atau transaksi. Semua perjanjian antara pemilik properti dan penyewa adalah risiko pengguna sendiri."
+        },
+        {
+          "title": "8. Moderasi Konten",
+          "content": "Kami berhak untuk meninjau dan menghapus konten apa pun, menangguhkan atau menghentikan akun, atau membatasi akses ke Platform jika kami yakin konten atau aktivitas tersebut melanggar Ketentuan ini atau hukum yang berlaku. Namun, kami tidak berkewajiban untuk memantau semua konten pengguna."
+        },
+        {
+          "title": "9. Kekayaan Intelektual",
+          "content": "Semua hak kekayaan intelektual yang terkait dengan Platform, termasuk namun tidak terbatas pada: desain, perangkat lunak, logo, merek dagang, dan antarmuka, adalah milik Your Home atau pemberi lisensinya. Pengguna tidak boleh menyalin, mendistribusikan, memodifikasi, atau memproduksi ulang bagian mana pun dari Platform tanpa izin tertulis sebelumnya."
+        },
+        {
+          "title": "10. Privasi",
+          "content": "Penggunaan Platform oleh Anda juga diatur oleh Kebijakan Privasi kami, yang menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi data pengguna. Dengan menggunakan Platform, Anda setuju dengan praktik data yang dijelaskan dalam Kebijakan Privasi."
+        },
+        {
+          "title": "11. Batasan Tanggung Jawab",
+          "content": "Sejauh diizinkan oleh hukum, Your Home tidak akan bertanggung jawab atas: Perselisihan antara pemilik properti dan penyewa; Daftar properti yang tidak akurat atau menyesatkan; Kerusakan akibat perjanjian sewa; Kerugian finansial terkait transaksi properti; Perilaku buruk pengguna di Platform. Pengguna setuju untuk menggunakan Platform dengan risiko mereka sendiri."
+        },
+        {
+          "title": "12. Ganti Rugi",
+          "content": "Anda setuju untuk membela, mengganti rugi, dan membebaskan Your Home, pemiliknya, karyawannya, dan afiliasinya dari segala klaim, kerusakan, kerugian, atau biaya hukum yang timbul dari: Penggunaan Platform oleh Anda; Konten yang Anda posting; Pelanggaran Anda terhadap Ketentuan ini; atau Pelanggaran Anda terhadap hukum yang berlaku."
+        },
+        {
+          "title": "13. Ketersediaan Layanan",
+          "content": "Kami berupaya menjaga agar Platform selalu tersedia. Namun, kami tidak menjamin layanan tanpa gangguan. Kami dapat memodifikasi, menangguhkan, atau menghentikan bagian mana pun dari Platform kapan saja tanpa pemberitahuan sebelumnya."
+        },
+        {
+          "title": "14. Perubahan Ketentuan",
+          "content": "Kami berhak memperbarui atau memodifikasi Ketentuan ini kapan saja. Ketika perubahan dilakukan, Ketentuan yang diperbarui akan diposting di Platform dengan tanggal \"Terakhir Diperbarui\" yang direvisi. Penggunaan berkelanjutan terhadap Platform setelah perubahan berarti Anda menerima Ketentuan yang diperbarui."
+        },
+        {
+          "title": "15. Hukum yang Berlaku",
+          "content": "Ketentuan ini akan diatur dan ditafsirkan sesuai dengan hukum Vietnam. Segala perselisihan yang timbul dari Ketentuan ini akan diselesaikan di pengadilan yurisdiksi yang berlaku."
+        },
+        {
+          "title": "16. Informasi Kontak",
+          "content": "Jika Anda memiliki pertanyaan tentang Ketentuan ini, silakan hubungi kami di support@yourhome.com."
+        }
+      ]
+    },
+    "privacy": {
+      "linkLabel": "Kebijakan Privasi",
+      "title": "KEBIJAKAN PRIVASI",
+      "updated": "Terakhir Diperbarui: 12 Maret 2026",
+      "welcome": "Selamat datang di Your Home.",
+      "intro": "Kebijakan Privasi ini menjelaskan bagaimana Your Home (“kami”, “milik kami”, atau “kita”) mengumpulkan, menggunakan, menyimpan, dan melindungi informasi pribadi Anda saat Anda menggunakan situs web, aplikasi seluler, dan layanan terkait kami (secara kolektif disebut sebagai “Platform”).",
+      "agreement": "Dengan menggunakan Platform, Anda menyetujui pengumpulan dan penggunaan informasi sesuai dengan Kebijakan Privasi ini.",
+      "sections": [
+        {
+          "title": "1. Informasi yang Kami Kumpulkan",
+          "content": "Kami dapat mengumpulkan jenis informasi berikut saat Anda menggunakan Platform.\n\n1.1 Informasi Pribadi\nSaat Anda membuat akun atau menggunakan layanan kami, kami dapat mengumpulkan informasi pribadi seperti: nama lengkap, alamat email, nomor telepon, kredensial akun (kata sandi terenkripsi), informasi profil, informasi daftar properti.\n\n1.2 Informasi Daftar Properti\nJika Anda memposting daftar sewa, kami dapat mengumpulkan: alamat properti, deskripsi properti, harga sewa, foto properti, informasi kontak, data lokasi terkait properti. Informasi ini ditampilkan secara publik di Platform.\n\n1.3 Informasi Penggunaan\nKami dapat secara otomatis mengumpulkan informasi teknis tertentu, termasuk: alamat IP, jenis browser, informasi perangkat, sistem operasi, halaman yang dikunjungi, waktu yang dihabiskan di Platform, interaksi dengan daftar. Ini membantu kami memahami bagaimana pengguna berinteraksi dengan Platform.\n\n1.4 Cookies dan Teknologi Pelacakan\nKami dapat menggunakan cookie untuk: menjaga sesi pengguna, mengingat preferensi, menganalisis lalu lintas dan perilaku pengguna, meningkatkan kinerja platform. Pengguna dapat menonaktifkan cookie melalui pengaturan browser Anda."
+        },
+        {
+          "title": "2. Bagaimana Kami Menggunakan Informasi Anda",
+          "content": "Kami menggunakan informasi yang dikumpulkan untuk tujuan berikut: Untuk membuat dan mengelola akun pengguna; Untuk menampilkan daftar sewa di Platform; Untuk menghubungkan pemilik properti dan penyewa; Untuk meningkatkan kinerja dan fitur platform; Untuk mencegah penipuan, penyalahgunaan, dan aktivitas ilegal; Untuk berkomunikasi dengan pengguna tentang akun atau daftar mereka; Untuk mematuhi kewajiban hukum."
+        },
+        {
+          "title": "3. Bagaimana Kami Berbagi Informasi",
+          "content": "Kami tidak menjual informasi pribadi Anda. Namun, kami dapat berbagi informasi dalam situasi berikut:\n\n3.1 Dengan Pengguna Lain\nInformasi yang Anda sertakan dalam daftar properti (seperti detail kontak atau informasi properti) mungkin dapat dilihat oleh pengguna lain.\n\n3.2 Penyedia Layanan\nKami dapat berbagi informasi dengan penyedia layanan pihak ketiga tepercaya yang membantu mengoperasikan Platform, seperti layanan hosting cloud, penyedia analitik, layanan pengiriman email. Penyedia ini berkewajiban untuk melindungi informasi Anda.\n\n3.3 Persyaratan Hukum\nKami dapat mengungkapkan informasi jika diwajibkan oleh hukum atau sebagai tanggapan terhadap permintaan hukum yang sah dari pihak berwenang."
+        },
+        {
+          "title": "4. Penyimpanan dan Keamanan Data",
+          "content": "Kami mengambil langkah-langkah teknis dan organisasi yang wajar untuk melindungi informasi pribadi Anda dari akses yang tidak sah, kehilangan, penyalahgunaan, atau perubahan. Langkah-langkah keamanan dapat mencakup: kata sandi terenkripsi, server aman, akses database terbatas, pemantauan aktivitas mencurigakan. Namun, tidak ada metode transmisi melalui Internet atau penyimpanan elektronik yang 100% aman."
+        },
+        {
+          "title": "5. Retensi Data",
+          "content": "Kami menyimpan informasi pribadi Anda selama diperlukan untuk: menyediakan layanan kami, menjaga akun Anda, mematuhi kewajiban hukum, menyelesaikan perselisihan, menegakkan perjanjian. Jika Anda menghapus akun Anda, kami dapat menyimpan informasi tertentu jika diwajibkan oleh hukum atau untuk tujuan bisnis yang sah."
+        },
+        {
+          "title": "6. Hak-Hak Anda",
+          "content": "Tergantung pada hukum yang berlaku, pengguna mungkin memiliki hak untuk: mengakses data pribadi mereka, memperbaiki informasi yang tidak akurat, meminta penghapusan data pribadi, menolak jenis pemrosesan data tertentu, menarik persetujuan jika berlaku. Permintaan dapat dikirim ke email kontak kami yang tercantum di bawah ini."
+        },
+        {
+          "title": "7. Tautan Pihak Ketiga",
+          "content": "Platform mungkin berisi tautan ke situs web atau layanan pihak ketiga. Kami tidak bertanggung jawab atas praktik privasi atau konten situs eksternal tersebut. Pengguna disarankan untuk meninjau kebijakan privasi dari setiap layanan pihak ketiga yang mereka kunjungi."
+        },
+        {
+          "title": "8. Privasi Anak-Anak",
+          "content": "Platform tidak ditujukan untuk individu di bawah usia 18 tahun. Kami tidak secara sengaja mengumpulkan informasi pribadi dari anak-anak. Jika kami menyadari bahwa informasi pribadi dari anak di bawah umur telah dikumpulkan, kami akan mengambil langkah-langkah untuk menghapus informasi tersebut."
+        },
+        {
+          "title": "9. Perubahan pada Kebijakan Privasi Ini",
+          "content": "Kami dapat memperbarui Kebijakan Privasi ini dari waktu ke waktu. Ketika perubahan dilakukan, kami akan memperbarui tanggal “Terakhir Diperbarui” di bagian atas halaman ini. Penggunaan platform yang berkelanjutan setelah pembaruan merupakan penerimaan terhadap kebijakan yang revisi."
+        },
+        {
+          "title": "10. Informasi Kontak",
+          "content": "Jika Anda memiliki pertanyaan tentang Kebijakan Privasi ini atau praktik data kami, silakan hubungi kami di:\n\nEmail: support@yourhome.com\nPerusahaan: Your Home\nAlamat: Hanoi, Vietnam"
+        }
+      ]
+    },
+    "footerCopyright": "© {year} YourHome. Hak cipta dilindungi."
+  },
+  "about": {
+    "header": "Tentang",
+    "title": "Membantu penyewa dan pemilik terhubung dengan percaya diri",
+    "intro": "YourHome membuat pencarian sewa menjadi lebih sederhana, lebih cepat, dan lebih tepercaya untuk semua orang.",
+    "founder": {
+      "title": "Pendiri",
+      "nameLabel": "Dibuat oleh",
+      "name": "Vuong Trung Kien",
+      "description": "Kami ingin penemuan properti sewa terasa jelas, manusiawi, dan dapat diandalkan."
+    },
+    "hiring": {
+      "title": "Kami sedang berkembang",
+      "descriptionPrimary": "Kami selalu senang bertemu orang-orang yang peduli pada kualitas produk, kepercayaan, dan pengalaman penyewa.",
+      "descriptionSecondary": "Jika itu terdengar seperti Anda, kami ingin mendengar dari Anda."
+    },
+    "product": {
+      "title": "Apa yang dibantu oleh YourHome",
+      "items": [
+        "Menjelajahi iklan sewa terverifikasi di peta interaktif.",
+        "Menyaring berdasarkan harga, luas, dan lokasi dalam hitungan detik.",
+        "Menyimpan properti dan melihatnya lagi nanti.",
+        "Mengirim pesan langsung ke pemilik tanpa keluar dari aplikasi.",
+        "Memposting dan mengelola iklan Anda dengan mudah."
+      ]
+    },
+    "mission": {
+      "title": "Misi kami",
+      "descriptionPrimary": "Kami ingin pencarian sewa terasa praktis dan transparan, bukan menegangkan dan terpecah-pecah.",
+      "descriptionSecondary": "Iklan yang lebih jelas, percakapan yang lebih cepat, dan alat yang lebih baik membantu penyewa maupun pemilik bergerak dengan percaya diri."
+    },
+    "contact": {
+      "title": "Kontak",
+      "description": "Punya pertanyaan, masukan, atau ide kerja sama? Hubungi kami kapan saja dan kami akan segera merespons.",
+      "homeButton": "Kembali ke beranda"
+    }
+  },
+  "user": {
+    "profileTitle": "Profil pengguna",
+    "notFoundTitle": "Pengguna tidak ditemukan",
+    "notFoundDescription": "Pengguna ini tidak dapat ditemukan atau mungkin telah dihapus.",
+    "messageUser": "Kirim pesan",
+    "propertiesByName": "Properti milik {name}",
+    "noPropertiesTitle": "Belum ada properti",
+    "noPropertiesDescription": "Pengguna ini belum memposting properti sewa apa pun.",
+    "selfMessageError": "Anda tidak dapat mengirim pesan kepada diri sendiri."
+  },
+  "errors": {
+    "global": {
+      "title": "Terjadi kesalahan!",
+      "defaultDescription": "Terjadi kesalahan tak terduga."
+    },
+    "notFound": {
+      "title": "Halaman tidak ditemukan",
+      "description": "Halaman yang Anda cari tidak ada.",
+      "action": "Ke beranda"
+    }
+  }
+}

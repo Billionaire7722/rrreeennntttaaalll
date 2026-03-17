@@ -6,7 +6,8 @@
     "dev": "next dev -p 3002 --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "validate:i18n": "node scripts/validate-i18n.mjs"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.21",

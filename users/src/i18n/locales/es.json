@@ -1,0 +1,544 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "goBack": "Volver",
+    "hello": "Hola",
+    "guest": "Invitado",
+    "search": "Buscar",
+    "searchPlaceholder": "Buscar propiedades...",
+    "from": "Desde...",
+    "to": "Hasta...",
+    "reset": "Restablecer",
+    "apply": "Aplicar",
+    "cancel": "Cancelar",
+    "saveChanges": "Guardar cambios",
+    "upload": "Subir",
+    "tryAgain": "Reintentar",
+    "saving": "Guardando...",
+    "loadMore": "Ver más",
+    "showingOf": "Mostrando {shown} de {total}",
+    "showingRange": "Mostrando {start}-{end} de {total}",
+    "theme": "Tema",
+    "view": "Ver",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "darkMode": "Modo oscuro",
+    "lightMode": "Modo claro",
+    "switchToDarkMode": "Cambiar a modo oscuro",
+    "switchToLightMode": "Cambiar a modo claro"
+  },
+  "property": {
+    "detail": {
+      "notFound": "Información de la propiedad no encontrada.",
+      "postedBy": "Publicado por",
+      "noPosterInfo": "Sin información del anunciante",
+      "noDescription": "No hay descripción disponible.",
+      "contactNow": "Contactar ahora",
+      "manageListing": "Administrar anuncio"
+    },
+    "status": {
+      "available": "Disponible",
+      "rented": "Alquilado",
+      "pending": "Pendiente"
+    },
+    "units": {
+      "million": "millones",
+      "vndPerMonth": "VND / mes",
+      "monthAbbr": "/mes"
+    },
+    "fields": {
+      "bedrooms": "Dormitorios",
+      "privateBath": "Privado",
+      "sharedBath": "Compartido",
+      "bathrooms": "Baños",
+      "area": "Área (m²)",
+      "description": "Descripción"
+    },
+    "filters": {
+      "title": "Filtro avanzado",
+      "priceRange": "Rango de precio (VND)",
+      "minBedrooms": "Dormitorios mínimos",
+      "locationArea": "Ubicación",
+      "provinceCity": "Provincia / Ciudad",
+      "bathroomType": "Tipo de baño"
+    },
+    "list": {
+      "countLabel": "propiedades",
+      "displayMode": "Modo de visualización",
+      "emptyTitle": "No se encontraron propiedades",
+      "viewModes": {
+        "grid": "Cuadrícula",
+        "list": "Lista",
+        "compact": "Compacto"
+      }
+    },
+    "actions": {
+      "viewDetails": "Ver detalles"
+    },
+    "add": {
+      "title": "Agregar propiedad",
+      "submitButton": "Enviar P.",
+      "submitting": "Enviando...",
+      "submitSuccess": "Propiedad enviada",
+      "submitError": "Fallo al enviar",
+      "loginRequired": "Inicie sesión para añadir"
+    },
+    "form": {
+      "propertyTypeLabel": "Tipo de propiedad",
+      "cityLabel": "Ciudad",
+      "districtLabel": "Distrito",
+      "addressLabel": "Dirección",
+      "exactLocationLabel": "Ubicación exacta",
+      "dragPinHint": "Arrastra el marcador hasta la ubicación exacta de la propiedad",
+      "priceLabel": "Precio (VND)",
+      "contactPhoneLabel": "Teléfono de contacto",
+      "photosLabel": "Fotos",
+      "videosLabel": "Videos",
+      "addPhotosHint": "Haz clic para agregar fotos (máx. 7)",
+      "addVideosHint": "Haz clic para agregar videos (máx. 2)",
+      "streetAddressLabel": "Dirección detallada",
+      "useCurrentLocation": "Usar mi ubicación actual",
+      "geocodingLoading": "Buscando ubicación...",
+      "uploadingMedia": "Subiendo fotos y videos...",
+      "previewImage": "Vista previa",
+      "locationError": "No se pudo obtener tu ubicación.",
+      "invalidImageType": "Sube solo imágenes PNG, JPG, GIF, WebP, BMP o AVIF.",
+      "imageUploadError": "No se pudieron subir una o más imágenes.",
+      "videoUploadError": "No se pudieron subir uno o más videos."
+    },
+    "types": {
+      "house": "Casa",
+      "commercialSpace": "Local comercial",
+      "apartment": "Apartamento",
+      "condominium": "Condominio",
+      "hotel": "Hotel"
+    },
+    "labels": {
+      "price": "Precio"
+    },
+    "edit": {
+      "title": "Editar propiedad",
+      "submitSuccess": "¡Propiedad actualizada con éxito!",
+      "submitError": "No se pudo actualizar la propiedad",
+      "nameLabel": "Nombre de la propiedad"
+    },
+    "messages": {
+      "deleteConfirm": "¿Seguro que quieres eliminar esta propiedad? Esta acción no se puede deshacer.",
+      "deleteFailed": "No se pudo eliminar la propiedad."
+    },
+    "media": {
+      "videoUploaded": "Video {index} subido"
+    }
+  },
+  "navigation": {
+    "home": "Inicio",
+    "settings": "Ajustes",
+    "accountsCenter": "Centro de Cuentas",
+    "appLanguage": "Idioma de la App",
+    "helpSupport": "Centro de Ayuda",
+    "about": "Acerca de",
+    "logOut": "Cerrar Sesión",
+    "saved": "Guardado",
+    "myProperties": "Anuncios",
+    "chats": "Chats",
+    "profile": "Perfil",
+    "postListing": "Publicar"
+  },
+  "chat": {
+    "conversationsTitle": "Conversaciones",
+    "online": "En línea",
+    "offline": "Sin conexión",
+    "viewProperty": "Ver propiedad",
+    "startTitle": "Inicia una conversación",
+    "startDescription": "Saluda para comenzar a chatear",
+    "seen": "Visto",
+    "sent": "Enviado",
+    "youPrefix": "Tú: ",
+    "selectConversationTitle": "Selecciona una conversación",
+    "selectConversationDescription": "Un chat moderno para conectar al instante con propietarios y clientes.",
+    "typeMessagePlaceholder": "Escribe un mensaje...",
+    "countSingular": "chat",
+    "countPlural": "chats",
+    "signInRequiredTitle": "Inicia sesión",
+    "signInRequiredDescription": "Debes iniciar sesión para ver tu historial de chats.",
+    "emptyTitle": "Aún no hay conversaciones",
+    "emptyDescription": "Tu historial de chats aparecerá aquí.",
+    "initialPropertyMessage": "Hola, me gustaría contactarte sobre el anuncio \"{title}\" (ID: {id}).",
+    "loadingMessages": "Cargando mensajes..."
+  },
+  "profile": {
+    "editProfile": "Editar Perfil",
+    "displayName": "Nombre visible",
+    "bio": "Sobre Mí",
+    "changeLimit": "Límite de cambio: Una vez cada 30 días.",
+    "bioPlaceholder": "Cuéntanos algo sobre ti...",
+    "account": {
+      "firstNameLabel": "Nombre",
+      "lastNameLabel": "Apellido",
+      "personalInfoTitle": "Información personal",
+      "securityTitle": "Seguridad y contraseña",
+      "currentPasswordLabel": "Contraseña actual",
+      "newPasswordLabel": "Nueva contraseña",
+      "confirmPasswordLabel": "Confirmar nueva contraseña",
+      "updatePasswordButton": "Actualizar contraseña",
+      "emailLabel": "Correo electrónico",
+      "heroTitle": "Cuenta y seguridad",
+      "heroDescription": "Administre sus datos personales y proteja la configuración de su cuenta aquí."
+    },
+    "messages": {
+      "editSuccess": "Perfil actualizado correctamente",
+      "editFailed": "No se pudo actualizar el perfil",
+      "nameChangeLimit": "Solo puedes cambiar tu nombre una vez cada 30 días.",
+      "profileUpdated": "¡Perfil actualizado con éxito!",
+      "passwordUpdated": "¡Contraseña cambiada con éxito!"
+    },
+    "editCover": "Editar imagen de portada",
+    "welcomeTitle": "Bienvenido a tu hogar",
+    "myPropertiesTitle": "Lista de casas listadas",
+    "savedEmptyTitle": "No hay propiedades guardadas",
+    "savedSectionDescription": "Guarda aquí los anuncios que te gusten",
+    "myPropertiesEmptyTitle": "Aún no hay anuncios",
+    "myPropertiesSectionDescription": "Empieza publicando tu primer anuncio",
+    "savedSectionTitle": "Propiedades Guardadas",
+    "welcomeDescription": "Inicie sesión para guardar sus propiedades favoritas, realizar un seguimiento de sus listados y conectarse con los propietarios",
+    "footerHint": "Encuentre su casa de alquiler perfecta con YourHome",
+    "noBioYet": "Cuéntales a los inquilinos un poco sobre ti",
+    "sectionsTitle": "Secciones",
+    "sectionsDescription": "Elige un área para administrar a la vez.",
+    "uploadAvatarError": "No se pudo subir la foto de perfil. Inténtalo de nuevo.",
+    "uploadCoverError": "No se pudo subir la imagen de portada.",
+    "createdOn": "Publicado el {date}",
+    "summaryTitle": "Resumen"
+  },
+  "auth": {
+    "loginPrompt": {
+      "title": "Inicio de sesión requerido",
+      "description": "Inicia sesión para publicar anuncios y conectar con miles de posibles inquilinos."
+    },
+    "login": {
+      "title": "Bienvenido de nuevo",
+      "subtitle": "Inicia sesión para continuar explorando casas",
+      "emailOrUsernamePlaceholder": "Correo o usuario",
+      "submitting": "Iniciando...",
+      "noAccount": "¿No tienes cuenta?",
+      "createOne": "Crea una",
+      "heroTitle": "Descubre tu próximo hogar",
+      "heroDescription": "Explora miles de anuncios verificados y encuentra el espacio perfecto que se sienta como en casa."
+    },
+    "shared": {
+      "passwordPlaceholder": "Contraseña",
+      "signInButton": "Iniciar Sesión",
+      "signInLink": "Inicia sesión",
+      "logoSubtitle": "Encuentra tu lugar ideal"
+    },
+    "register": {
+      "title": "Crea tu cuenta",
+      "subtitle": "Únete a miles de inquilinos felices",
+      "usernamePlaceholder": "Usuario",
+      "emailPlaceholder": "Correo electrónico",
+      "phonePlaceholder": "Teléfono",
+      "firstNamePlaceholder": "Nombre",
+      "lastNamePlaceholder": "Apellido",
+      "confirmPasswordPlaceholder": "Confirmar contraseña",
+      "createAccountButton": "Crear Cuenta",
+      "creatingAccount": "Creando cuenta...",
+      "alreadyHaveAccount": "¿Ya tienes cuenta?",
+      "heroTitle": "Comienza tu viaje hacia el hogar perfecto",
+      "heroDescription": "Crea una cuenta para guardar tus listados favoritos y contactar a los propietarios.",
+      "passwordRequirements": "Requisitos de contraseña:",
+      "passwordRules": {
+        "length": "8-12 caracteres",
+        "uppercase": "Mayúscula (A-Z)",
+        "lowercase": "Minúscula (a-z)",
+        "number": "Número (0-9)",
+        "special": "Especial (@$!%*?&)"
+      },
+      "acceptTermsLabel": "Acepto los Términos de Servicio y la Política de Privacidad"
+    },
+    "validation": {
+      "emailOrUsernameRequired": "Por favor ingrese su correo o usuario",
+      "passwordRequired": "Por favor ingrese su contraseña",
+      "loginFailed": "Ingreso fallido. Intente de nuevo.",
+      "firstNameRequired": "Por favor ingrese su nombre",
+      "lastNameRequired": "Por favor ingrese su apellido",
+      "fullNameRequired": "Por favor ingrese su nombre completo",
+      "usernameRequired": "Por favor ingrese un usuario",
+      "usernameLength": "El usuario debe tener al menos 3 caracteres",
+      "emailRequired": "Por favor ingrese su correo",
+      "emailInvalid": "Formato de correo inválido",
+      "phoneRequired": "Por favor ingrese su teléfono",
+      "confirmPasswordRequired": "Por favor confirme su contraseña",
+      "passwordsMismatch": "Las contraseñas no coinciden",
+      "captchaRequired": "Por favor complete el captcha",
+      "acceptTermsRequired": "Por favor acepte los términos de servicio para continuar"
+    }
+  },
+  "home": {
+    "onboarding": {
+      "steps": [
+        {
+          "title": "Descubre Alquileres en el Mapa",
+          "description": "Este mapa muestra todas las propiedades de alquiler disponibles."
+        },
+        {
+          "title": "Marcadores de Propiedad",
+          "description": "Cada marcador representa un listado. Toca un marcador para ver detalles."
+        },
+        {
+          "title": "Barra de Búsqueda",
+          "description": "Usa la barra de búsqueda para encontrar propiedades por ubicación."
+        },
+        {
+          "title": "Filtros",
+          "description": "Usa filtros para reducir los listados por precio, tipo, etc."
+        },
+        {
+          "title": "Publicar un Nuevo Anuncio",
+          "description": "Haz clic aquí para publicar un nuevo anuncio de alquiler."
+        }
+      ],
+      "complete": {
+        "title": "¡Todo listo! 🎉",
+        "description": "¡Estás listo para explorar y publicar propiedades!"
+      },
+      "skip": "Omitir",
+      "next": "Siguiente",
+      "finish": "Empezar"
+    }
+  },
+  "help": {
+    "centerTitle": "Centro de ayuda",
+    "centerSubtitle": "¿Cómo podemos ayudarte hoy?",
+    "searchPlaceholder": "Buscar artículos de ayuda...",
+    "faqTitle": "Preguntas frecuentes",
+    "faq": {
+      "items": [
+        {
+          "question": "¿Cómo publico un anuncio?",
+          "answer": "Simplemente haz clic en el botón + en la página de inicio o en tu perfil."
+        },
+        {
+          "question": "¿Cómo cambio los detalles de mi cuenta?",
+          "answer": "Ve a tu Perfil, abre los Ajustes y selecciona 'Centro de Cuentas' para actualizar tu información o contraseña."
+        },
+        {
+          "question": "¿Están seguros mis datos?",
+          "answer": "Sí, utilizamos cifrado y protocolos de seguridad estándar de la industria para garantizar que tus datos personales estén protegidos."
+        },
+        {
+          "question": "¿Cómo contacto a un propietario?",
+          "answer": "Una vez que encuentres una propiedad que te guste, haz clic en 'Contactar ahora' para iniciar un chat directo con el propietario."
+        }
+      ]
+    },
+    "contact": {
+      "title": "Contáctenos",
+      "email": "Soporte por correo",
+      "chat": "Chat en vivo",
+      "call": "Línea directa",
+      "avgResponseTime": "Respuesta promedio: 5m",
+      "stillNeedHelp": "¿Aún necesitas ayuda? Nuestro equipo está disponible 24/7."
+    },
+    "ticket": {
+      "title": "Enviar ticket de soporte",
+      "successMessage": "Tu solicitud de soporte se envió correctamente. Te responderemos pronto.",
+      "errorMessage": "No pudimos enviar tu solicitud. Inténtalo de nuevo.",
+      "subjectLabel": "Asunto",
+      "subjectPlaceholder": "Cuéntanos en qué necesitas ayuda",
+      "priorityLabel": "Prioridad",
+      "priorities": {
+        "low": "Baja",
+        "medium": "Media",
+        "high": "Alta"
+      },
+      "messageLabel": "Mensaje",
+      "messagePlaceholder": "Describe el problema con el mayor detalle posible",
+      "submitButton": "Enviar ticket",
+      "submittingButton": "Enviando...",
+      "submittedTitle": "¡Enviado!",
+      "redirectingBack": "Volviendo..."
+    }
+  },
+  "legal": {
+    "terms": {
+      "linkLabel": "Términos de Servicio",
+      "title": "Términos de Servicio",
+      "updated": "Última actualización: 12 de marzo de 2026",
+      "intro": "Bienvenido a Your Home. Estos Términos de Servicio (\"Términos\") rigen su acceso y uso del sitio web de Your Home, la aplicación móvil y los servicios relacionados (colectivamente denominados la \"Plataforma\"). Al acceder o utilizar la Plataforma, crear una cuenta o publicar contenido, usted acepta estar sujeto a estos Términos. Si no está de acuerdo con estos Términos, no utilice la Plataforma.",
+      "sections": [
+        {
+          "title": "1. Descripción del Servicio",
+          "content": "Your Home es una plataforma en línea que permite a los usuarios: publicar anuncios de alquiler de propiedades, buscar propiedades de alquiler y conectar a los propietarios con inquilinos potenciales. La Plataforma actúa únicamente como un intermediario para fines de listado e información. No poseemos, gestionamos, vendemos, alquilamos ni controlamos ninguna de las propiedades enumeradas en la Plataforma. Cualquier acuerdo o transacción realizada entre propietarios e inquilinos es exclusivamente entre esas partes."
+        },
+        {
+          "title": "2. Elegibilidad",
+          "content": "Para utilizar la Plataforma, debe: Tener al menos 18 años de edad; Tener la capacidad legal para celebrar acuerdos vinculantes; Proporcionar información precisa y veraz al registrar una cuenta. Al usar la Plataforma, usted declara y garantiza que cumple con estos requisitos."
+        },
+        {
+          "title": "3. Cuentas de Usuario",
+          "content": "Para acceder a ciertas funciones de la Plataforma, es posible que deba crear una cuenta. Usted acepta que: La información que proporcione durante el registro sea precisa y esté actualizada; Usted es responsable de mantener la confidencialidad de sus credenciales de cuenta; Usted es responsable de todas las actividades que ocurran bajo su cuenta. Debe notificarnos de inmediato si sospecha cualquier acceso no autorizado a su cuenta. Nos reservamos el derecho de suspender o cancelar cuentas que violen estos Términos."
+        },
+        {
+          "title": "4. Contenido del Usuario",
+          "content": "Los usuarios pueden cargar, publicar o difundir contenido en la Plataforma, incluyendo: descripciones de propiedades, fotos, información de contacto, precios y detalles de ubicación. Usted conserva la propiedad de cualquier contenido que envíe. Sin embargo, al publicar contenido en la Plataforma, otorga a Your Home una licencia mundial, no exclusiva y libre de regalías para: mostrar, distribuir, reproducir y promover su contenido con el fin de operar y mejorar la Plataforma. Usted es el único responsable de la precisión y legalidad del contenido que publique."
+        },
+        {
+          "title": "5. Conducta Prohibida",
+          "content": "Los usuarios aceptan no: Publicar información de propiedad falsa o engañosa; Anunciar propiedades que no existen; Publicar contenido ilegal, ofensivo o dañino; Usar la Plataforma para fraude o estafas; Intentar obtener acceso no autorizado a la Plataforma; Interferir con la seguridad o el funcionamiento de la Plataforma; Usar sistemas automatizados para extraer datos de la Plataforma. Nos reservamos el derecho de eliminar contenido o suspender cuentas que violen estas reglas."
+        },
+        {
+          "title": "6. Listados de Propiedades",
+          "content": "Los usuarios que publiquen información de propiedades aceptan que: La información del listado sea precisa y veraz; El usuario tenga el derecho legal de alquilar o anunciar la propiedad; El listado no viole ninguna ley aplicable. Your Home no verifica la precisión de los listados de propiedades y no es responsable de las disputas entre propietarios e inquilinos. Se recomienda a los usuarios verificar de forma independiente toda la información antes de celebrar cualquier contrato de alquiler."
+        },
+        {
+          "title": "7. Papel de la Plataforma y Descargo de Responsabilidad",
+          "content": "La Plataforma solo proporciona un espacio para que los usuarios publiquen y vean listados de alquiler. Your Home no: Garantiza la precisión de los listados; Participa en acuerdos de alquiler; Actúa como agente de bienes raíces; Verifica la propiedad de los inmuebles; Garantiza pagos o transacciones. Todos los acuerdos entre propietarios e inquilinos son bajo el propio riesgo de los usuarios."
+        },
+        {
+          "title": "8. Moderación de Contenido",
+          "content": "Nos reservamos el derecho de revisar y eliminar cualquier contenido, suspender o cancelar cuentas, o restringir el acceso a la Plataforma si creemos que el contenido o la actividad viola estos Términos o las leyes aplicables. Sin embargo, no tenemos la obligación de monitorear todo el contenido de los usuarios."
+        },
+        {
+          "title": "9. Propiedad Intelectual",
+          "content": "Todos los derechos de propiedad intelectual relacionados con la Plataforma, incluidos, entre otros: el diseño, el software, los logotipos, las marcas comerciales y las interfaces, pertenecen a Your Home o a sus licenciantes. Los usuarios no pueden copiar, distribuir, modificar o reproducir ninguna parte de la Plataforma sin permiso previo por escrito."
+        },
+        {
+          "title": "10. Privacidad",
+          "content": "Su uso de la Plataforma también se rige por nuestra Política de Privacidad, que explica cómo recopilamos, usamos, y protegemos los datos de los usuarios. Al usar la Plataforma, usted acepta las prácticas de datos descritas en la Política de Privacidad."
+        },
+        {
+          "title": "11. Limitación de Responsabilidad",
+          "content": "En la medida máxima permitida por la ley, Your Home no será responsable por: Disputas entre propietarios e inquilinos; Listados de propiedades inexactos o engañosos; Daños resultantes de acuerdos de alquiler; Pérdidas financieras relacionadas con transacciones de propiedad; Mala conducta del usuario en la Plataforma. Los usuarios aceptan usar la Plataforma bajo su propio riesgo."
+        },
+        {
+          "title": "12. Indemnización",
+          "content": "Usted acepta defender, indemnizar, y eximir de responsabilidad a Your Home, sus propietarios, empleados, y afiliados de cualquier reclamo, daño, pérdida, o gasto legal que surja de: Su uso de la Plataforma; El contenido que publique; Su violación de estos Términos; o Su violación de las leyes aplicables."
+        },
+        {
+          "title": "13. Disponibilidad del Servicio",
+          "content": "Nos esforzamos por mantener la Plataforma disponible en todo momento. Sin embargo, no garantizamos que el servicio sea ininterrumpido. Podemos modificar, suspender, o descontinuar cualquier parte de la Plataforma en cualquier momento sin previo aviso."
+        },
+        {
+          "title": "14. Cambios en los Términos",
+          "content": "Nos reservamos el derecho de actualizar o modificar estos Términos en cualquier momento. Cuando se realicen cambios, los Términos actualizados se publicarán en la Plataforma con una fecha revisada de \"Última actualización\". El uso continuado de la Plataforma después de los cambios constituye la aceptación de los Términos actualizados."
+        },
+        {
+          "title": "15. Ley Aplicable",
+          "content": "Estos Términos se regirán e interpretarán de acuerdo con las leyes de Vietnam. Cualquier disputa que surja de estos Términos se resolverá en los tribunales de la jurisdicción aplicable."
+        },
+        {
+          "title": "16. Información de Contacto",
+          "content": "Si tiene alguna pregunta sobre estos Términos, contáctenos en support@yourhome.com."
+        }
+      ]
+    },
+    "privacy": {
+      "linkLabel": "Política de Privacidad",
+      "title": "POLÍTICA DE PRIVACIDAD",
+      "updated": "Última actualización: 12 de marzo de 2026",
+      "welcome": "Bienvenido a Your Home.",
+      "intro": "Esta Política de Privacidad explica cómo Your Home (\"nosotros\", \"nuestro\" o \"nos\") recopila, utiliza, almacena y protege su información personal cuando utiliza nuestro sitio web, aplicación móvil y servicios relacionados (colectivamente denominados la \"Plataforma\").",
+      "agreement": "Al utilizar la Plataforma, usted acepta la recopilación y el uso de información de acuerdo con esta Política de Privacidad.",
+      "sections": [
+        {
+          "title": "1. Información que Recopilamos",
+          "content": "Podemos recopilar los siguientes tipos de información cuando utiliza la Plataforma.\n\n1.1 Información Personal\nCuando crea una cuenta o utiliza nuestros servicios, podemos recopilar información personal como: nombre completo, dirección de correo electrónico, número de teléfono, credenciales de cuenta (contraseña cifrada), información de perfil, información de listado de propiedades.\n\n1.2 Información del Listado de Propiedades\nSi publica anuncios de alquiler, podemos recopilar: dirección de la propiedad, descripción de la propiedad, precio del alquiler, fotos de la propiedad, información de contacto, datos de ubicación relacionados con la propiedad. Esta información se muestra públicamente en la Plataforma.\n\n1.3 Información de Uso\nPodemos recopilar automáticamente cierta información técnica, incluyendo: dirección IP, tipo de navegador, información del dispositivo, sistema operativo, páginas visitadas, tiempo pasado en la Plataforma, interacción con los listados. Esto nos ayuda a entender cómo los usuarios interactúan con la Plataforma.\n\n1.4 Cookies y Tecnologías de Seguimiento\nPodemos utilizar cookies para: mantener las sesiones de usuario, recordar preferencias, analizar el tráfico y el comportamiento del usuario, mejorar el rendimiento de la plataforma. Los usuarios pueden desactivar las cookies a través de la configuración de su navegador."
+        },
+        {
+          "title": "2. Cómo Utilizamos su Información",
+          "content": "Utilizamos la información recopilada para los siguientes fines: Para crear y gestionar cuentas de usuario; Para mostrar listados de alquiler en la Plataforma; Para conectar a propietarios e inquilinos; Para mejorar el rendimiento y las funciones de la plataforma; Para prevenir el fraude, el abuso y las actividades ilegales; Para comunicarse con usuarios sobre sus cuentas o listados; Para cumplir con las obligaciones legales."
+        },
+        {
+          "title": "3. Cómo Compartimos la Información",
+          "content": "Kami tidak menjual informasi pribadi Anda. Namun, kami dapat berbagi informasi dalam situasi berikut:\n\n3.1 Con Otros Usuarios\nLa información que incluya en los listados de propiedades (como detalles de contacto o información de la propiedad) puede ser visible para otros usuarios.\n\n3.2 Proveedores de Servicios\nKami dapat berbagi informasi dengan penyedia layanan pihak ketiga tepercaya yang membantu mengoperasikan Platform, seperti layanan hosting cloud, penyedia analitik, layanan pengiriman email. Penyedia ini berkewajiban untuk melindungi informasi Anda.\n\n3.3 Requisitos Legales\nKami dapat mengungkapkan informasi jika diwajibkan oleh hukum atau sebagai tanggapan terhadap permintaan hukum yang sah dari pihak berwenang."
+        },
+        {
+          "title": "4. Almacenamiento y Seguridad de Datos",
+          "content": "Tomamos medidas técnicas y organizativas razonables para proteger su información personal contra el acceso no autorizado, la pérdida, el mal uso o la alteración. Las medidas de seguridad pueden incluir: contraseñas cifradas, servidores seguros, acceso restringido a bases de datos, monitoreo de actividades sospechosas. Namun, ningún método de transmisión por Internet o almacenamiento electrónico es completamente seguro."
+        },
+        {
+          "title": "5. Retención de Datos",
+          "content": "Conservamos su información personal durante el tiempo que sea necesario para: proporcionar nuestros servicios, mantener su cuenta, cumplir con las obligaciones legales, resolver disputas, hacer cumplir los acuerdos. Si elimina su cuenta, podemos conservar cierta información cuando lo exija la ley o para fines comerciales legítimos."
+        },
+        {
+          "title": "6. Sus Derechos",
+          "content": "Dependiendo de las leyes aplicables, los usuarios pueden tener derecho a: acceder a sus datos personales, corregir información inexacta, solicitar la eliminación de datos personales, oponerse a ciertos tipos de procesamiento de datos, retirar el consentimiento cuando corresponda. Las solicitudes se pueden enviar a nuestro correo electrónico de contacto que figura a continuación."
+        },
+        {
+          "title": "7. Enlaces de Terceros",
+          "content": "La Plataforma puede contener enlaces a sitios web o servicios de terceros. No somos responsables de las prácticas de privacidad o el contenido de esos sitios externos. Se recomienda a los usuarios revisar las políticas de privacidad de cualquier servicio de terceros que visiten."
+        },
+        {
+          "title": "8. Privacidad de los Niños",
+          "content": "La Plataforma no está destinada a personas menores de 18 años. No recopilamos a sabiendas información personal de niños. Si nos damos cuenta de que se ha recopilado información personal de un menor, tomaremos medidas para eliminar dicha información."
+        },
+        {
+          "title": "9. Cambios en esta Política de Privacidad",
+          "content": "Podemos actualizar esta Política de Privacidad de vez en cuando. Cuando se realicen cambios, actualizaremos la fecha de \"Última actualización\" en la parte superior de esta página. El uso continuado de la Plataforma después de las actualizaciones constituye la aceptación de la política revisada."
+        },
+        {
+          "title": "10. Información de Contacto",
+          "content": "Si tiene alguna pregunta sobre esta Política de Privacidad o nuestras prácticas de datos, póngase en contacto con nosotros:\n\nCorreo electrónico: support@yourhome.com\nEmpresa: Your Home\nDirección: Hanoi, Vietnam"
+        }
+      ]
+    },
+    "footerCopyright": "© {year} YourHome. Todos los derechos reservados."
+  },
+  "about": {
+    "header": "Acerca de",
+    "title": "Conectamos a inquilinos y propietarios con confianza",
+    "intro": "YourHome hace que la búsqueda de alquiler sea más simple, rápida y confiable para todos.",
+    "founder": {
+      "title": "Fundador",
+      "nameLabel": "Creado por",
+      "name": "Vuong Trung Kien",
+      "description": "Queremos que descubrir alquileres se sienta claro, humano y confiable."
+    },
+    "hiring": {
+      "title": "Estamos creciendo",
+      "descriptionPrimary": "Siempre nos entusiasma conocer personas que valoran la calidad del producto, la confianza y la experiencia del inquilino.",
+      "descriptionSecondary": "Si eso te describe, nos encantará saber de ti."
+    },
+    "product": {
+      "title": "Lo que YourHome te ayuda a hacer",
+      "items": [
+        "Explorar anuncios verificados en un mapa interactivo.",
+        "Filtrar por precio, área y ubicación en segundos.",
+        "Guardar propiedades y revisarlas más tarde.",
+        "Hablar con propietarios sin salir de la app.",
+        "Publicar y administrar tus anuncios fácilmente."
+      ]
+    },
+    "mission": {
+      "title": "Nuestra misión",
+      "descriptionPrimary": "Queremos que descubrir alquileres sea práctico y transparente, no estresante ni fragmentado.",
+      "descriptionSecondary": "Mejores anuncios, conversaciones más rápidas y mejores herramientas ayudan tanto a inquilinos como a propietarios a avanzar con confianza."
+    },
+    "contact": {
+      "title": "Contacto",
+      "description": "¿Tienes preguntas, comentarios o ideas de colaboración? Escríbenos cuando quieras y te responderemos pronto.",
+      "homeButton": "Volver al inicio"
+    }
+  },
+  "user": {
+    "profileTitle": "Perfil del usuario",
+    "notFoundTitle": "Usuario no encontrado",
+    "notFoundDescription": "No se pudo encontrar a este usuario o ha sido eliminado.",
+    "messageUser": "Enviar mensaje",
+    "propertiesByName": "Propiedades de {name}",
+    "noPropertiesTitle": "Aún no hay propiedades",
+    "noPropertiesDescription": "Este usuario todavía no ha publicado propiedades en alquiler.",
+    "selfMessageError": "No puedes enviarte mensajes a ti mismo."
+  },
+  "errors": {
+    "global": {
+      "title": "¡Algo salió mal!",
+      "defaultDescription": "Ocurrió un error inesperado."
+    },
+    "notFound": {
+      "title": "Página no encontrada",
+      "description": "La página que buscas no existe.",
+      "action": "Ir al inicio"
+    }
+  }
+}

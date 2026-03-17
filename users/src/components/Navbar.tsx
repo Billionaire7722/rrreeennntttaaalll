@@ -35,7 +35,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
             {/* Left: User Greeting */}
             <div className="flex-1 flex">
                 <span className="max-w-[80px] truncate text-sm font-medium text-[var(--theme-text)] sm:max-w-[120px]">
-                    {t("hello")}, {user ? user.firstName || user.name || t("guest") : t("guest")}
+                    {t("common.hello")}, {user ? user.firstName || user.name || t("common.guest") : t("common.guest")}
                 </span>
             </div>
 
@@ -45,7 +45,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
                     <Search size={16} className="flex-shrink-0 text-[var(--theme-text-muted)]" />
                     <input
                         className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-[var(--theme-text)] outline-none placeholder:text-[var(--theme-text-muted)]"
-                        placeholder={t("search_placeholder")}
+                        placeholder={t("common.searchPlaceholder")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />

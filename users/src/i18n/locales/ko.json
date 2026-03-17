@@ -1,0 +1,544 @@
+{
+  "common": {
+    "loading": "로딩 중...",
+    "goBack": "뒤로",
+    "hello": "안녕하세요",
+    "guest": "게스트",
+    "search": "검색",
+    "searchPlaceholder": "검색...",
+    "from": "부터...",
+    "to": "까지...",
+    "reset": "재설정",
+    "apply": "적용",
+    "cancel": "취소",
+    "saveChanges": "변경 사항 저장",
+    "upload": "업로드",
+    "tryAgain": "다시 시도",
+    "saving": "저장 중...",
+    "loadMore": "더 보기",
+    "showingOf": "{total}개 중 {shown}개 표시",
+    "showingRange": "{total}개 중 {start}-{end}개 표시",
+    "theme": "테마",
+    "view": "보기",
+    "edit": "수정",
+    "delete": "삭제",
+    "darkMode": "다크 모드",
+    "lightMode": "라이트 모드",
+    "switchToDarkMode": "다크 모드로 전환",
+    "switchToLightMode": "라이트 모드로 전환"
+  },
+  "property": {
+    "detail": {
+      "notFound": "정보를 찾을 수 없습니다.",
+      "postedBy": "게시자",
+      "noPosterInfo": "게시자 정보 없음",
+      "noDescription": "설명이 없습니다.",
+      "contactNow": "연락하기",
+      "manageListing": "매물 관리"
+    },
+    "status": {
+      "available": "이용 가능",
+      "rented": "임대됨",
+      "pending": "대기 중"
+    },
+    "units": {
+      "million": "백만",
+      "vndPerMonth": "VND / 월",
+      "monthAbbr": "/월"
+    },
+    "fields": {
+      "bedrooms": "침실",
+      "privateBath": "개별",
+      "sharedBath": "공용",
+      "bathrooms": "욕실",
+      "area": "면적 (m²)",
+      "description": "설명"
+    },
+    "filters": {
+      "title": "고급 필터",
+      "priceRange": "가격 범위 (VND)",
+      "minBedrooms": "최소 침실 수",
+      "locationArea": "지역",
+      "provinceCity": "주 / 도시",
+      "bathroomType": "욕실 유형"
+    },
+    "list": {
+      "countLabel": "숙소",
+      "displayMode": "표시 모드",
+      "emptyTitle": "매물을 찾을 수 없습니다",
+      "viewModes": {
+        "grid": "그리드",
+        "list": "목록",
+        "compact": "간단히"
+      }
+    },
+    "actions": {
+      "viewDetails": "상세 보기"
+    },
+    "add": {
+      "title": "매물 추가",
+      "submitButton": "숙소 등록",
+      "submitting": "처리 중...",
+      "submitSuccess": "성공적으로 제출됨",
+      "submitError": "제출 실패",
+      "loginRequired": "추가하려면 로그인하세요."
+    },
+    "form": {
+      "propertyTypeLabel": "매물 유형",
+      "cityLabel": "도시",
+      "districtLabel": "지역",
+      "addressLabel": "주소",
+      "exactLocationLabel": "정확한 위치",
+      "dragPinHint": "핀을 드래그해 정확한 위치를 선택하세요",
+      "priceLabel": "가격 (VND)",
+      "contactPhoneLabel": "연락처 전화번호",
+      "photosLabel": "사진",
+      "videosLabel": "동영상",
+      "addPhotosHint": "사진 추가하기 (최대 7장)",
+      "addVideosHint": "동영상 추가하기 (최대 2개)",
+      "streetAddressLabel": "상세 주소",
+      "useCurrentLocation": "현재 위치 사용",
+      "geocodingLoading": "위치 검색 중...",
+      "uploadingMedia": "사진과 동영상을 업로드하는 중...",
+      "previewImage": "이미지 미리보기",
+      "locationError": "위치를 가져올 수 없습니다.",
+      "invalidImageType": "PNG, JPG, GIF, WebP, BMP 또는 AVIF 이미지 파일만 업로드해 주세요.",
+      "imageUploadError": "하나 이상의 이미지 업로드에 실패했습니다.",
+      "videoUploadError": "하나 이상의 동영상 업로드에 실패했습니다."
+    },
+    "types": {
+      "house": "주택",
+      "commercialSpace": "상업 공간",
+      "apartment": "아파트",
+      "condominium": "콘도",
+      "hotel": "호텔"
+    },
+    "labels": {
+      "price": "가격"
+    },
+    "edit": {
+      "title": "매물 수정",
+      "submitSuccess": "매물이 성공적으로 수정되었습니다!",
+      "submitError": "매물 수정에 실패했습니다",
+      "nameLabel": "매물 이름"
+    },
+    "messages": {
+      "deleteConfirm": "이 매물을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+      "deleteFailed": "매물 삭제에 실패했습니다."
+    },
+    "media": {
+      "videoUploaded": "동영상 {index} 업로드 완료"
+    }
+  },
+  "navigation": {
+    "home": "홈페이지",
+    "settings": "설정",
+    "accountsCenter": "계정 센터",
+    "appLanguage": "앱 언어",
+    "helpSupport": "도움말 및 지원",
+    "about": "정보",
+    "logOut": "로그아웃",
+    "saved": "저장됨",
+    "myProperties": "내 숙소",
+    "chats": "채팅",
+    "profile": "프로필",
+    "postListing": "등록"
+  },
+  "chat": {
+    "conversationsTitle": "대화",
+    "online": "온라인",
+    "offline": "오프라인",
+    "viewProperty": "매물 보기",
+    "startTitle": "대화를 시작하세요",
+    "startDescription": "인사를 보내고 채팅을 시작하세요",
+    "seen": "읽음",
+    "sent": "보냄",
+    "youPrefix": "나: ",
+    "selectConversationTitle": "대화를 선택하세요",
+    "selectConversationDescription": "현대적인 메신저 스타일로 집주인과 고객을 즉시 연결합니다.",
+    "typeMessagePlaceholder": "메시지를 입력하세요...",
+    "countSingular": "채팅",
+    "countPlural": "채팅",
+    "signInRequiredTitle": "로그인이 필요합니다",
+    "signInRequiredDescription": "채팅 기록을 보려면 로그인해야 합니다.",
+    "emptyTitle": "아직 대화가 없습니다",
+    "emptyDescription": "채팅 기록이 여기에 표시됩니다.",
+    "initialPropertyMessage": "안녕하세요. \"{title}\" 매물(ID: {id})에 대해 문의드리고 싶습니다.",
+    "loadingMessages": "메시지를 불러오는 중..."
+  },
+  "profile": {
+    "editProfile": "프로필 수정",
+    "displayName": "표시 이름",
+    "bio": "자기소개",
+    "changeLimit": "변경 제한: 30일마다 한 번.",
+    "bioPlaceholder": "자신에 대해 한마디 해주세요...",
+    "account": {
+      "firstNameLabel": "이름",
+      "lastNameLabel": "성",
+      "personalInfoTitle": "개인 정보",
+      "securityTitle": "보안 및 비밀번호",
+      "currentPasswordLabel": "현재 비밀번호",
+      "newPasswordLabel": "새 비밀번호",
+      "confirmPasswordLabel": "새 비밀번호 확인",
+      "updatePasswordButton": "비밀번호 업데이트",
+      "emailLabel": "이메일 주소",
+      "heroTitle": "계정 및 보안",
+      "heroDescription": "여기에서 개인 정보 및 보안 설정을 관리하세요."
+    },
+    "messages": {
+      "editSuccess": "프로필이 성공적으로 업데이트되었습니다",
+      "editFailed": "프로필 업데이트에 실패했습니다",
+      "nameChangeLimit": "이름은 30일에 한 번만 변경할 수 있습니다.",
+      "profileUpdated": "프로필이 업데이트되었습니다!",
+      "passwordUpdated": "비밀번호가 성공적으로 변경되었습니다!"
+    },
+    "editCover": "커버 이미지 편집",
+    "welcomeTitle": "환영합니다",
+    "myPropertiesTitle": "등록된 주택 목록",
+    "savedEmptyTitle": "저장한 매물이 없습니다",
+    "savedSectionDescription": "마음에 드는 매물을 여기에 저장하세요",
+    "myPropertiesEmptyTitle": "아직 등록한 매물이 없습니다",
+    "myPropertiesSectionDescription": "첫 번째 매물을 등록해 보세요",
+    "savedSectionTitle": "저장된 숙소",
+    "welcomeDescription": "로그인하여 즐겨찾는 숙소를 저장하고, 내 매물을 추적하며, 집주인과 소통하세요",
+    "footerHint": "YourHome과 함께 완벽한 임대 주택을 찾아보세요",
+    "noBioYet": "임차인에게 자신을 간단히 소개해 주세요",
+    "sectionsTitle": "섹션",
+    "sectionsDescription": "한 번에 하나의 영역만 관리하세요.",
+    "uploadAvatarError": "프로필 사진 업로드에 실패했습니다. 다시 시도해 주세요.",
+    "uploadCoverError": "커버 이미지 업로드에 실패했습니다.",
+    "createdOn": "{date} 등록",
+    "summaryTitle": "요약"
+  },
+  "auth": {
+    "loginPrompt": {
+      "title": "로그인이 필요합니다",
+      "description": "로그인하여 매물을 등록하고 수많은 잠재 임차인과 연결하세요."
+    },
+    "login": {
+      "title": "환영합니다",
+      "subtitle": "계속해서 숙소를 둘러보려면 로그인하세요",
+      "emailOrUsernamePlaceholder": "이메일 또는 아이디",
+      "submitting": "로그인 중...",
+      "noAccount": "계정이 없으신가요?",
+      "createOne": "계정 만들기",
+      "heroTitle": "다음 렌탈 홈을 발견하세요",
+      "heroDescription": "인증된 수천 개의 매물을 찾아보세요."
+    },
+    "shared": {
+      "passwordPlaceholder": "비밀번호",
+      "signInButton": "로그인",
+      "signInLink": "로그인",
+      "logoSubtitle": "완벽한 장소를 찾으세요"
+    },
+    "register": {
+      "title": "계정 생성",
+      "subtitle": "수천 명의 행복한 세입자와 함께하세요",
+      "usernamePlaceholder": "사용자 이름",
+      "emailPlaceholder": "이메일 주소",
+      "phonePlaceholder": "전화번호",
+      "firstNamePlaceholder": "이름",
+      "lastNamePlaceholder": "성",
+      "confirmPasswordPlaceholder": "비밀번호 확인",
+      "createAccountButton": "계정 만들기",
+      "creatingAccount": "생성 중...",
+      "alreadyHaveAccount": "이미 계정이 있나요?",
+      "heroTitle": "완벽한 집을 향한 여정을 시작하세요",
+      "heroDescription": "계정을 만들어 즐겨찾기를 저장하세요.",
+      "passwordRequirements": "비밀번호 요구사항:",
+      "passwordRules": {
+        "length": "8-12자",
+        "uppercase": "대문자 (A-Z)",
+        "lowercase": "소문자 (a-z)",
+        "number": "숫자 (0-9)",
+        "special": "특수 문자 (@$!%*?&)"
+      },
+      "acceptTermsLabel": "서비스 약관 및 개인정보 보호정책에 동의합니다"
+    },
+    "validation": {
+      "emailOrUsernameRequired": "이메일 또는 아이디를 입력하세요",
+      "passwordRequired": "비밀번호를 입력하세요",
+      "loginFailed": "로그인 실패. 다시 시도하십시오.",
+      "firstNameRequired": "이름을 입력하세요",
+      "lastNameRequired": "성을 입력하세요",
+      "fullNameRequired": "이름을 입력하세요",
+      "usernameRequired": "사용자 이름을 입력하세요",
+      "usernameLength": "아이디는 3자 이상이어야 합니다",
+      "emailRequired": "이메일을 입력하세요",
+      "emailInvalid": "잘못된 이메일 형식",
+      "phoneRequired": "전화번호를 입력하세요",
+      "confirmPasswordRequired": "비밀번호를 다시 입력하세요",
+      "passwordsMismatch": "비밀번호가 일치하지 않습니다",
+      "captchaRequired": "캡차를 완료하세요",
+      "acceptTermsRequired": "계속하려면 서비스 약관에 동의해 주세요"
+    }
+  },
+  "home": {
+    "onboarding": {
+      "steps": [
+        {
+          "title": "지도에서 렌탈 발견",
+          "description": "이 지도는 현재 이용 가능한 모든 임대 숙소를 보여줍니다."
+        },
+        {
+          "title": "숙소 마커",
+          "description": "각 마커는 숙소를 나타냅니다. 마커를 탭하여 세부 정보를 확인하세요."
+        },
+        {
+          "title": "검색 창",
+          "description": "검색 창을 사용하여 위치로 숙소를 찾으세요."
+        },
+        {
+          "title": "필터",
+          "description": "가격, 유형 등으로 숙소를 필터링하세요."
+        },
+        {
+          "title": "새 숙소 게시",
+          "description": "여기를 클릭하여 새 임대 숙소를 게시하세요."
+        }
+      ],
+      "complete": {
+        "title": "완료되었습니다! 🎉",
+        "description": "숙소를 탐색하고 게시할 준비가 되었습니다!"
+      },
+      "skip": "건너뛰기",
+      "next": "다음",
+      "finish": "시작하기"
+    }
+  },
+  "help": {
+    "centerTitle": "고객 센터",
+    "centerSubtitle": "무엇을 도와드릴까요?",
+    "searchPlaceholder": "도움말 문서 검색...",
+    "faqTitle": "자주 묻는 질문",
+    "faq": {
+      "items": [
+        {
+          "question": "매물을 어떻게 게시하나요?",
+          "answer": "홈페이지 또는 프로필에 있는 + 버튼을 누르시면 됩니다."
+        },
+        {
+          "question": "내 계정 정보를 어떻게 변경하나요?",
+          "answer": "프로필로 이동하여 설정을 열고 '계정 센터'를 선택하여 정보 또는 비밀번호를 업데이트하십시오."
+        },
+        {
+          "question": "내 데이터는 안전한가요?",
+          "answer": "예, 당사는 업계 표준 암호화 및 보안 프로토콜을 사용하여 귀하의 개인 데이터와 매물 정보를 비공개로 유지합니다."
+        },
+        {
+          "question": "집주인과 어떻게 연락하나요?",
+          "answer": "마음에 드는 숙소를 찾으면 '연락하기'를 클릭하여 집주인과 직접 채팅을 시작하세요."
+        }
+      ]
+    },
+    "contact": {
+      "title": "문의하기",
+      "email": "이메일 지원",
+      "chat": "실시간 채팅",
+      "call": "고객 센터 전화",
+      "avgResponseTime": "평균 응답 시간: 5분",
+      "stillNeedHelp": "도움이 더 필요하신가요? 저희 팀은 연중무휴 24시간 대기하고 있습니다."
+    },
+    "ticket": {
+      "title": "지원 티켓 제출",
+      "successMessage": "지원 요청이 성공적으로 제출되었습니다. 곧 답변드리겠습니다.",
+      "errorMessage": "요청을 제출하지 못했습니다. 다시 시도해 주세요.",
+      "subjectLabel": "제목",
+      "subjectPlaceholder": "어떤 도움이 필요한지 알려주세요",
+      "priorityLabel": "우선순위",
+      "priorities": {
+        "low": "낮음",
+        "medium": "보통",
+        "high": "높음"
+      },
+      "messageLabel": "내용",
+      "messagePlaceholder": "문제를 가능한 한 자세히 설명해 주세요",
+      "submitButton": "티켓 제출",
+      "submittingButton": "제출 중...",
+      "submittedTitle": "제출 완료!",
+      "redirectingBack": "돌아가는 중..."
+    }
+  },
+  "legal": {
+    "terms": {
+      "linkLabel": "서비스 약관",
+      "title": "이용약관",
+      "updated": "최종 업데이트: 2026년 3월 12일",
+      "intro": "Your Home에 오신 것을 환영합니다. 본 이용약관(\"약관\")은 Your Home 웹사이트, 모바일 애플리케이션 및 관련 서비스(이하 통칭하여 \"플랫폼\")에 대한 귀하의 액세스 및 이용을 규정합니다. 플랫폼을 이용하거나, 계정을 생성하거나, 콘텐츠를 게시함으로써 귀하는 본 약관에 동의하는 것으로 간주됩니다. 본 약관에 동의하지 않는 경우 플랫폼을 이용하지 마십시오.",
+      "sections": [
+        {
+          "title": "1. 서비스 설명",
+          "content": "Your Home은 사용자가 임대 매물 정보를 게시하고, 임대 매물을 검색하며, 임대인과 잠재적 임차인을 연결할 수 있는 온라인 플랫폼입니다. 플랫폼은 게시 및 정보 제공 목적의 중개 역할만 수행합니다. 당사는 플랫폼에 게시된 어떠한 부동산도 소유, 관리, 판매, 임대 또는 통제하지 않습니다. 임대인과 임차인 사이에 이루어지는 모든 계약이나 거래는 전적으로 해당 당사자 간의 책임입니다."
+        },
+        {
+          "title": "2. 이용 자격",
+          "content": "플랫폼을 이용하려면 귀하는 만 18세 이상이어야 하며, 구속력 있는 계약을 체결할 수 있는 법적 능력이 있어야 하고, 계정 등록 시 정확하고 진실된 정보를 제공해야 합니다. 플랫폼을 이용함으로써 귀하는 이러한 요구 사항을 충족함을 진술하고 보증합니다."
+        },
+        {
+          "title": "3. 사용자 계정",
+          "content": "플랫폼의 특정 기능을 이용하려면 계정을 생성해야 할 수 있습니다. 귀하는 등록 시 제공하는 정보가 정확하고 최신 상태임을 유지하며, 계정 자격 증명의 기밀을 유지할 책임이 있고, 귀하의 계정에서 발생하는 모든 활동에 책임이 있음에 동의합니다. 계정에 대한 무단 액세스가 의심되는 경우 즉시 당사에 알려야 합니다. 당사는 본 약관을 위반하는 계정을 일시 중지하거나 해지할 권리를 보유합니다."
+        },
+        {
+          "title": "4. 사용자 콘텐츠",
+          "content": "사용자는 매물 설명, 사진, 연락처 정보, 가격 및 위치 상세 정보가 포함된 콘텐츠를 플랫폼에 업로드, 게시 또는 발행할 수 있습니다. 귀하는 제출한 콘텐츠에 대한 소유권을 유지합니다. 다만, 플랫폼에 콘텐츠를 게시함으로써 귀하는 플랫폼 운영 및 개선을 목적으로 귀하의 콘텐츠를 표시, 배포, 복제 및 홍보할 수 있는 전 세계적이고 비독점적이며 사용료가 없는 라이선스를 Your Home에 부여하는 것으로 간주됩니다. 귀하는 귀하가 게시하는 콘텐츠의 정확성과 적법성에 대해 전적인 책임을 집니다."
+        },
+        {
+          "title": "5. 금지 행위",
+          "content": "사용자는 다음 행위를 하지 않기로 동의합니다: 허위 또는 오도하는 매물 게시; 존재하지 않는 부동산 광고; 불법, 공격적 또는 유해한 콘텐츠 게시; 사기 또는 스캠 목적으로 플랫폼 이용; 플랫폼에 대한 무단 액세스 시도; 플랫폼의 보안 또는 운영 방해; 자동화된 시스템을 사용하여 플랫폼에서 데이터를 수집하는 행위. 당사는 규정을 위반하는 콘텐츠를 삭제하거나 계정을 일시 중지할 권리를 보유합니다."
+        },
+        {
+          "title": "6. 매물 목록",
+          "content": "매물 정보를 게시하는 사용자는 목록 정보가 정확하고 진실되며, 사용자가 해당 부동산을 임대하거나 광고할 법적 권리가 있고, 목록이 관련 법률을 위반하지 않음에 동의합니다. Your Home은 매물 목록의 정확성을 검증하지 않으며 임대인과 임차인 간의 분쟁에 대해 책임을 지지 않습니다. 사용자는 임대 계약을 체결하기 전에 모든 정보를 독립적으로 검증할 것을 권장합니다."
+        },
+        {
+          "title": "7. 플랫폼의 역할 및 면책 고지",
+          "content": "플랫폼은 사용자가 임대 목록을 게시하고 볼 수 있는 공간만 제공합니다. Your Home은 목록의 정확성 보장, 임대 계약 참여, 부동산 중개인 역할 수행, 부동산 소유권 확인, 지불 또는 거래 보장을 하지 않습니다. 임대인과 임차인 간의 모든 합의는 사용자 본인의 책임하에 이루어집니다."
+        },
+        {
+          "title": "8. 콘텐츠 관리",
+          "content": "당사는 콘텐츠나 활동이 본 약관 또는 관련 법률을 위반한다고 판단되는 경우 콘텐츠 검토 및 삭제, 계정 일시 중지 또는 해지, 플랫폼 액세스 제한을 할 수 있는 권리를 보유합니다. 다만, 당사가 모든 사용자 콘텐츠를 모니터링할 의무는 없습니다."
+        },
+        {
+          "title": "9. 지적 재산권",
+          "content": "디자인, 소프트웨어, 로고, 상표 및 인터페이스를 포함하여 플랫폼과 관련된 모든 지적 재산권은 Your Home 또는 라이선스 제공자의 소유입니다. 사용자는 사전 서면 허가 없이 플랫폼의 어떤 부분도 복사, 배포, 수정 또는 복제할 수 없습니다."
+        },
+        {
+          "title": "10. 개인정보 보호",
+          "content": "플랫폼 이용은 사용자 데이터 수집, 이용 및 보호 방법을 설명하는 당사의 개인정보 보호정책에 따라 관리됩니다. 플랫폼을 이용함으로써 귀하는 개인정보 보호정책에 기재된 데이터 관행에 동의하는 것으로 간주됩니다."
+        },
+        {
+          "title": "11. 책임의 제한",
+          "content": "법률이 허용하는 최대 범위 내에서 Your Home은 임대인과 임차인 간의 분쟁, 부정확하거나 오도하는 매물 정보, 임대 계약으로 인한 손해, 부동산 거래와 관련된 재정적 손실, 플랫폼에서의 사용자 부적절 행위에 대해 책임을 지지 않습니다. 사용자는 자신의 위험 부담 하에 플랫폼을 이용함에 동의합니다."
+        },
+        {
+          "title": "12. 면책",
+          "content": "귀하는 플랫폼 이용, 게시한 콘텐츠, 본 약관 위반 또는 관련 법률 위반으로 인해 발생하는 모든 청구, 손해, 손실 또는 법적 비용으로부터 Your Home과 그 소유주, 직원 및 계열사를 방어하고 면책하며 피해가 없도록 하는 데 동의합니다."
+        },
+        {
+          "title": "13. 서비스 가용성",
+          "content": "당사는 플랫폼을 항상 이용 가능하도록 유지하기 위해 노력합니다. 다만, 중단 없는 서비스를 보장하지는 않습니다. 당사는 사전 통지 없이 언제든지 플랫폼의 일부를 수정, 일시 중지 또는 중단할 수 있습니다."
+        },
+        {
+          "title": "14. 약관의 변경",
+          "content": "당사는 언제든지 본 약관을 업데이트하거나 수정할 권리를 보유합니다. 변경 사항이 있을 경우 업데이트된 약관은 \"최종 업데이트\" 날짜와 함께 플랫폼에 게시됩니다. 변경 후에도 플랫폼을 계속 이용하는 것은 업데이트된 약관에 동의하는 것으로 간주됩니다."
+        },
+        {
+          "title": "15. 준거법",
+          "content": "본 약관은 베트남 법률에 따라 규율되고 해석됩니다. 본 약관으로 인해 발생하는 모든 분쟁은 해당 관할 법원에서 해결됩니다."
+        },
+        {
+          "title": "16. 연락처 정보",
+          "content": "본 약관과 관련하여 궁금한 점이 있으시면 support@yourhome.com으로 문의해 주시기 바랍니다."
+        }
+      ]
+    },
+    "privacy": {
+      "linkLabel": "개인정보 보호정책",
+      "title": "개인정보 보호정책",
+      "updated": "최종 업데이트: 2026년 3월 12일",
+      "welcome": "Your Home에 오신 것을 환영합니다.",
+      "intro": "본 개인정보 보호정책은 귀하가 당사의 웹사이트, 모바일 애플리케이션 및 관련 서비스(이하 통칭하여 \"플랫폼\")를 이용할 때 Your Home(\"당사\", \"당사의\")이 귀하의 개인정보를 어떻게 수집, 이용, 저장 및 보호하는지 설명합니다.",
+      "agreement": "플랫폼을 이용함으로써 귀하는 본 개인정보 보호정책에 따른 정보 수집 및 이용에 동의하는 것으로 간주됩니다.",
+      "sections": [
+        {
+          "title": "1. 수집하는 정보",
+          "content": "당사는 귀하가 플랫폼을 이용할 때 다음과 같은 유형의 정보를 수집할 수 있습니다.\n\n1.1 개인정보\n귀하가 계정을 생성하거나 당사의 서비스를 이용할 때 당사는 이름, 이메일 주소, 전화번호, 계정 자격 증명(암호화된 비밀번호), 프로필 정보, 매물 정보와 같은 개인정보를 수집할 수 있습니다.\n\n1.2 매물 정보\n귀하가 임대 매물을 게시하는 경우, 당사는 매물 주소, 매물 설명, 임대료, 매물 사진, 연락처 정보, 매물 관련 위치 데이터를 수집할 수 있습니다. 이 정보는 플랫폼에 공개적으로 표시됩니다.\n\n1.3 이용 정보\n당사는 IP 주소, 브라우저 유형, 기기 정보, 운영 체제, 방문한 페이지, 플랫폼 체류 시간, 매물과의 상호 작용을 포함한 특정 기술 정보를 자동으로 수집할 수 있습니다. 이는 사용자가 플랫폼과 상호 작용하는 방식을 이해하는 데 도움이 됩니다.\n\n1.4 쿠키 및 추적 기술\n당사는 사용자 세션 유지, 기본 설정 기억, 트래픽 및 사용자 행동 분석, 플랫폼 성능 향상을 위해 쿠키를 사용할 수 있습니다. 사용자는 브라우저 설정을 통해 쿠키를 비활성화할 수 있습니다."
+        },
+        {
+          "title": "2. 정보 이용 방법",
+          "content": "당사는 수집된 정보를 다음과 같은 목적으로 이용합니다: 사용자 계정 생성 및 관리, 플랫폼에 임대 매물 표시, 임대인과 임차인 연결, 플랫폼 성능 및 기능 개선, 사기, 남용 및 불법 활동 방지, 계정 또는 매물에 관한 사용자 소통, 법적 의무 준수."
+        },
+        {
+          "title": "3. 정보 공유 방법",
+          "content": "당사는 귀하의 개인정보를 판매하지 않습니다. 다만, 다음과 같은 상황에서는 정보를 공유할 수 있습니다.\n\n3.1 다른 사용자와의 공유\n귀하가 매물 목록에 포함한 정보(연락처 상세 정보 또는 매물 정보 등)는 다른 사용자에게 표시될 수 있습니다.\n\n3.2 서비스 제공업체\n당사는 클라우드 호스팅 서비스, 분석 제공업체, 이메일 전송 서비스 등 플랫폼 운영을 돕는 신뢰할 수 있는 제3자 서비스 제공업체와 정보를 공유할 수 있습니다. 이러한 업체는 귀하의 정보를 보호할 의무가 있습니다.\n\n3.3 법적 요구 사항\n법률에서 요구하거나 당국의 유효한 법적 요청이 있는 경우 정보를 공개할 수 있습니다."
+        },
+        {
+          "title": "4. 데이터 저장 및 보안",
+          "content": "당사는 귀하의 개인정보를 무단 액세스, 분실, 오용 또는 변경으로부터 보호하기 위해 합리적인 기술적 및 조직적 조치를 취합니다. 보안 조치에는 암호화된 비밀번호, 보안 서버, 제한된 데이터베이스 액세스, 의심스러운 활동 모니터링 등이 포함될 수 있습니다. 그러나 인터넷 전송 또는 전자 저장 방법 중 100% 안전한 것은 없습니다."
+        },
+        {
+          "title": "5. 데이터 보관",
+          "content": "당사는 서비스 제공, 계정 유지, 법적 의무 준수, 분쟁 해결, 계약 이행을 위해 필요한 기간 동안 귀하의 개인정보를 보관합니다. 계정을 삭제하는 경우 법률에서 요구하거나 정당한 비즈니스 목적을 위해 특정 정보를 보관할 수 있습니다."
+        },
+        {
+          "title": "6. 귀하의 권리",
+          "content": "관련 법률에 따라 사용자는 자신의 개인 데이터에 액세스하고, 잘못된 정보를 수정하고, 개인 데이터 삭제를 요청하고, 특정 유형의 데이터 처리에 반대하고, 해당하는 경우 동의를 철회할 권리가 있을 수 있습니다. 요청은 아래 기재된 당사의 연락처 이메일로 보내실 수 있습니다."
+        },
+        {
+          "title": "7. 제3자 링크",
+          "content": "플랫폼에는 제3자 웹사이트 또는 서비스에 대한 링크가 포함될 수 있습니다. 당사는 해당 외부 사이트의 개인정보 보호 관행이나 콘텐츠에 대해 책임을 지지 않습니다. 사용자는 방문하는 제3자 서비스의 개인정보 보호정책을 검토할 것을 권장합니다."
+        },
+        {
+          "title": "8. 아동의 개인정보 보호",
+          "content": "플랫폼은 18세 미만의 개인을 대상으로 하지 않습니다. 당사는 아동으로부터 의도적으로 개인정보를 수집하지 않습니다. 미성년자의 개인정보가 수집된 사실을 인지하게 되면 해당 정보를 삭제하기 위한 조치를 취할 것입니다."
+        },
+        {
+          "title": "9. 개인정보 보호정책의 변경",
+          "content": "당사는 때때로 이 개인정보 보호정책을 업데이트할 수 있습니다. 변경 사항이 있을 경우 이 페이지 상단의 \"최종 업데이트\" 날짜를 업데이트합니다. 업데이트 후 플랫폼을 계속 이용하는 것은 수정된 정책을 수락하는 것으로 간주됩니다."
+        },
+        {
+          "title": "10. 연락처 정보",
+          "content": "본 개인정보 보호정책 또는 당사의 데이터 관행에 대해 궁금한 점이 있으면 당사에 문의하십시오.\n\n이메일: support@yourhome.com\n회사: Your Home\n주소: 베트남 하노이"
+        }
+      ]
+    },
+    "footerCopyright": "© {year} YourHome. 모든 권리 보유."
+  },
+  "about": {
+    "header": "소개",
+    "title": "임차인과 집주인이 더 자신 있게 연결되도록 돕습니다",
+    "intro": "YourHome은 모두에게 더 간단하고 빠르며 믿을 수 있는 임대 검색 경험을 제공합니다.",
+    "founder": {
+      "title": "창립자",
+      "nameLabel": "제작자",
+      "name": "Vuong Trung Kien",
+      "description": "우리는 임대 탐색 경험이 명확하고 인간적이며 신뢰할 수 있기를 바랍니다."
+    },
+    "hiring": {
+      "title": "우리는 성장하고 있습니다",
+      "descriptionPrimary": "제품 품질, 신뢰, 그리고 임차인 경험을 중요하게 생각하는 분들을 언제나 환영합니다.",
+      "descriptionSecondary": "그런 분이라면 꼭 연락 주세요."
+    },
+    "product": {
+      "title": "YourHome이 도와주는 일",
+      "items": [
+        "인터랙티브 지도에서 검증된 임대 매물을 둘러보기.",
+        "가격, 면적, 위치별로 빠르게 필터링하기.",
+        "마음에 드는 매물을 저장하고 나중에 다시 보기.",
+        "앱을 떠나지 않고 집주인에게 직접 메시지 보내기.",
+        "내 매물을 손쉽게 등록하고 관리하기."
+      ]
+    },
+    "mission": {
+      "title": "우리의 미션",
+      "descriptionPrimary": "우리는 임대 검색이 스트레스 많고 단절된 경험이 아니라 실용적이고 투명한 경험이 되기를 바랍니다.",
+      "descriptionSecondary": "더 명확한 매물 정보, 더 빠른 대화, 더 나은 도구는 임차인과 집주인 모두가 자신 있게 움직이도록 돕습니다."
+    },
+    "contact": {
+      "title": "문의",
+      "description": "질문, 피드백 또는 협업 제안이 있다면 언제든지 연락 주세요. 빠르게 답변드리겠습니다.",
+      "homeButton": "홈으로 돌아가기"
+    }
+  },
+  "user": {
+    "profileTitle": "사용자 프로필",
+    "notFoundTitle": "사용자를 찾을 수 없습니다",
+    "notFoundDescription": "이 사용자를 찾을 수 없거나 삭제되었을 수 있습니다.",
+    "messageUser": "메시지 보내기",
+    "propertiesByName": "{name}님의 매물",
+    "noPropertiesTitle": "아직 매물이 없습니다",
+    "noPropertiesDescription": "이 사용자는 아직 임대 매물을 등록하지 않았습니다.",
+    "selfMessageError": "자기 자신에게는 메시지를 보낼 수 없습니다."
+  },
+  "errors": {
+    "global": {
+      "title": "문제가 발생했습니다!",
+      "defaultDescription": "예기치 않은 오류가 발생했습니다."
+    },
+    "notFound": {
+      "title": "페이지를 찾을 수 없습니다",
+      "description": "찾으시는 페이지가 존재하지 않습니다.",
+      "action": "홈으로 이동"
+    }
+  }
+}

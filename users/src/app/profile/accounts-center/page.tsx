@@ -15,6 +15,10 @@ export default function AccountsCenter() {
     const { user } = useAuth();
     const { t } = useLanguage();
     const router = useRouter();
+    const getApiMessage = (error: unknown) => {
+        const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        return typeof message === 'string' ? message : null;
+    };
 
     // Profile State
     const [profileData, setProfileData] = useState({
@@ -50,9 +54,9 @@ export default function AccountsCenter() {
         setProfileMessage({ type: '', text: '' });
         try {
             await api.post('/users/profile', profileData);
-            setProfileMessage({ type: 'success', text: t('profile_updated_success') || 'Profile updated successfully!' });
-        } catch (err: any) {
-            const msg = err.response?.data?.message || 'Failed to update profile';
+            setProfileMessage({ type: 'success', text: t('profile.messages.profileUpdated') });
+        } catch (err: unknown) {
+            const msg = getApiMessage(err) || t('profile.messages.editFailed');
             setProfileMessage({ type: 'error', text: msg });
         } finally {
             setIsUpdatingProfile(false);
@@ -62,17 +66,17 @@ export default function AccountsCenter() {
     const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            setPasswordMessage({ type: 'error', text: t('err_passwords_mismatch') || 'Passwords do not match' });
+            setPasswordMessage({ type: 'error', text: t('auth.validation.passwordsMismatch') });
             return;
         }
         setIsUpdatingPassword(true);
         setPasswordMessage({ type: '', text: '' });
         try {
             await api.post('/users/change-password', passwordData);
-            setPasswordMessage({ type: 'success', text: t('password_updated_success') || 'Password changed successfully!' });
+            setPasswordMessage({ type: 'success', text: t('profile.messages.passwordUpdated') });
             setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
-        } catch (err: any) {
-            const msg = err.response?.data?.message || 'Failed to change password';
+        } catch (err: unknown) {
+            const msg = getApiMessage(err) || t('profile.messages.editFailed');
             setPasswordMessage({ type: 'error', text: msg });
         } finally {
             setIsUpdatingPassword(false);
@@ -84,7 +88,7 @@ export default function AccountsCenter() {
             <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
                 <div className="flex flex-col items-center gap-3">
                     <Loader2 className="w-10 h-10 text-teal-600 animate-spin" />
-                    <p className="text-slate-500 font-medium animate-pulse">{t("loading")}</p>
+                    <p className="text-slate-500 font-medium animate-pulse">{t("common.loading")}</p>
                 </div>
             </div>
         );
@@ -103,8 +107,8 @@ export default function AccountsCenter() {
                             <ChevronLeft className="w-5 h-5 text-slate-600 group-hover:text-teal-600 group-hover:-translate-x-0.5 transition-transform" />
                         </button>
                         <div>
-                            <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight leading-none">{t("accounts_center")}</h1>
-                            <p className="hidden sm:block text-[13px] font-medium text-slate-500 mt-1">{t("settings")}</p>
+                            <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight leading-none">{t("navigation.accountsCenter")}</h1>
+                            <p className="hidden sm:block text-[13px] font-medium text-slate-500 mt-1">{t("navigation.settings")}</p>
                         </div>
                     </div>
                     <div className="hidden sm:flex items-center gap-3 bg-slate-100/50 p-1 rounded-2xl border border-slate-200/50">
@@ -133,15 +137,15 @@ export default function AccountsCenter() {
                         </div>
                         <div className="flex-1">
                             <h2 className="text-2xl sm:text-3xl font-black text-white mb-3 tracking-tight">
-                                {t("account_privacy_title") || "Tài khoản & Bảo mật"}
+                                {t("profile.account.heroTitle")}
                             </h2>
                             <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl font-medium">
-                                {t("account_privacy_desc") || "Manage your personal details and secure your account settings here."}
+                                {t("profile.account.heroDescription")}
                             </p>
                         </div>
                         <div className="hidden lg:block self-center">
                             <div className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors cursor-default">
-                                <span className="text-[13px] font-black uppercase tracking-wider text-teal-400">Secure Access</span>
+                                <span className="text-[13px] font-black uppercase tracking-wider text-teal-400">{t("profile.account.securityTitle")}</span>
                             </div>
                         </div>
                     </div>
@@ -155,9 +159,9 @@ export default function AccountsCenter() {
                                 <div className="p-2.5 bg-teal-100 rounded-2xl text-teal-600 transition-transform group-hover:scale-110 duration-500">
                                     <UserCircle2 className="w-6 h-6" />
                                 </div>
-                                <h3 className="font-black text-slate-900 text-lg sm:text-xl tracking-tight">{t("personal_info") || "Personal Information"}</h3>
+                                <h3 className="font-black text-slate-900 text-lg sm:text-xl tracking-tight">{t("profile.account.personalInfoTitle")}</h3>
                             </div>
-                            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Settings</span>
+                            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">{t("navigation.settings")}</span>
                         </div>
                         
                         <form onSubmit={handleProfileSubmit} className="p-8 sm:p-10 space-y-8">
@@ -174,23 +178,23 @@ export default function AccountsCenter() {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                                 <div className="space-y-3">
-                                    <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("first_name") || "First Name"}</label>
+                                    <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("profile.account.firstNameLabel")}</label>
                                     <input 
                                         type="text"
                                         value={profileData.firstName}
                                         onChange={e => setProfileData({...profileData, firstName: e.target.value})}
-                                        placeholder="First name"
+                                        placeholder={t("auth.register.firstNamePlaceholder")}
                                         className="w-full h-14 px-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all duration-300 text-[15px] font-bold text-slate-800 placeholder:text-slate-400"
                                         required
                                     />
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("last_name") || "Last Name"}</label>
+                                    <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("profile.account.lastNameLabel")}</label>
                                     <input 
                                         type="text"
                                         value={profileData.lastName}
                                         onChange={e => setProfileData({...profileData, lastName: e.target.value})}
-                                        placeholder="Last name"
+                                        placeholder={t("auth.register.lastNamePlaceholder")}
                                         className="w-full h-14 px-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all duration-300 text-[15px] font-bold text-slate-800 placeholder:text-slate-400"
                                         required
                                     />
@@ -198,14 +202,14 @@ export default function AccountsCenter() {
                             </div>
 
                             <div className="space-y-3">
-                                <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("email_label") || "Email Address"}</label>
+                                <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("profile.account.emailLabel")}</label>
                                 <div className="relative group/input">
                                     <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within/input:text-teal-500 transition-colors" />
                                     <input 
                                         type="email"
                                         value={profileData.email}
                                         onChange={e => setProfileData({...profileData, email: e.target.value})}
-                                        placeholder="yourname@example.com"
+                                        placeholder={t("profile.account.emailLabel")}
                                         className="w-full h-14 pl-14 pr-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all duration-300 text-[15px] font-bold text-slate-800 placeholder:text-slate-400"
                                         required
                                     />
@@ -220,7 +224,7 @@ export default function AccountsCenter() {
                                 >
                                     {isUpdatingProfile ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                                         <>
-                                            <span>{t("save_changes")}</span>
+                                            <span>{t("common.saveChanges")}</span>
                                         </>
                                     )}
                                 </button>
@@ -235,9 +239,9 @@ export default function AccountsCenter() {
                                 <div className="p-2.5 bg-slate-100 rounded-2xl text-slate-900 transition-transform group-hover:scale-110 duration-500">
                                     <KeyRound className="w-6 h-6" />
                                 </div>
-                                <h3 className="font-black text-slate-900 text-lg sm:text-xl tracking-tight">{t("security_settings") || "Security & Password"}</h3>
+                                <h3 className="font-black text-slate-900 text-lg sm:text-xl tracking-tight">{t("profile.account.securityTitle")}</h3>
                             </div>
-                            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Privacy</span>
+                            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">{t("legal.privacy.linkLabel")}</span>
                         </div>
 
                         <form onSubmit={handlePasswordSubmit} className="p-8 sm:p-10 space-y-8">
@@ -253,14 +257,14 @@ export default function AccountsCenter() {
                             )}
 
                             <div className="space-y-3">
-                                <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("current_password") || "Current Password"}</label>
+                                <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("profile.account.currentPasswordLabel")}</label>
                                 <div className="relative group/input">
                                     <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within/input:text-slate-900 transition-colors" />
                                     <input 
                                         type="password"
                                         value={passwordData.oldPassword}
                                         onChange={e => setPasswordData({...passwordData, oldPassword: e.target.value})}
-                                        placeholder="••••••••••••"
+                                        placeholder={t("auth.shared.passwordPlaceholder")}
                                         className="w-full h-14 pl-14 pr-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all duration-300 text-[15px] font-bold text-slate-800"
                                         required
                                     />
@@ -269,24 +273,24 @@ export default function AccountsCenter() {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                                 <div className="space-y-3">
-                                    <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("new_password") || "New Password"}</label>
+                                    <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("profile.account.newPasswordLabel")}</label>
                                     <input 
                                         type="password"
                                         value={passwordData.newPassword}
                                         onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})}
-                                        placeholder="Min 6 characters"
+                                        placeholder={t("profile.account.newPasswordLabel")}
                                         className="w-full h-14 px-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all duration-300 text-[15px] font-bold text-slate-800"
                                         required
                                         minLength={6}
                                     />
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("confirm_new_password") || "Confirm Password"}</label>
+                                    <label className="text-[13px] font-black text-slate-600 uppercase tracking-wider ml-1">{t("profile.account.confirmPasswordLabel")}</label>
                                     <input 
                                         type="password"
                                         value={passwordData.confirmPassword}
                                         onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                                        placeholder="Repeat new password"
+                                        placeholder={t("profile.account.confirmPasswordLabel")}
                                         className="w-full h-14 px-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all duration-300 text-[15px] font-bold text-slate-800"
                                         required
                                     />
@@ -301,7 +305,7 @@ export default function AccountsCenter() {
                                 >
                                     {isUpdatingPassword ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                                         <>
-                                            <span>{t("update_password") || "Update Password"}</span>
+                                            <span>{t("profile.account.updatePasswordButton")}</span>
                                         </>
                                     )}
                                 </button>

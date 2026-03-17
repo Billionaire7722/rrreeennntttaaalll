@@ -6,7 +6,7 @@ import { useAuth } from '@/context/useAuth';
 import { useLanguage } from '@/context/LanguageContext';
 import Link from 'next/link';
 import Image from 'next/image';
-import { User, Mail, Lock, Phone } from 'lucide-react';
+import { User, Mail, Lock, Phone, Check, Circle } from 'lucide-react';
 import Captcha from '@/components/Captcha';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -42,11 +42,11 @@ function extractErrorMessage(data?: ApiErrorData) {
 }
 
 const passwordRules = (t: (key: string) => string) => [
-    { id: 'length', label: t('rule_length'), test: (p: string) => p.length >= 8 && p.length <= 12 },
-    { id: 'uppercase', label: t('rule_uppercase'), test: (p: string) => /[A-Z]/.test(p) },
-    { id: 'lowercase', label: t('rule_lowercase'), test: (p: string) => /[a-z]/.test(p) },
-    { id: 'number', label: t('rule_number'), test: (p: string) => /\d/.test(p) },
-    { id: 'special', label: t('rule_special'), test: (p: string) => /[@$!%*?&]/.test(p) },
+    { id: 'length', label: t('auth.register.passwordRules.length'), test: (p: string) => p.length >= 8 && p.length <= 12 },
+    { id: 'uppercase', label: t('auth.register.passwordRules.uppercase'), test: (p: string) => /[A-Z]/.test(p) },
+    { id: 'lowercase', label: t('auth.register.passwordRules.lowercase'), test: (p: string) => /[a-z]/.test(p) },
+    { id: 'number', label: t('auth.register.passwordRules.number'), test: (p: string) => /\d/.test(p) },
+    { id: 'special', label: t('auth.register.passwordRules.special'), test: (p: string) => /[@$!%*?&]/.test(p) },
 ];
 
 export default function RegisterPage() {
@@ -77,31 +77,31 @@ export default function RegisterPage() {
     const validateField = (name: string, value: string): string | undefined => {
         switch (name) {
             case 'firstName':
-                if (!value.trim()) return t('err_enter_first_name');
+                if (!value.trim()) return t('auth.validation.firstNameRequired');
                 break;
             case 'lastName':
-                if (!value.trim()) return t('err_enter_last_name');
+                if (!value.trim()) return t('auth.validation.lastNameRequired');
                 break;
             case 'username':
-                if (!value.trim()) return t('err_enter_username');
-                if (value.length < 3) return t('err_username_length');
+                if (!value.trim()) return t('auth.validation.usernameRequired');
+                if (value.length < 3) return t('auth.validation.usernameLength');
                 break;
             case 'email':
-                if (!value.trim()) return t('err_enter_email');
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return t('err_invalid_email');
+                if (!value.trim()) return t('auth.validation.emailRequired');
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return t('auth.validation.emailInvalid');
                 break;
             case 'phone':
-                if (!value.trim()) return t('err_enter_phone');
+                if (!value.trim()) return t('auth.validation.phoneRequired');
                 break;
             case 'password':
-                if (!value) return t('err_enter_password');
+                if (!value) return t('auth.validation.passwordRequired');
                 break;
             case 'confirmPassword':
-                if (!value) return t('err_confirm_password');
-                if (value !== formData.password) return t('err_passwords_mismatch');
+                if (!value) return t('auth.validation.confirmPasswordRequired');
+                if (value !== formData.password) return t('auth.validation.passwordsMismatch');
                 break;
             case 'acceptTerms':
-                if (!value) return t('err_accept_terms');
+                if (!value) return t('auth.validation.acceptTermsRequired');
                 break;
         }
         return undefined;
@@ -145,7 +145,7 @@ export default function RegisterPage() {
         });
 
         if (!submittedToken) {
-            newErrors.captcha = t('err_complete_captcha');
+            newErrors.captcha = t('auth.validation.captchaRequired');
             hasErrors = true;
         }
 
@@ -177,7 +177,7 @@ export default function RegisterPage() {
                 captchaToken: submittedToken,
             });
         } catch (err) {
-            let errorMessage = t('err_login_failed');
+            let errorMessage = t('auth.validation.loginFailed');
 
             const data = (err as ApiErrorShape).response?.data;
             if (data) {
@@ -224,7 +224,7 @@ export default function RegisterPage() {
             <div className="hidden lg:block lg:w-1/2 relative">
                 <Image
                     src="/images/auth-background.jpg"
-                    alt="Beautiful home interior"
+                    alt=""
                     fill
                     priority
                     className="object-cover"
@@ -250,14 +250,14 @@ export default function RegisterPage() {
                             />
                             <div>
                                 <h1 className="text-2xl font-bold text-white">YourHome</h1>
-                                <p className="text-teal-200 text-sm">{t('logo_subtitle')}</p>
+                                <p className="text-teal-200 text-sm">{t('auth.shared.logoSubtitle')}</p>
                             </div>
                         </div>
                         <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight text-balance">
-                            {t('hero_register_title')}
+                            {t('auth.register.heroTitle')}
                         </h2>
                         <p className="mt-4 text-lg text-teal-100 leading-relaxed">
-                            {t('hero_register_desc')}
+                            {t('auth.register.heroDescription')}
                         </p>
                         <div className="mt-8 space-y-3">
                             <div className="flex items-center gap-3 text-white">
@@ -266,7 +266,7 @@ export default function RegisterPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <span>{t('tour_step1_title')}</span>
+                                <span>{t('home.onboarding.steps.0.title')}</span>
                             </div>
                             <div className="flex items-center gap-3 text-white">
                                 <div className="w-8 h-8 rounded-full bg-teal-500/30 flex items-center justify-center">
@@ -274,7 +274,7 @@ export default function RegisterPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <span>{t('tour_step2_title')}</span>
+                                <span>{t('home.onboarding.steps.1.title')}</span>
                             </div>
                             <div className="flex items-center gap-3 text-white">
                                 <div className="w-8 h-8 rounded-full bg-teal-500/30 flex items-center justify-center">
@@ -282,7 +282,7 @@ export default function RegisterPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <span>{t('chats')}</span>
+                                <span>{t('navigation.chats')}</span>
                             </div>
                         </div>
                     </div>
@@ -298,7 +298,7 @@ export default function RegisterPage() {
                 <div className="lg:hidden absolute inset-0">
                     <Image
                     src="/images/auth-background.jpg"
-                    alt="Beautiful home interior"
+                    alt=""
                     fill
                     priority
                     className="object-cover"
@@ -327,19 +327,19 @@ export default function RegisterPage() {
                             />
                             <div className="text-left">
                                 <h1 className="text-xl font-bold text-white">YourHome</h1>
-                                <p className="text-teal-200 text-xs">{t('logo_subtitle')}</p>
+                                <p className="text-teal-200 text-xs">{t('auth.shared.logoSubtitle')}</p>
                             </div>
                         </div>
                         <p className="text-white/80 text-sm max-w-xs mx-auto">
-                            {t('register_subtitle')}
+                            {t('auth.register.subtitle')}
                         </p>
                     </div>
 
                     <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-6 shadow-xl lg:shadow-sm">
                         <div className="flex items-start justify-between">
                             <div>
-                                <h2 className="text-2xl font-bold text-[var(--theme-text)]">{t('register_title')}</h2>
-                                <p className="mt-2 text-sm text-[var(--theme-text-muted)]">{t('register_subtitle')}</p>
+                                <h2 className="text-2xl font-bold text-[var(--theme-text)]">{t('auth.register.title')}</h2>
+                                <p className="mt-2 text-sm text-[var(--theme-text-muted)]">{t('auth.register.subtitle')}</p>
                             </div>
                         </div>
 
@@ -364,7 +364,7 @@ export default function RegisterPage() {
                                             onChange={handleChange}
                                             onBlur={handleBlur}
                                             className={getInputClassName('firstName')}
-                                            placeholder={t('first_name_placeholder')}
+                                            placeholder={t('auth.register.firstNamePlaceholder')}
                                         />
                                     </div>
                                     {errors.firstName && touched.firstName && <p className="text-[10px] text-red-500">{errors.firstName}</p>}
@@ -384,7 +384,7 @@ export default function RegisterPage() {
                                             onChange={handleChange}
                                             onBlur={handleBlur}
                                             className={getInputClassName('lastName')}
-                                            placeholder={t('last_name_placeholder')}
+                                            placeholder={t('auth.register.lastNamePlaceholder')}
                                         />
                                     </div>
                                     {errors.lastName && touched.lastName && <p className="text-[10px] text-red-500">{errors.lastName}</p>}
@@ -404,7 +404,7 @@ export default function RegisterPage() {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     className={getInputClassName('username')}
-                                    placeholder={t('username_placeholder')}
+                                    placeholder={t('auth.register.usernamePlaceholder')}
                                 />
                             </div>
                             {errors.username && touched.username && <p className="text-xs text-red-500">{errors.username}</p>}
@@ -422,7 +422,7 @@ export default function RegisterPage() {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     className={getInputClassName('email')}
-                                    placeholder={t('email_placeholder')}
+                                    placeholder={t('auth.register.emailPlaceholder')}
                                 />
                             </div>
                             {errors.email && touched.email && <p className="text-xs text-red-500">{errors.email}</p>}
@@ -440,7 +440,7 @@ export default function RegisterPage() {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     className={getInputClassName('phone')}
-                                    placeholder={t('phone_placeholder')}
+                                    placeholder={t('auth.register.phonePlaceholder')}
                                 />
                             </div>
                             {errors.phone && touched.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
@@ -459,7 +459,7 @@ export default function RegisterPage() {
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         className={getInputClassName('password')}
-                                        placeholder={t('password_placeholder')}
+                                        placeholder={t('auth.shared.passwordPlaceholder')}
                                     />
                                 </div>
                                 <div className="relative">
@@ -475,7 +475,7 @@ export default function RegisterPage() {
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         className={getInputClassName('confirmPassword')}
-                                        placeholder={t('confirm_password_placeholder')}
+                                        placeholder={t('auth.register.confirmPasswordPlaceholder')}
                                     />
                                 </div>
                             </div>
@@ -486,14 +486,16 @@ export default function RegisterPage() {
 
                             {formData.password && (
                                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
-                                    <p className="mb-2 font-medium text-slate-700">{t('password_requirements')}</p>
+                                    <p className="mb-2 font-medium text-slate-700">{t('auth.register.passwordRequirements')}</p>
                                     <div className="space-y-1">
                                         {passwordValidations.map((rule) => (
                                             <div
                                                 key={rule.id}
                                                 className={`flex items-center ${rule.valid ? 'text-emerald-600' : 'text-slate-500'}`}
                                             >
-                                                <span className="mr-2">{rule.valid ? '✓' : '○'}</span>
+                                                <span className="mr-2">
+                                                    {rule.valid ? <Check className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
+                                                </span>
                                                 {rule.label}
                                             </div>
                                         ))}
@@ -517,9 +519,9 @@ export default function RegisterPage() {
                                     </div>
                                     <div className="text-sm">
                                         <label htmlFor="acceptTerms" className="text-slate-600 leading-snug select-none">
-                                            {t('accept_terms_label').split(t('terms_of_service')).map((part, i, arr) => (
+                                            {t('auth.register.acceptTermsLabel').split(t('legal.terms.linkLabel')).map((part, i, arr) => (
                                                 <React.Fragment key={i}>
-                                                    {part.split(t('privacy_policy')).map((subPart, j, subArr) => (
+                                                    {part.split(t('legal.privacy.linkLabel')).map((subPart, j, subArr) => (
                                                         <React.Fragment key={j}>
                                                             {subPart}
                                                             {j < subArr.length - 1 && (
@@ -528,7 +530,7 @@ export default function RegisterPage() {
                                                                     className="font-semibold underline underline-offset-4 hover:opacity-80 transition-opacity"
                                                                     style={{ color: 'var(--color-emerald-600)' }}
                                                                 >
-                                                                    {t('privacy_policy')}
+                                                                    {t('legal.privacy.linkLabel')}
                                                                 </Link>
                                                             )}
                                                         </React.Fragment>
@@ -539,7 +541,7 @@ export default function RegisterPage() {
                                                             className="font-semibold underline underline-offset-4 hover:opacity-80 transition-opacity"
                                                             style={{ color: 'var(--color-emerald-600)' }}
                                                         >
-                                                            {t('terms_of_service')}
+                                                            {t('legal.terms.linkLabel')}
                                                         </Link>
                                                     )}
                                                 </React.Fragment>
@@ -568,13 +570,13 @@ export default function RegisterPage() {
                                     : 'bg-teal-600 shadow-md shadow-teal-600/25 hover:-translate-y-0.5 hover:bg-teal-700 hover:shadow-lg'
                                 } focus:outline-none focus:ring-4 focus:ring-teal-100`}
                         >
-                            {loading ? t('creating_account') : t('create_account_btn')}
+                            {loading ? t('auth.register.creatingAccount') : t('auth.register.createAccountButton')}
                         </button>
 
                         <p className="pt-1 text-center text-sm text-slate-500">
-                            {t('already_have_account')}{' '}
+                            {t('auth.register.alreadyHaveAccount')}{' '}
                             <Link href="/login" className="font-semibold text-teal-600 transition-colors hover:text-teal-700">
-                                {t('sign_in_link')}
+                                {t('auth.shared.signInLink')}
                             </Link>
                         </p>
                     </form>

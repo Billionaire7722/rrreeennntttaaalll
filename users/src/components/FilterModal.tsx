@@ -1,230 +1,264 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 export type FilterOptions = {
-    searchQuery: string;
-    minPrice: number | null;
-    maxPrice: number | null;
-    province: string | null;
-    ward: string | null;
-    minBedrooms: number | null;
-    minArea: number | null;
-    maxArea: number | null;
-    bathroomType: "khép kín" | "chung" | null;
+  searchQuery: string;
+  minPrice: number | null;
+  maxPrice: number | null;
+  province: string | null;
+  ward: string | null;
+  minBedrooms: number | null;
+  minArea: number | null;
+  maxArea: number | null;
+  bathroomType: "private" | "shared" | null;
 };
 
 export const DEFAULT_FILTERS: FilterOptions = {
-    searchQuery: "",
-    minPrice: null,
-    maxPrice: null,
-    province: null,
-    ward: null,
-    minBedrooms: null,
-    minArea: null,
-    maxArea: null,
-    bathroomType: null,
+  searchQuery: "",
+  minPrice: null,
+  maxPrice: null,
+  province: null,
+  ward: null,
+  minBedrooms: null,
+  minArea: null,
+  maxArea: null,
+  bathroomType: null,
 };
 
 interface Props {
-    visible: boolean;
-    onClose: () => void;
-    filters: FilterOptions;
-    applyFilters: (f: FilterOptions) => void;
+  visible: boolean;
+  onClose: () => void;
+  filters: FilterOptions;
+  applyFilters: (filters: FilterOptions) => void;
 }
 
-const formatWithDots = (val: number | null) => {
-    if (val === null) return "";
-    return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const formatWithDots = (value: number | null) => {
+  if (value === null) return "";
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
-const parseWithDots = (val: string) => {
-    // Remove all non-numeric characters except dots (though we only want to strip dots)
-    const raw = val.replace(/\./g, "").replace(/[^\d]/g, "");
-    if (!raw) return null;
-    const num = parseInt(raw, 10);
-    return isNaN(num) ? null : num;
+const parseWithDots = (value: string) => {
+  const raw = value.replace(/\./g, "").replace(/[^\d]/g, "");
+  if (!raw) return null;
+
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isNaN(parsed) ? null : parsed;
 };
 
 export default function FilterModal({ visible, onClose, filters, applyFilters }: Props) {
-    const { t } = useLanguage();
-    const [localFilters, setLocalFilters] = useState<FilterOptions>(filters);
+  const { t, localeTag } = useLanguage();
+  const [localFilters, setLocalFilters] = useState<FilterOptions>(filters);
+  const [provincesList, setProvincesList] = useState<any[]>([]);
+  const [wardsData, setWardsData] = useState<any[]>([]);
 
-    // Use JSON data or state as requested instead of mock data
-    const [provincesList, setProvincesList] = useState<any[]>([]);
-    const [wardsData, setWardsData] = useState<any[]>([]);
+  useEffect(() => {
+    fetch("/data/province.json")
+      .then((response) => response.json())
+      .then((data) => setProvincesList(Array.isArray(data) ? data : Object.values(data)))
+      .catch(() => {});
 
-    useEffect(() => {
-        // Corrected: provinces should be from province.json, wards from ward.json
-        fetch('/data/province.json')
-            .then(res => res.json())
-            .then(data => {
-                const list = Array.isArray(data) ? data : Object.values(data);
-                setProvincesList(list);
-            })
-            .catch(() => { });
+    fetch("/data/ward.json")
+      .then((response) => response.json())
+      .then((data) => setWardsData(Array.isArray(data) ? data : Object.values(data)))
+      .catch(() => {});
+  }, []);
 
-        fetch('/data/ward.json')
-            .then(res => res.json())
-            .then(data => {
-                const list = Array.isArray(data) ? data : Object.values(data);
-                setWardsData(list);
-            })
-            .catch(() => { });
-    }, []);
+  useEffect(() => {
+    if (visible) setLocalFilters(filters);
+  }, [filters, visible]);
 
-    const selectedProvinceCode = provincesList.find(p => p.name === localFilters.province)?.code;
-    const availableWards = wardsData
-        .filter(w => w.parent_code === selectedProvinceCode)
-        .sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
+  if (!visible) return null;
 
+  const selectedProvinceCode = provincesList.find((province) => province.name === localFilters.province)?.code;
+  const availableWards = wardsData
+    .filter((ward) => ward.parent_code === selectedProvinceCode)
+    .sort((first, second) => first.name.localeCompare(second.name, localeTag, { sensitivity: "base" }));
 
-    useEffect(() => {
-        if (visible) setLocalFilters(filters);
-    }, [visible, filters]);
+  const handleApply = () => {
+    applyFilters(localFilters);
+    onClose();
+  };
 
-    if (!visible) return null;
+  const handleReset = () => {
+    setLocalFilters(DEFAULT_FILTERS);
+  };
 
-    const handleApply = () => {
-        applyFilters(localFilters);
-        onClose();
-    };
-
-    const handleReset = () => {
-        setLocalFilters(DEFAULT_FILTERS);
-    };
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm transition-all duration-300">
-            {/* Modal Container */}
-            <div className="bg-white w-full sm:w-[500px] h-auto max-h-[90vh] sm:rounded-2xl rounded-t-2xl flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom-5">
-
-                {/* Header */}
-                <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-white sticky top-0 z-10">
-                    <h2 className="text-lg font-bold text-gray-900">{t("advanced_filter")}</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition">
-                        <X size={24} className="text-gray-600" />
-                    </button>
-                </div>
-
-                {/* Body (Scrollable) */}
-                <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-
-                    {/* Price Range */}
-                    <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-800 text-sm">{t("price_range")}</h3>
-                        <div className="flex items-center gap-3">
-                            <input
-                                type="text"
-                                inputMode="numeric"
-                                placeholder={t("from")}
-                                className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
-                                value={formatWithDots(localFilters.minPrice)}
-                                onChange={(e) => {
-                                    const val = parseWithDots(e.target.value);
-                                    setLocalFilters(p => ({ ...p, minPrice: val }));
-                                }}
-                            />
-                            <span className="text-gray-400">-</span>
-                            <input
-                                type="text"
-                                inputMode="numeric"
-                                placeholder={t("to")}
-                                className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
-                                value={formatWithDots(localFilters.maxPrice)}
-                                onChange={(e) => {
-                                    const val = parseWithDots(e.target.value);
-                                    setLocalFilters(p => ({ ...p, maxPrice: val }));
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Area Dropdowns */}
-                    <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-800 text-sm">{t("location_area")}</h3>
-                        <div className="grid grid-cols-1 gap-3">
-                            <select
-                                className="w-full border border-gray-300 bg-gray-50 text-gray-900 text-sm rounded-lg px-3 py-2 focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none"
-                                value={localFilters.province || ""}
-                                onChange={(e) => setLocalFilters(p => ({ ...p, province: e.target.value || null }))}
-                            >
-                                <option value="">{t("province_city")}</option>
-                                {provincesList.map(p => (
-                                    <option key={p.code} value={p.name}>{p.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Bedrooms Minimum */}
-                    <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-800 text-sm">{t("min_bedrooms")}</h3>
-                        <div className="flex gap-2">
-                            {[1, 2, 3, 4].map(n => (
-                                <button
-                                    key={n}
-                                    onClick={() => setLocalFilters(p => ({ ...p, minBedrooms: p.minBedrooms === n ? null : n }))}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition border ${localFilters.minBedrooms === n
-                                        ? 'bg-blue-600 border-blue-600 text-white'
-                                        : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
-                                        }`}
-                                >
-                                    {n}+
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Room Area */}
-                    <div className="space-y-3">
-                        <h3 className="font-semibold text-gray-800 text-sm">{t("area")}</h3>
-                        <div className="flex items-center gap-3 max-w-[220px]">
-                            <input
-                                type="number"
-                                placeholder={t("from")}
-                                className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
-                                value={localFilters.minArea || ""}
-                                onChange={(e) => {
-                                    const val = parseInt(e.target.value);
-                                    setLocalFilters(p => ({ ...p, minArea: isNaN(val) ? null : val }));
-                                }}
-                            />
-                            <span className="text-gray-400">-</span>
-                            <input
-                                type="number"
-                                placeholder={t("to")}
-                                className="flex-1 w-full border border-gray-300 bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-400"
-                                value={localFilters.maxArea || ""}
-                                onChange={(e) => {
-                                    const val = parseInt(e.target.value);
-                                    setLocalFilters(p => ({ ...p, maxArea: isNaN(val) ? null : val }));
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* Footer Buttons */}
-                <div className="p-4 border-t border-gray-200 bg-white flex gap-3 sticky bottom-0 z-10">
-                    <button
-                        onClick={handleReset}
-                        className="flex-1 py-3.5 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
-                    >
-                        {t("reset")}
-                    </button>
-                    <button
-                        onClick={handleApply}
-                        className="flex-[2] py-3.5 rounded-xl bg-blue-600 text-white font-bold shadow-sm hover:bg-blue-700 transition"
-                    >
-                        {t("apply")}
-                    </button>
-                </div>
-
-            </div>
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 backdrop-blur-sm transition-all duration-300 sm:items-center">
+      <div className="flex h-auto max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl animate-in slide-in-from-bottom-5 sm:w-[500px] sm:rounded-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
+          <h2 className="text-lg font-bold text-gray-900">{t("property.filters.title")}</h2>
+          <button onClick={onClose} className="rounded-full p-2 transition hover:bg-gray-100">
+            <X size={24} className="text-gray-600" />
+          </button>
         </div>
-    );
+
+        <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-800">{t("property.filters.priceRange")}</h3>
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder={t("common.from")}
+                className="w-full flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none placeholder-gray-400 focus:bg-white focus:ring-1 focus:ring-blue-500"
+                value={formatWithDots(localFilters.minPrice)}
+                onChange={(event) => {
+                  const value = parseWithDots(event.target.value);
+                  setLocalFilters((previous) => ({ ...previous, minPrice: value }));
+                }}
+              />
+              <span className="text-gray-400">-</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder={t("common.to")}
+                className="w-full flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none placeholder-gray-400 focus:bg-white focus:ring-1 focus:ring-blue-500"
+                value={formatWithDots(localFilters.maxPrice)}
+                onChange={(event) => {
+                  const value = parseWithDots(event.target.value);
+                  setLocalFilters((previous) => ({ ...previous, maxPrice: value }));
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-800">{t("property.filters.locationArea")}</h3>
+            <div className="grid grid-cols-1 gap-3">
+              <select
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:bg-white focus:ring-1 focus:ring-blue-500"
+                value={localFilters.province || ""}
+                onChange={(event) =>
+                  setLocalFilters((previous) => ({
+                    ...previous,
+                    province: event.target.value || null,
+                    ward: null,
+                  }))
+                }
+              >
+                <option value="">{t("property.filters.provinceCity")}</option>
+                {provincesList.map((province) => (
+                  <option key={province.code} value={province.name}>
+                    {province.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:bg-white focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                value={localFilters.ward || ""}
+                disabled={!localFilters.province}
+                onChange={(event) => setLocalFilters((previous) => ({ ...previous, ward: event.target.value || null }))}
+              >
+                <option value="">{t("property.form.districtLabel")}</option>
+                {availableWards.map((ward) => (
+                  <option key={ward.code} value={ward.name}>
+                    {ward.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-800">{t("property.filters.minBedrooms")}</h3>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map((value) => (
+                <button
+                  key={value}
+                  onClick={() =>
+                    setLocalFilters((previous) => ({
+                      ...previous,
+                      minBedrooms: previous.minBedrooms === value ? null : value,
+                    }))
+                  }
+                  className={`rounded-lg border px-4 py-1.5 text-xs font-semibold transition ${
+                    localFilters.minBedrooms === value
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {value}+
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-800">{t("property.fields.area")}</h3>
+            <div className="flex max-w-[220px] items-center gap-3">
+              <input
+                type="number"
+                placeholder={t("common.from")}
+                className="w-full flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none placeholder-gray-400 focus:bg-white focus:ring-1 focus:ring-blue-500"
+                value={localFilters.minArea || ""}
+                onChange={(event) => {
+                  const value = Number.parseInt(event.target.value, 10);
+                  setLocalFilters((previous) => ({ ...previous, minArea: Number.isNaN(value) ? null : value }));
+                }}
+              />
+              <span className="text-gray-400">-</span>
+              <input
+                type="number"
+                placeholder={t("common.to")}
+                className="w-full flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none placeholder-gray-400 focus:bg-white focus:ring-1 focus:ring-blue-500"
+                value={localFilters.maxArea || ""}
+                onChange={(event) => {
+                  const value = Number.parseInt(event.target.value, 10);
+                  setLocalFilters((previous) => ({ ...previous, maxArea: Number.isNaN(value) ? null : value }));
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-800">{t("property.filters.bathroomType")}</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { value: "private" as const, label: t("property.fields.privateBath") },
+                { value: "shared" as const, label: t("property.fields.sharedBath") },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() =>
+                    setLocalFilters((previous) => ({
+                      ...previous,
+                      bathroomType: previous.bathroomType === option.value ? null : option.value,
+                    }))
+                  }
+                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                    localFilters.bathroomType === option.value
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="sticky bottom-0 z-10 flex gap-3 border-t border-gray-200 bg-white p-4">
+          <button
+            onClick={handleReset}
+            className="flex-1 rounded-xl border border-gray-300 py-3.5 font-semibold text-gray-700 transition hover:bg-gray-50"
+          >
+            {t("common.reset")}
+          </button>
+          <button
+            onClick={handleApply}
+            className="flex-[2] rounded-xl bg-blue-600 py-3.5 font-bold text-white shadow-sm transition hover:bg-blue-700"
+          >
+            {t("common.apply")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -50,10 +50,10 @@ export default function LoginPage() {
     const validateField = (name: string, value: string): string | undefined => {
         switch (name) {
             case 'loginId':
-                if (!value.trim()) return t('err_enter_email_username');
+                if (!value.trim()) return t('auth.validation.emailOrUsernameRequired');
                 break;
             case 'password':
-                if (!value) return t('err_enter_password');
+                if (!value) return t('auth.validation.passwordRequired');
                 break;
         }
         return undefined;
@@ -116,7 +116,7 @@ export default function LoginPage() {
         try {
             await login(loginId, password, submittedToken || "dummy_token");
         } catch (err) {
-            let errorMessage = t('err_login_failed');
+            let errorMessage = t('auth.validation.loginFailed');
 
             const data = (err as ApiErrorShape).response?.data;
             if (data) {
@@ -153,7 +153,7 @@ export default function LoginPage() {
             <div className="hidden lg:block lg:w-1/2 relative">
                 <Image
                     src="/images/auth-background.jpg"
-                    alt="Beautiful home interior"
+                    alt=""
                     fill
                     priority
                     className="object-cover"
@@ -179,14 +179,14 @@ export default function LoginPage() {
                             />
                             <div>
                                 <h1 className="text-2xl font-bold text-white">YourHome</h1>
-                                <p className="text-teal-200 text-sm">{t('logo_subtitle')}</p>
+                                <p className="text-teal-200 text-sm">{t('auth.shared.logoSubtitle')}</p>
                             </div>
                         </div>
                         <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight text-balance">
-                            {t('hero_login_title')}
+                            {t('auth.login.heroTitle')}
                         </h2>
                         <p className="mt-4 text-lg text-teal-100 leading-relaxed">
-                            {t('hero_login_desc')}
+                            {t('auth.login.heroDescription')}
                         </p>
                     </div>
                 </div>
@@ -201,7 +201,7 @@ export default function LoginPage() {
                 <div className="lg:hidden absolute inset-0">
                     <Image
                         src="/images/auth-background.jpg"
-                        alt="Background"
+                        alt=""
                         fill
                         priority
                         className="object-cover"
@@ -230,20 +230,20 @@ export default function LoginPage() {
                             />
                             <div className="text-left">
                                 <h1 className="text-2xl font-bold text-white">YourHome</h1>
-                                <p className="text-teal-200 text-sm">{t('logo_subtitle')}</p>
+                                <p className="text-teal-200 text-sm">{t('auth.shared.logoSubtitle')}</p>
                             </div>
                         </div>
                         <p className="text-white/80 text-sm max-w-xs mx-auto">
-                            {t('hero_login_desc')}
+                            {t('auth.login.heroDescription')}
                         </p>
                     </div>
 
                     <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-8 shadow-xl lg:shadow-sm">
                         <div className="flex items-start justify-between">
                             <div>
-                                <h2 className="text-2xl font-bold text-[var(--theme-text)]">{t('login_title')}</h2>
+                                <h2 className="text-2xl font-bold text-[var(--theme-text)]">{t('auth.login.title')}</h2>
                                 <p className="mt-2 text-sm text-[var(--theme-text-muted)]">
-                                    {t('login_subtitle')}
+                                    {t('auth.login.subtitle')}
                                 </p>
                             </div>
                         </div>
@@ -267,7 +267,7 @@ export default function LoginPage() {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     className={getInputClassName('loginId')}
-                                    placeholder={t('email_username_placeholder')}
+                                    placeholder={t('auth.login.emailOrUsernamePlaceholder')}
                                 />
                             </div>
                             {errors.loginId && touched.loginId && <p className="text-xs text-red-500">{errors.loginId}</p>}
@@ -285,7 +285,7 @@ export default function LoginPage() {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     className={getInputClassName('password')}
-                                    placeholder={t('password_placeholder')}
+                                    placeholder={t('auth.shared.passwordPlaceholder')}
                                 />
                             </div>
                             {errors.password && touched.password && <p className="text-xs text-red-500">{errors.password}</p>}
@@ -306,13 +306,13 @@ export default function LoginPage() {
                                     : 'bg-teal-600 shadow-md shadow-teal-600/25 hover:-translate-y-0.5 hover:bg-teal-700 hover:shadow-lg'
                                 } focus:outline-none focus:ring-4 focus:ring-teal-100`}
                         >
-                            {loading ? t('signing_in') : t('sign_in_btn')}
+                            {loading ? t('auth.login.submitting') : t('auth.shared.signInButton')}
                         </button>
 
                         <p className="pt-1 text-center text-sm text-[var(--theme-text-muted)]">
-                            {t('no_account')}{' '}
+                            {t('auth.login.noAccount')}{' '}
                             <Link href="/register" className="font-semibold text-teal-600 transition-colors hover:text-teal-700">
-                                {t('create_one')}
+                                {t('auth.login.createOne')}
                             </Link>
                         </p>
                     </form>

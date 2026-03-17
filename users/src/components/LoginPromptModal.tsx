@@ -49,11 +49,11 @@ export default function LoginPromptModal({ isOpen, onClose }: LoginPromptModalPr
                     </div>
 
                     <h2 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">
-                        {t('login_prompt_title')}
+                        {t('auth.loginPrompt.title')}
                     </h2>
                     
                     <p className="text-gray-500 text-sm leading-relaxed mb-8">
-                        {t('login_prompt_desc')}
+                        {t('auth.loginPrompt.description')}
                     </p>
 
                     <div className="w-full space-y-3">
@@ -62,7 +62,7 @@ export default function LoginPromptModal({ isOpen, onClose }: LoginPromptModalPr
                             className="w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-600/20 active:scale-[0.98]"
                         >
                             <LogIn size={18} />
-                            {t('sign_in_btn')}
+                            {t('auth.shared.signInButton')}
                         </button>
                         
                         <button 
@@ -70,14 +70,14 @@ export default function LoginPromptModal({ isOpen, onClose }: LoginPromptModalPr
                             className="w-full flex items-center justify-center gap-2 bg-teal-50 hover:bg-teal-100 text-teal-700 py-3.5 rounded-xl font-bold transition-all active:scale-[0.98]"
                         >
                             <UserPlus size={18} />
-                            {t('create_account_btn')}
+                            {t('auth.register.createAccountButton')}
                         </button>
 
                         <button 
                             onClick={onClose}
                             className="w-full py-3 text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors"
                         >
-                            {t('cancel')}
+                            {t('common.cancel')}
                         </button>
                     </div>
                 </div>

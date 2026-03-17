@@ -14,10 +14,10 @@ export default function HelpSupport() {
     const router = useRouter();
 
     const faqs = [
-        { q: t("faq_q1"), a: t("faq_a1") },
-        { q: t("faq_q2"), a: t("faq_a2") },
-        { q: t("faq_q3"), a: t("faq_a3") },
-        { q: t("faq_q4"), a: t("faq_a4") },
+        { q: t("help.faq.items.0.question"), a: t("help.faq.items.0.answer") },
+        { q: t("help.faq.items.1.question"), a: t("help.faq.items.1.answer") },
+        { q: t("help.faq.items.2.question"), a: t("help.faq.items.2.answer") },
+        { q: t("help.faq.items.3.question"), a: t("help.faq.items.3.answer") },
     ];
 
     return (
@@ -32,7 +32,7 @@ export default function HelpSupport() {
                         >
                             <ChevronLeft className="w-5 h-5 text-slate-600" />
                         </button>
-                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("help_support")}</h1>
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("navigation.helpSupport")}</h1>
                     </div>
                 </div>
             </header>
@@ -45,12 +45,12 @@ export default function HelpSupport() {
                         <div className="inline-flex p-4 bg-white/10 border border-white/20 rounded-3xl backdrop-blur-md">
                             <LifeBuoy className="w-8 h-8 text-teal-400" />
                         </div>
-                        <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">{t("help_subtitle")}</h2>
+                        <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">{t("help.centerSubtitle")}</h2>
                         <div className="max-w-xl mx-auto relative group">
                             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-teal-400 transition-colors" />
                             <input 
                                 type="text" 
-                                placeholder={t("search_help_placeholder")}
+                                placeholder={t("help.searchPlaceholder")}
                                 className="w-full h-14 pl-14 pr-6 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:bg-white/10 focus:border-teal-500/50 outline-none transition-all"
                             />
                         </div>
@@ -61,19 +61,19 @@ export default function HelpSupport() {
                 <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     <ContactCard 
                         icon={<Mail className="w-6 h-6" />}
-                        title={t("contact_email")}
+                        title={t("help.contact.email")}
                         desc="support@yourhome.com"
                         color="bg-blue-50 text-blue-600"
                     />
                     <ContactCard 
                         icon={<MessageCircle className="w-6 h-6" />}
-                        title={t("contact_chat")}
-                        desc={t("avg_response_time")}
+                        title={t("help.contact.chat")}
+                        desc={t("help.contact.avgResponseTime")}
                         color="bg-teal-50 text-teal-600"
                     />
                     <ContactCard 
                         icon={<Phone className="w-6 h-6" />}
-                        title={t("contact_call")}
+                        title={t("help.contact.call")}
                         desc="+1 (555) 000-0000"
                         color="bg-indigo-50 text-indigo-600"
                     />
@@ -85,7 +85,7 @@ export default function HelpSupport() {
                         <div className="p-2 bg-slate-900 rounded-xl text-white">
                             <BookOpen className="w-5 h-5" />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t("faq_title")}</h3>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t("help.faqTitle")}</h3>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
@@ -105,12 +105,12 @@ export default function HelpSupport() {
 
                 {/* Bottom CTA */}
                 <section className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] p-8 text-center">
-                    <p className="text-slate-500 font-bold mb-4">{t("still_need_help")}</p>
+                    <p className="text-slate-500 font-bold mb-4">{t("help.contact.stillNeedHelp")}</p>
                     <button 
                         onClick={() => router.push('/profile/help-support/ticket')}
                         className="px-8 h-12 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 active:scale-95 transition-all"
                     >
-                        {t("support_ticket_title")}
+                        {t("help.ticket.title")}
                     </button>
                 </section>
             </main>

@@ -1,543 +1,714 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Loader2, Upload, Image as ImageIcon, Video, Trash2, CheckCircle, XCircle, MapPin, Navigation } from 'lucide-react';
-import api, { resolvedApiBaseUrl } from '@/api/axios';
-import dynamic from 'next/dynamic';
-import { getBestAvailableLocation } from '@/utils/location';
-import SafeImage from '@/components/SafeImage';
-import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from '@/utils/safeMedia';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  X,
+  Loader2,
+  Upload,
+  Image as ImageIcon,
+  Video,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  MapPin,
+  Navigation,
+} from "lucide-react";
+import dynamic from "next/dynamic";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { useMap } from "react-leaflet";
+import api, { resolvedApiBaseUrl } from "@/api/axios";
+import SafeImage from "@/components/SafeImage";
+import { useLanguage } from "@/context/LanguageContext";
+import { getBestAvailableLocation } from "@/utils/location";
+import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from "@/utils/safeMedia";
+import { PROPERTY_TYPE_OPTIONS, toPropertyTypeApiValue } from "@/i18n";
 
-const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
 
 const MapViewUpdater = ({ center }: { center: [number, number] }) => {
-    const { useMap: useMapHook } = require('react-leaflet');
-    const map = useMapHook();
-    useEffect(() => {
-        if (center) {
-            map.setView(center, 16);
-        }
-    }, [center, map]);
-    return null;
+  const map = useMap();
+
+  useEffect(() => {
+    map.setView(center, 16);
+  }, [center, map]);
+
+  return null;
 };
 
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import { useLanguage } from '@/context/LanguageContext';
-
 const markerSvg = encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">' +
-        '<circle cx="12" cy="12" r="9" fill="#3b82f6" stroke="white" stroke-width="3"/>' +
-    '</svg>'
+  '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">' +
+    '<circle cx="12" cy="12" r="9" fill="#3b82f6" stroke="white" stroke-width="3"/>' +
+  "</svg>"
 );
+
 const customIcon = L.icon({
-    iconUrl: `data:image/svg+xml,${markerSvg}`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+  iconUrl: `data:image/svg+xml,${markerSvg}`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
 });
 
 interface House {
-    id: string;
-    name: string;
-    property_type?: string;
-    address: string;
-    ward?: string;
-    district: string;
-    city: string;
-    price?: number;
-    square?: number;
-    bedrooms?: number;
-    description?: string;
-    contact_phone?: string;
-    latitude?: number;
-    longitude?: number;
-    image_url_1?: string;
-    image_url_2?: string;
-    image_url_3?: string;
-    image_url_4?: string;
-    image_url_5?: string;
-    image_url_6?: string;
-    image_url_7?: string;
-    video_url_1?: string;
-    video_url_2?: string;
+  id: string;
+  name: string;
+  property_type?: string;
+  address: string;
+  ward?: string;
+  district: string;
+  city: string;
+  price?: number;
+  square?: number;
+  bedrooms?: number;
+  description?: string;
+  contact_phone?: string;
+  latitude?: number;
+  longitude?: number;
+  image_url_1?: string;
+  image_url_2?: string;
+  image_url_3?: string;
+  image_url_4?: string;
+  image_url_5?: string;
+  image_url_6?: string;
+  image_url_7?: string;
+  video_url_1?: string;
+  video_url_2?: string;
 }
 
 interface EditPropertyModalProps {
-    house: House | null;
-    onClose: () => void;
-    onSuccess?: () => void;
+  house: House | null;
+  onClose: () => void;
+  onSuccess?: () => void;
 }
 
 const API_BASE = () => {
-    if (typeof window !== 'undefined' && resolvedApiBaseUrl.startsWith('/')) {
-        return `${window.location.origin}${resolvedApiBaseUrl}`;
-    }
-    if (resolvedApiBaseUrl) return resolvedApiBaseUrl;
-    if (typeof window !== 'undefined') return `${window.location.origin}/api`;
-    return 'http://localhost:3000';
+  if (typeof window !== "undefined" && resolvedApiBaseUrl.startsWith("/")) {
+    return `${window.location.origin}${resolvedApiBaseUrl}`;
+  }
+
+  if (resolvedApiBaseUrl) return resolvedApiBaseUrl;
+  if (typeof window !== "undefined") return `${window.location.origin}/api`;
+  return "http://localhost:3000";
 };
 
-function removeVietnameseTones(str: string) {
-    return str
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/đ/g, "d")
-        .replace(/Đ/g, "D");
+function removeVietnameseTones(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\u0111/g, "d")
+    .replace(/\u0110/g, "D");
 }
 
-async function uploadFile(file: File, type: 'image' | 'video'): Promise<string> {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = await fetch(`${API_BASE()}/upload/${type}`, { method: 'POST', body: formData });
-    if (!res.ok) throw new Error(`${type} upload failed`);
-    const data = await res.json();
-    return data.url as string;
+async function uploadFile(file: File, type: "image" | "video"): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE()}/upload/${type}`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) throw new Error(`${type} upload failed`);
+
+  const data = await response.json();
+  return data.url as string;
 }
 
 export default function EditPropertyModal({ house, onClose, onSuccess }: EditPropertyModalProps) {
-    const { t } = useLanguage();
-    const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-    const [uploadingMedia, setUploadingMedia] = useState(false);
-    const [isGeocoding, setIsGeocoding] = useState(false);
-    
-    const [images, setImages] = useState<string[]>([]);
-    const [videos, setVideos] = useState<string[]>([]);
-    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-    
-    const imageInputRef = useRef<HTMLInputElement>(null);
-    const videoInputRef = useRef<HTMLInputElement>(null);
-    const markerRef = useRef<any>(null);
+  const { t } = useLanguage();
+  const [submitState, setSubmitState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const [videos, setVideos] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    property_type: "house",
+    street_address: "",
+    district: "",
+    city: "",
+    price: "",
+    square: "",
+    bedrooms: "",
+    description: "",
+    contact_phone: "",
+    latitude: 21.0285,
+    longitude: 105.8542,
+  });
+  const [mapCenter, setMapCenter] = useState<[number, number]>([21.0285, 105.8542]);
+  const [shouldGeocode, setShouldGeocode] = useState(false);
+  const { street_address, district, city } = formData;
 
-    const [formData, setFormData] = useState({
-        name: '',
-        property_type: 'house',
-        street_address: '',
-        district: '',
-        city: '',
-        price: '',
-        square: '',
-        bedrooms: '',
-        description: '',
-        contact_phone: '',
-        latitude: 21.0285,
-        longitude: 105.8542
+  useEffect(() => {
+    if (!house) return;
+
+    setFormData({
+      name: house.name || "",
+      property_type: house.property_type || "house",
+      street_address: house.address || "",
+      district: house.district || "",
+      city: house.city || "",
+      price: house.price != null ? String(house.price).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "",
+      square: house.square != null ? String(house.square) : "",
+      bedrooms: house.bedrooms != null ? String(house.bedrooms) : "",
+      description: house.description || "",
+      contact_phone: house.contact_phone || "",
+      latitude: house.latitude || 21.0285,
+      longitude: house.longitude || 105.8542,
     });
 
-    const [mapCenter, setMapCenter] = useState<[number, number]>([21.0285, 105.8542]);
+    if (house.latitude && house.longitude) {
+      setMapCenter([house.latitude, house.longitude]);
+    }
 
-    useEffect(() => {
-        if (house) {
-            setFormData({
-                name: house.name || '',
-                property_type: house.property_type || 'house',
-                street_address: house.address || '',
-                district: house.district || '',
-                city: house.city || '',
-                price: house.price != null ? String(house.price).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : '',
-                square: house.square != null ? String(house.square) : '',
-                bedrooms: house.bedrooms != null ? String(house.bedrooms) : '',
-                description: house.description || '',
-                contact_phone: house.contact_phone || '',
-                latitude: house.latitude || 21.0285,
-                longitude: house.longitude || 105.8542
-            });
-            
-            if (house.latitude && house.longitude) {
-                setMapCenter([house.latitude, house.longitude]);
-            }
+    const existingImages = [
+      house.image_url_1,
+      house.image_url_2,
+      house.image_url_3,
+      house.image_url_4,
+      house.image_url_5,
+      house.image_url_6,
+      house.image_url_7,
+    ].filter(Boolean) as string[];
 
-            const existingImages: string[] = [
-                house.image_url_1, house.image_url_2, house.image_url_3,
-                house.image_url_4, house.image_url_5, house.image_url_6,
-                house.image_url_7
-            ].filter((url): url is string => !!url);
-            
-            setImages(existingImages);
-            setImagePreviews(existingImages);
-            
-            const existingVideos: string[] = [
-                house.video_url_1, house.video_url_2
-            ].filter((url): url is string => !!url);
-            setVideos(existingVideos);
-        }
-    }, [house]);
+    const existingVideos = [house.video_url_1, house.video_url_2].filter(Boolean) as string[];
 
-    // Geocoding Logic
-    const [shouldGeocode, setShouldGeocode] = useState(false);
+    setImages(existingImages);
+    setImagePreviews(existingImages);
+    setVideos(existingVideos);
+  }, [house]);
 
-    useEffect(() => {
-        if (!house || !shouldGeocode) return;
-        
-        const { street_address, district, city } = formData;
-        if (!street_address && !district && !city) return;
+  useEffect(() => {
+    if (!house || !shouldGeocode) return;
 
-        const timer = setTimeout(async () => {
-            setIsGeocoding(true);
-            try {
-                const fullAddress = `${street_address}, ${district}, ${city}, Vietnam`;
-                const cleanAddress = removeVietnameseTones(fullAddress);
-                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddress)}&format=json&limit=1`;
-                
-                const response = await fetch(url, { headers: { 'User-Agent': 'RentalApp/1.0' } });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data && data.length > 0) {
-                        const lat = parseFloat(data[0].lat);
-                        const lon = parseFloat(data[0].lon);
-                        setFormData(prev => ({ ...prev, latitude: lat, longitude: lon }));
-                        setMapCenter([lat, lon]);
-                    }
-                }
-            } catch (error) {
-                console.error('Geocoding error:', error);
-            } finally {
-                setIsGeocoding(false);
-                setShouldGeocode(false);
-            }
-        }, 800);
+    if (!street_address && !district && !city) return;
 
-        return () => clearTimeout(timer);
-    }, [formData.street_address, formData.district, formData.city, shouldGeocode, house]);
+    const timer = setTimeout(async () => {
+      setIsGeocoding(true);
 
-    const handleUseCurrentLocation = useCallback(async () => {
-        try {
-            const location = await getBestAvailableLocation();
-            setFormData(prev => ({ ...prev, latitude: location.lat, longitude: location.lng }));
-            setMapCenter([location.lat, location.lng]);
-        } catch (error) {
-            console.error("Error getting location:", error);
-            alert("Unable to retrieve your location");
-        }
-    }, []);
+      try {
+        const fullAddress = `${street_address}, ${district}, ${city}, Vietnam`;
+        const cleanAddress = removeVietnameseTones(fullAddress);
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddress)}&format=json&limit=1`;
+        const response = await fetch(url, { headers: { "User-Agent": "RentalApp/1.0" } });
 
-    const handleDragEnd = () => {
-        const marker = markerRef.current;
-        if (marker != null) {
-            const position = marker.getLatLng();
-            setFormData(prev => ({ ...prev, latitude: position.lat, longitude: position.lng }));
-        }
-    };
+        if (!response.ok) return;
 
-    if (!house) return null;
+        const data = await response.json();
+        if (!data?.length) return;
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        let value = e.target.value;
-        if (e.target.name === 'price') {
-            const rawValue = value.replace(/\D/g, '');
-            value = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
-        setFormData(prev => ({ ...prev, [e.target.name]: value }));
-        
-        // Trigger geocoding when address fields change
-        if (['street_address', 'district', 'city'].includes(e.target.name)) {
-            setShouldGeocode(true);
-        }
-    };
+        const lat = Number.parseFloat(data[0].lat);
+        const lon = Number.parseFloat(data[0].lon);
+        setFormData((previous) => ({ ...previous, latitude: lat, longitude: lon }));
+        setMapCenter([lat, lon]);
+      } catch (error) {
+        console.error("Geocoding error:", error);
+      } finally {
+        setIsGeocoding(false);
+        setShouldGeocode(false);
+      }
+    }, 800);
 
-    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        if (!files.length) return;
-        const supportedFiles = files.filter(isSafeImageFile);
-        if (!supportedFiles.length) {
-            alert('Please upload PNG, JPG, GIF, WebP, BMP, or AVIF images only.');
-            if (imageInputRef.current) imageInputRef.current.value = '';
-            return;
-        }
-        const remaining = 7 - images.length;
-        const toUpload = supportedFiles.slice(0, remaining);
-        setUploadingMedia(true);
-        try {
-            const urls = await Promise.all(toUpload.map(f => uploadFile(f, 'image')));
-            const previews = toUpload.map(f => URL.createObjectURL(f));
-            setImages(prev => [...prev, ...urls]);
-            setImagePreviews(prev => [...prev, ...previews]);
-        } catch (err) {
-            console.error('Image upload error', err);
-            alert('Failed to upload one or more images.');
-        } finally {
-            setUploadingMedia(false);
-            if (imageInputRef.current) imageInputRef.current.value = '';
-        }
-    };
+    return () => clearTimeout(timer);
+  }, [city, district, house, shouldGeocode, street_address]);
 
-    const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        if (!files.length) return;
-        const remaining = 2 - videos.length;
-        const toUpload = files.slice(0, remaining);
-        setUploadingMedia(true);
-        try {
-            const urls = await Promise.all(toUpload.map(f => uploadFile(f, 'video')));
-            setVideos(prev => [...prev, ...urls]);
-        } catch (err) {
-            console.error('Video upload error', err);
-            alert('Failed to upload one or more videos.');
-        } finally {
-            setUploadingMedia(false);
-            if (videoInputRef.current) videoInputRef.current.value = '';
-        }
-    };
+  const handleUseCurrentLocation = useCallback(async () => {
+    try {
+      const location = await getBestAvailableLocation();
+      setFormData((previous) => ({ ...previous, latitude: location.lat, longitude: location.lng }));
+      setMapCenter([location.lat, location.lng]);
+    } catch (error) {
+      console.error("Error getting location:", error);
+      window.alert(t("property.form.locationError"));
+    }
+  }, [t]);
 
-    const removeImage = (idx: number) => {
-        setImages(prev => prev.filter((_, i) => i !== idx));
-        setImagePreviews(prev => prev.filter((_, i) => i !== idx));
-    };
+  const handleDragEnd = () => {
+    const marker = markerRef.current;
+    if (!marker) return;
 
-    const removeVideo = (idx: number) => {
-        setVideos(prev => prev.filter((_, i) => i !== idx));
-    };
+    const position = marker.getLatLng();
+    setFormData((previous) => ({ ...previous, latitude: position.lat, longitude: position.lng }));
+  };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSubmitState('loading');
-        try {
-            const fullAddressString = `${formData.street_address}, ${formData.district}, ${formData.city}`.replace(/^, |, $/g, '');
-            const payload: Record<string, any> = {
-                ...formData,
-                address: fullAddressString,
-                price: formData.price ? Number(String(formData.price).replace(/\./g, '')) : null,
-                square: formData.square ? Number(formData.square) : null,
-                bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
-            };
-            
-            // Clear all media slots
-            for (let i = 1; i <= 7; i++) payload[`image_url_${i}`] = null;
-            for (let i = 1; i <= 2; i++) payload[`video_url_${i}`] = null;
-            
-            // Re-fill with current media
-            images.forEach((url, i) => { payload[`image_url_${i + 1}`] = url; });
-            videos.forEach((url, i) => { payload[`video_url_${i + 1}`] = url; });
-            
-            await api.patch(`/houses/${house.id}`, payload);
-            setSubmitState('success');
-            setTimeout(() => {
-                onSuccess?.();
-                onClose();
-                setTimeout(() => setSubmitState('idle'), 300);
-            }, 2000);
-        } catch (err: any) {
-            console.error(err);
-            setSubmitState('error');
-        }
-    };
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    let value = event.target.value;
 
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative">
-                <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
-                    <h2 className="text-xl font-semibold text-gray-800">Edit Property</h2>
-                    <button onClick={onClose} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
-                        <X size={20} />
-                    </button>
+    if (event.target.name === "price") {
+      const rawValue = value.replace(/\D/g, "");
+      value = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    setFormData((previous) => ({ ...previous, [event.target.name]: value }));
+
+    if (["street_address", "district", "city"].includes(event.target.name)) {
+      setShouldGeocode(true);
+    }
+  };
+
+  const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    const supportedFiles = files.filter(isSafeImageFile);
+    if (!supportedFiles.length) {
+      window.alert(t("property.form.invalidImageType"));
+      if (imageInputRef.current) imageInputRef.current.value = "";
+      return;
+    }
+
+    const remaining = 7 - images.length;
+    const filesToUpload = supportedFiles.slice(0, remaining);
+
+    setUploadingMedia(true);
+
+    try {
+      const urls = await Promise.all(filesToUpload.map((file) => uploadFile(file, "image")));
+      const previews = filesToUpload.map((file) => URL.createObjectURL(file));
+      setImages((previous) => [...previous, ...urls]);
+      setImagePreviews((previous) => [...previous, ...previews]);
+    } catch (error) {
+      console.error("Image upload error", error);
+      window.alert(t("property.form.imageUploadError"));
+    } finally {
+      setUploadingMedia(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
+
+  const handleVideoSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    const remaining = 2 - videos.length;
+    const filesToUpload = files.slice(0, remaining);
+
+    setUploadingMedia(true);
+
+    try {
+      const urls = await Promise.all(filesToUpload.map((file) => uploadFile(file, "video")));
+      setVideos((previous) => [...previous, ...urls]);
+    } catch (error) {
+      console.error("Video upload error", error);
+      window.alert(t("property.form.videoUploadError"));
+    } finally {
+      setUploadingMedia(false);
+      if (videoInputRef.current) videoInputRef.current.value = "";
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
+    setImagePreviews((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
+  };
+
+  const removeVideo = (index: number) => {
+    setVideos((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!house) return;
+
+    setSubmitState("loading");
+
+    try {
+      const fullAddressString = `${formData.street_address}, ${formData.district}, ${formData.city}`.replace(/^, |, $/g, "");
+      const payload: Record<string, unknown> = {
+        ...formData,
+        property_type: toPropertyTypeApiValue(formData.property_type),
+        address: fullAddressString,
+        price: formData.price ? Number(String(formData.price).replace(/\./g, "")) : null,
+        square: formData.square ? Number(formData.square) : null,
+        bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
+        name: formData.name || fullAddressString || house.name,
+      };
+
+      for (let index = 1; index <= 7; index += 1) payload[`image_url_${index}`] = null;
+      for (let index = 1; index <= 2; index += 1) payload[`video_url_${index}`] = null;
+
+      images.forEach((url, index) => {
+        payload[`image_url_${index + 1}`] = url;
+      });
+
+      videos.forEach((url, index) => {
+        payload[`video_url_${index + 1}`] = url;
+      });
+
+      await api.patch(`/houses/${house.id}`, payload);
+      setSubmitState("success");
+
+      setTimeout(() => {
+        onSuccess?.();
+        onClose();
+        setTimeout(() => setSubmitState("idle"), 300);
+      }, 2000);
+    } catch (error) {
+      console.error(error);
+      setSubmitState("error");
+    }
+  };
+
+  if (!house) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
+      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4">
+          <h2 className="text-xl font-semibold text-gray-800">{t("property.edit.title")}</h2>
+          <button onClick={onClose} className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100">
+            <X size={20} />
+          </button>
+        </div>
+
+        {submitState !== "idle" ? (
+          <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4 p-10">
+            {submitState === "loading" ? (
+              <>
+                <Loader2 size={48} className="animate-spin text-blue-600" />
+                <p className="text-lg font-medium text-gray-700">{t("property.add.submitting")}</p>
+              </>
+            ) : null}
+
+            {submitState === "success" ? (
+              <>
+                <CheckCircle size={60} className="text-green-500" />
+                <p className="text-lg font-medium text-green-600">{t("property.edit.submitSuccess")}</p>
+              </>
+            ) : null}
+
+            {submitState === "error" ? (
+              <>
+                <XCircle size={60} className="text-red-500" />
+                <p className="text-lg font-medium text-red-600">{t("property.edit.submitError")}</p>
+                <button
+                  type="button"
+                  onClick={() => setSubmitState("idle")}
+                  className="mt-4 rounded-xl bg-gray-100 px-6 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-200"
+                >
+                  {t("common.tryAgain")}
+                </button>
+              </>
+            ) : null}
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5 p-6">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                {t("property.edit.nameLabel")} <span className="text-red-500">*</span>
+              </label>
+              <input
+                required
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                {t("property.form.propertyTypeLabel")} <span className="text-red-500">*</span>
+              </label>
+              <select
+                required
+                name="property_type"
+                value={formData.property_type}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {PROPERTY_TYPE_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.apiValue}>
+                    {t(option.translationKey)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  {t("property.form.cityLabel")} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  required
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={t("property.form.cityLabel")}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  {t("property.form.districtLabel")} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  required
+                  name="district"
+                  value={formData.district}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={t("property.form.districtLabel")}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                {t("property.form.streetAddressLabel")} <span className="text-red-500">*</span>
+              </label>
+              <input
+                required
+                name="street_address"
+                value={formData.street_address}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder={t("property.form.streetAddressLabel")}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="mb-1 flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">
+                  {t("property.form.exactLocationLabel")} <span className="text-red-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleUseCurrentLocation}
+                  className="flex items-center gap-1.5 text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
+                >
+                  <Navigation size={12} />
+                  {t("property.form.useCurrentLocation")}
+                </button>
+              </div>
+
+              <div className="relative">
+                <div className="z-10 h-[200px] w-full overflow-hidden rounded-xl border border-gray-200">
+                  {typeof window !== "undefined" ? (
+                    <MapContainer center={mapCenter} zoom={13} style={{ height: "100%", width: "100%" }}>
+                      <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+                      <Marker
+                        draggable
+                        eventHandlers={{ dragend: handleDragEnd }}
+                        position={[formData.latitude, formData.longitude]}
+                        ref={markerRef}
+                        icon={customIcon}
+                      />
+                      <MapViewUpdater center={mapCenter} />
+                    </MapContainer>
+                  ) : null}
                 </div>
 
-                {submitState !== 'idle' ? (
-                    <div className="p-10 flex flex-col items-center justify-center space-y-4 min-h-[300px]">
-                        {submitState === 'loading' && (
-                            <>
-                                <Loader2 size={48} className="animate-spin text-blue-600" />
-                                <p className="text-lg font-medium text-gray-700">{t('submitting_property')}</p>
-                            </>
-                        )}
-                        {submitState === 'success' && (
-                            <>
-                                <CheckCircle size={60} className="text-green-500" />
-                                <p className="text-lg font-medium text-green-600">Property updated successfully!</p>
-                            </>
-                        )}
-                        {submitState === 'error' && (
-                            <>
-                                <XCircle size={60} className="text-red-500" />
-                                <p className="text-lg font-medium text-red-600">Failed to update property</p>
-                                <button type="button" onClick={() => setSubmitState('idle')} className="mt-4 px-6 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl font-medium transition-colors">
-                                    {t('try_again')}
-                                </button>
-                            </>
-                        )}
+                {isGeocoding ? (
+                  <div className="absolute inset-0 z-[1001] flex items-center justify-center rounded-xl bg-white/40 backdrop-blur-[1px]">
+                    <div className="flex items-center gap-2 rounded-full border border-blue-50/50 bg-white/90 px-3 py-1.5 shadow-sm">
+                      <Loader2 size={14} className="animate-spin text-blue-600" />
+                      <span className="text-[11px] font-medium uppercase tracking-tight text-blue-700">
+                        {t("property.form.geocodingLoading")}
+                      </span>
                     </div>
-                ) : (
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                    {/* Name */}
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700">Property Name <span className="text-red-500">*</span></label>
-                        <input required name="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
-                    </div>
+                  </div>
+                ) : null}
+              </div>
 
-                    {/* Type */}
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700">{t('property_type')} <span className="text-red-500">*</span></label>
-                        <select required name="property_type" value={formData.property_type} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="house">{t('house')}</option>
-                            <option value="commercial space">{t('commercial_space')}</option>
-                            <option value="apartment">{t('apartment')}</option>
-                            <option value="condominium">{t('condominium')}</option>
-                            <option value="hotel">{t('hotel')}</option>
-                        </select>
-                    </div>
-
-                    {/* City + District */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('city')} <span className="text-red-500">*</span></label>
-                            <input required name="city" value={formData.city} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder={t('city')} />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('district')} <span className="text-red-500">*</span></label>
-                            <input required name="district" value={formData.district} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder={t('district')} />
-                        </div>
-                    </div>
-
-                    {/* Street Address */}
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700">{t('street_address')} <span className="text-red-500">*</span></label>
-                        <input required name="street_address" value={formData.street_address} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12 ngo 34 Tran Phu" />
-                    </div>
-
-                    {/* Map Pin Picker */}
-                    <div className="space-y-1">
-                        <div className="flex items-center justify-between mb-1">
-                            <label className="text-sm font-medium text-gray-700">{t('exact_location')} <span className="text-red-500">*</span></label>
-                            <button type="button" onClick={handleUseCurrentLocation} className="flex items-center gap-1.5 text-xs text-blue-600 font-medium hover:text-blue-700 transition-colors">
-                                <Navigation size={12} /> {t('use_current_location')}
-                            </button>
-                        </div>
-                        <div className="relative">
-                            <div className="h-[200px] w-full rounded-xl overflow-hidden border border-gray-200 z-10">
-                                {typeof window !== 'undefined' && (
-                                    <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
-                                        <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
-                                        <Marker draggable={true} eventHandlers={{ dragend: handleDragEnd }} position={[formData.latitude, formData.longitude]} ref={markerRef} icon={customIcon} />
-                                        <MapViewUpdater center={mapCenter} />
-                                    </MapContainer>
-                                )}
-                            </div>
-                            {isGeocoding && (
-                                <div className="absolute inset-0 z-[1001] bg-white/40 backdrop-blur-[1px] flex items-center justify-center rounded-xl">
-                                    <div className="bg-white/90 px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 border border-blue-50/50">
-                                        <Loader2 size={14} className="animate-spin text-blue-600" />
-                                        <span className="text-[11px] font-medium text-blue-700 uppercase tracking-tight">{t('geocoding_loading')}</span>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <p className="text-[10px] text-gray-400 mt-1.5 flex items-center gap-1">
-                            <MapPin size={10} className="text-gray-300" /> {t('drag_pin')}
-                        </p>
-                    </div>
-
-                    {/* Price + Area */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('price_vnd')}</label>
-                            <input type="text" name="price" value={formData.price} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0" />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('area')}</label>
-                            <input type="number" name="square" value={formData.square} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0.0" />
-                        </div>
-                    </div>
-
-                    {/* Bedrooms + Phone */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('bedrooms')}</label>
-                            <input type="number" name="bedrooms" value={formData.bedrooms} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0" />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">{t('contact_phone')}</label>
-                            <input name="contact_phone" value={formData.contact_phone} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="+84..." />
-                        </div>
-                    </div>
-
-                    {/* Description */}
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700">{t('description')}</label>
-                        <textarea name="description" value={formData.description} onChange={handleChange} rows={3} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="..." />
-                    </div>
-
-                    {/* Images */}
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><ImageIcon size={15} /> {t('photos')} <span className="text-gray-400 font-normal">({images.length}/7)</span></label>
-                            {images.length < 7 && (
-                                <button type="button" onClick={() => imageInputRef.current?.click()} disabled={uploadingMedia} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 disabled:opacity-50">
-                                    <Upload size={13} /> {t('upload')}
-                                </button>
-                            )}
-                        </div>
-                        <input ref={imageInputRef} type="file" accept={SAFE_IMAGE_ACCEPT} multiple className="hidden" onChange={handleImageSelect} />
-                        {imagePreviews.length > 0 && (
-                            <div className="grid grid-cols-4 gap-2">
-                                {imagePreviews.map((src, i) => (
-                                    <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-                                        <SafeImage src={src} alt="" className="w-full h-full object-cover" allowBlob={true} />
-                                        <button type="button" onClick={() => removeImage(i)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                            <Trash2 size={16} className="text-white" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        {images.length === 0 && (
-                            <button type="button" onClick={() => imageInputRef.current?.click()} disabled={uploadingMedia} className="w-full h-24 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-1.5 text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors disabled:opacity-50">
-                                <ImageIcon size={22} />
-                                <span className="text-xs">{t('click_add_photos')}</span>
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Videos */}
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><Video size={15} /> {t('videos')} <span className="text-gray-400 font-normal">({videos.length}/2)</span></label>
-                            {videos.length < 2 && (
-                                <button type="button" onClick={() => videoInputRef.current?.click()} disabled={uploadingMedia} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 disabled:opacity-50">
-                                    <Upload size={13} /> {t('upload')}
-                                </button>
-                            )}
-                        </div>
-                        <input ref={videoInputRef} type="file" accept="video/*" multiple className="hidden" onChange={handleVideoSelect} />
-                        {videos.length > 0 && (
-                            <div className="flex flex-col gap-2">
-                                {videos.map((url, i) => (
-                                    <div key={i} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                                        <Video size={16} className="text-blue-500 shrink-0" />
-                                        <span className="text-xs text-gray-600 truncate flex-1">Video {i + 1} ✓</span>
-                                        <button type="button" onClick={() => removeVideo(i)} className="text-gray-400 hover:text-red-500 transition-colors">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        {videos.length === 0 && (
-                            <button type="button" onClick={() => videoInputRef.current?.click()} disabled={uploadingMedia} className="w-full h-16 border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center gap-2 text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors disabled:opacity-50">
-                                <Video size={18} />
-                                <span className="text-xs">{t('click_add_videos')}</span>
-                            </button>
-                        )}
-                    </div>
-
-                    {uploadingMedia && (
-                        <div className="flex items-center gap-2 text-sm text-blue-600">
-                            <Loader2 size={16} className="animate-spin" /> {t('uploading_cloud')}
-                        </div>
-                    )}
-
-                    <div className="pt-2 flex gap-3">
-                        <button type="button" onClick={onClose} className="flex-1 py-3 px-4 rounded-xl text-gray-700 font-medium hover:bg-gray-100 transition-colors">
-                            {t('cancel')}
-                        </button>
-                        <button type="submit" disabled={uploadingMedia} className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
-                            {t('submit_property')}
-                        </button>
-                    </div>
-                </form>
-                )}
+              <p className="mt-1.5 flex items-center gap-1 text-[10px] text-gray-400">
+                <MapPin size={10} className="text-gray-300" />
+                {t("property.form.dragPinHint")}
+              </p>
             </div>
-        </div>
-    );
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">{t("property.form.priceLabel")}</label>
+                <input
+                  type="text"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">{t("property.fields.area")}</label>
+                <input
+                  type="number"
+                  name="square"
+                  value={formData.square}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">{t("property.fields.bedrooms")}</label>
+                <input
+                  type="number"
+                  name="bedrooms"
+                  value={formData.bedrooms}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">{t("property.form.contactPhoneLabel")}</label>
+                <input
+                  name="contact_phone"
+                  value={formData.contact_phone}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="+84..."
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">{t("property.fields.description")}</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={3}
+                className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder={t("property.fields.description")}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                  <ImageIcon size={15} /> {t("property.form.photosLabel")}
+                  <span className="font-normal text-gray-400">({images.length}/7)</span>
+                </label>
+                {images.length < 7 ? (
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={uploadingMedia}
+                    className="flex items-center gap-1 text-xs font-medium text-blue-600 disabled:opacity-50 hover:text-blue-700"
+                  >
+                    <Upload size={13} /> {t("common.upload")}
+                  </button>
+                ) : null}
+              </div>
+
+              <input ref={imageInputRef} type="file" accept={SAFE_IMAGE_ACCEPT} multiple className="hidden" onChange={handleImageSelect} />
+
+              {imagePreviews.length > 0 ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {imagePreviews.map((src, index) => (
+                    <div key={index} className="group relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                      <SafeImage src={src} alt="" className="h-full w-full object-cover" allowBlob />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"
+                      >
+                        <Trash2 size={16} className="text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              {images.length === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={uploadingMedia}
+                  className="flex h-24 w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 transition-colors disabled:opacity-50 hover:border-blue-300 hover:text-blue-500"
+                >
+                  <ImageIcon size={22} />
+                  <span className="text-xs">{t("property.form.addPhotosHint")}</span>
+                </button>
+              ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                  <Video size={15} /> {t("property.form.videosLabel")}
+                  <span className="font-normal text-gray-400">({videos.length}/2)</span>
+                </label>
+                {videos.length < 2 ? (
+                  <button
+                    type="button"
+                    onClick={() => videoInputRef.current?.click()}
+                    disabled={uploadingMedia}
+                    className="flex items-center gap-1 text-xs font-medium text-blue-600 disabled:opacity-50 hover:text-blue-700"
+                  >
+                    <Upload size={13} /> {t("common.upload")}
+                  </button>
+                ) : null}
+              </div>
+
+              <input ref={videoInputRef} type="file" accept="video/*" multiple className="hidden" onChange={handleVideoSelect} />
+
+              {videos.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {videos.map((_, index) => (
+                    <div key={index} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                      <Video size={16} className="shrink-0 text-blue-500" />
+                      <span className="flex-1 truncate text-xs text-gray-600">
+                        {t("property.media.videoUploaded", { index: index + 1 })}
+                      </span>
+                      <button type="button" onClick={() => removeVideo(index)} className="text-gray-400 transition-colors hover:text-red-500">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              {videos.length === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => videoInputRef.current?.click()}
+                  disabled={uploadingMedia}
+                  className="flex h-16 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 transition-colors disabled:opacity-50 hover:border-blue-300 hover:text-blue-500"
+                >
+                  <Video size={18} />
+                  <span className="text-xs">{t("property.form.addVideosHint")}</span>
+                </button>
+              ) : null}
+            </div>
+
+            {uploadingMedia ? (
+              <div className="flex items-center gap-2 text-sm text-blue-600">
+                <Loader2 size={16} className="animate-spin" />
+                {t("property.form.uploadingMedia")}
+              </div>
+            ) : null}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 rounded-xl px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-100"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="submit"
+                disabled={uploadingMedia}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-medium text-white transition-colors disabled:opacity-70 hover:bg-blue-700"
+              >
+                {t("common.saveChanges")}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
 }

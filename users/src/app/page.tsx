@@ -17,7 +17,7 @@ const InteractiveMap = loadDynamic(() => import('@/components/Map'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full bg-gray-100 animate-pulse flex items-center justify-center rounded-xl shadow-sm">
-      <span className="text-gray-400 font-medium">Loading Map...</span>
+      <span className="text-gray-400 font-medium" />
     </div>
   )
 });
@@ -251,7 +251,7 @@ export default function HomePage() {
     }
 
     if (filters.bathroomType !== null) {
-      const wantsPrivate = removeVietnameseTones(filters.bathroomType) === 'khep kin';
+      const wantsPrivate = filters.bathroomType === 'private';
       result = result.filter((property: any) => property.hasPrivateBathroom === wantsPrivate);
     }
 
@@ -271,14 +271,14 @@ export default function HomePage() {
         <div className="absolute top-4 left-4 sm:left-[60px] z-[40] flex gap-2">
           <div className="bg-white/95 px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 border border-gray-100">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-            <span className="text-xs font-semibold text-gray-800">{t('available')}</span>
+            <span className="text-xs font-semibold text-gray-800">{t('property.status.available')}</span>
           </div>
           <div className="bg-white/95 px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 border border-gray-100">
             <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-            <span className="text-xs font-semibold text-gray-800">{t('rented')}</span>
+            <span className="text-xs font-semibold text-gray-800">{t('property.status.rented')}</span>
           </div>
           <div className="bg-blue-600 px-3 py-1.5 rounded-full shadow-sm flex items-center border border-blue-500">
-            <span className="text-xs font-bold text-white">{filteredProperties.length} {t('houses')}</span>
+            <span className="text-xs font-bold text-white">{filteredProperties.length} {t('property.list.countLabel')}</span>
           </div>
         </div>
 

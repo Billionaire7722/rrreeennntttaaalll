@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Inter } from "next/font/google";
 import ProvidersLoader from "@/components/ProvidersLoader";
+import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY, SUPPORTED_LOCALES } from "@/i18n";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,6 +23,37 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const localeInitScript = `
+    (() => {
+      try {
+        const key = ${JSON.stringify(LOCALE_STORAGE_KEY)};
+        const supported = new Set(${JSON.stringify([...SUPPORTED_LOCALES])});
+        const fallback = ${JSON.stringify(DEFAULT_LOCALE)};
+        const normalize = (value) => {
+          if (!value) return fallback;
+          const normalized = String(value).trim().replace(/_/g, '-');
+          const lower = normalized.toLowerCase();
+          if (supported.has(normalized)) return normalized;
+          if (lower === 'zh' || lower === 'zh-cn' || lower === 'zh-hans') return 'zh-CN';
+          if (lower === 'zh-tw' || lower === 'zh-hk' || lower === 'zh-mo' || lower === 'zh-hant') return 'zh-TW';
+          const base = lower.split('-')[0];
+          const supportedByBase = Array.from(supported).find((locale) => locale.toLowerCase() === base);
+          if (supportedByBase) return supportedByBase;
+          return fallback;
+        };
+        const rawStored = localStorage.getItem(key);
+        const stored = rawStored ? normalize(rawStored) : '';
+        const browser = normalize(navigator.language || navigator.languages?.[0]);
+        const locale = stored || browser || fallback;
+        document.documentElement.lang = locale;
+        document.documentElement.dataset.locale = locale;
+      } catch {
+        document.documentElement.lang = ${JSON.stringify(DEFAULT_LOCALE)};
+        document.documentElement.dataset.locale = ${JSON.stringify(DEFAULT_LOCALE)};
+      }
+    })();
+  `;
+
   const themeInitScript = `
     (() => {
       try {
@@ -36,8 +68,9 @@ export default function RootLayout({
   `;
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={DEFAULT_LOCALE} suppressHydrationWarning>
       <body className={`${inter.variable} antialiased bg-[var(--theme-bg)] text-[var(--theme-text)]`}>
+        <script dangerouslySetInnerHTML={{ __html: localeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <Script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js"
