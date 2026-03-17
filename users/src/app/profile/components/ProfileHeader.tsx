@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera, User as UserIcon, Pencil } from "lucide-react";
+import SafeImage from "@/components/SafeImage";
 
 interface ProfileHeaderProps {
   user: any;
@@ -30,10 +31,11 @@ export default function ProfileHeader({
       >
         <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-gradient-to-br from-teal-100 to-teal-50 flex items-center justify-center">
           {avatarUrl ? (
-            <img
+            <SafeImage
               src={avatarUrl}
               alt="Avatar"
               className={`w-full h-full object-cover transition-opacity ${isUploading ? "opacity-40" : ""}`}
+              fallbackSrc="/images/defaultimage.jpg"
             />
           ) : (
             <UserIcon className={`w-12 h-12 text-teal-400 ${isUploading ? "opacity-40" : ""}`} />

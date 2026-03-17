@@ -5,6 +5,8 @@ import { X, Loader2, Upload, Image as ImageIcon, Video, Trash2, CheckCircle, XCi
 import api, { resolvedApiBaseUrl } from '@/api/axios';
 import dynamic from 'next/dynamic';
 import { getBestAvailableLocation } from '@/utils/location';
+import SafeImage from '@/components/SafeImage';
+import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from '@/utils/safeMedia';
 
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
@@ -238,8 +240,14 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
     const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
+        const supportedFiles = files.filter(isSafeImageFile);
+        if (!supportedFiles.length) {
+            alert('Please upload PNG, JPG, GIF, WebP, BMP, or AVIF images only.');
+            if (imageInputRef.current) imageInputRef.current.value = '';
+            return;
+        }
         const remaining = 7 - images.length;
-        const toUpload = files.slice(0, remaining);
+        const toUpload = supportedFiles.slice(0, remaining);
         setUploadingMedia(true);
         try {
             const urls = await Promise.all(toUpload.map(f => uploadFile(f, 'image')));
@@ -460,12 +468,12 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
                                 </button>
                             )}
                         </div>
-                        <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+                        <input ref={imageInputRef} type="file" accept={SAFE_IMAGE_ACCEPT} multiple className="hidden" onChange={handleImageSelect} />
                         {imagePreviews.length > 0 && (
                             <div className="grid grid-cols-4 gap-2">
                                 {imagePreviews.map((src, i) => (
                                     <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-                                        <img src={src} alt="" className="w-full h-full object-cover" />
+                                        <SafeImage src={src} alt="" className="w-full h-full object-cover" allowBlob={true} />
                                         <button type="button" onClick={() => removeImage(i)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                             <Trash2 size={16} className="text-white" />
                                         </button>

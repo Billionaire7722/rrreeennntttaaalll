@@ -16,6 +16,7 @@ import ProfileHeader from "./components/ProfileHeader";
 import ProfileStats from "./components/ProfileStats";
 import ProfileAbout from "./components/ProfileAbout";
 import EditProfileForm from "./components/EditProfileForm";
+import SafeImage from "@/components/SafeImage";
 
 const FLAGS: Record<Language, { url: string, label: string }> = {
     vi: { url: "https://flagcdn.com/w20/vn.png", label: "Tiếng Việt" },
@@ -372,12 +373,13 @@ export default function ProfilePage() {
     <div className="min-h-[calc(100vh-60px)] bg-gray-50 pb-28">
 
       {/* ── Hero / Cover ─────────────────────────────────────────────────── */}
-      <div className="relative w-full h-44 sm:h-56 md:h-64 overflow-hidden group">
-        <img
-          src={coverUrl || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80"}
-          alt="Cover"
-          className={`w-full h-full object-cover transition-opacity ${isUploadingCover ? "opacity-60" : ""}`}
-        />
+        <div className="relative w-full h-44 sm:h-56 md:h-64 overflow-hidden group">
+          <SafeImage
+            src={coverUrl || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80"}
+            alt="Cover"
+            className={`w-full h-full object-cover transition-opacity ${isUploadingCover ? "opacity-60" : ""}`}
+            fallbackSrc="/images/defaultimage.jpg"
+          />
         <div className="absolute inset-0 bg-gradient-to-b from-teal-900/30 via-teal-800/20 to-gray-900/60" />
         
         {/* Navigation Drawer Trigger */}
@@ -600,7 +602,7 @@ export default function ProfilePage() {
                           {/* Avatar */}
                           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-100 to-teal-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
                             {other.avatarUrl ? (
-                              <img src={other.avatarUrl} alt={other.name} className="w-full h-full object-cover" />
+                              <SafeImage src={other.avatarUrl} alt={other.name} className="w-full h-full object-cover" fallbackSrc="/images/defaultimage.jpg" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-teal-600 font-bold bg-teal-50">
                                 {getInitials(other.name)}

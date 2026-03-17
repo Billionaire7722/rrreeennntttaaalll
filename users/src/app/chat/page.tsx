@@ -10,6 +10,7 @@ import Link from "next/link";
 import api from "@/api/axios";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
+import SafeImage from "@/components/SafeImage";
 
 interface Message {
   id: string;
@@ -331,8 +332,8 @@ function ChatPageContent() {
                 >
                   <div className="relative flex-shrink-0">
                     {conv.otherUser.avatarUrl ? (
-                      <img src={conv.otherUser.avatarUrl} alt={conv.otherUser.name} className="w-14 h-14 rounded-full object-cover" />
-                    ) : (
+                      <SafeImage src={conv.otherUser.avatarUrl} alt={conv.otherUser.name} className="w-14 h-14 rounded-full object-cover" fallbackSrc="/images/defaultimage.jpg" />
+                     ) : (
                       <div className="w-14 h-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-lg font-bold">
                         {getInitials(conv.otherUser.name)}
                       </div>
@@ -390,7 +391,7 @@ function ChatPageContent() {
                 
                 <Link href={`/user/${displayUser.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0">
                    {displayUser.avatarUrl ? (
-                     <img src={displayUser.avatarUrl} alt={displayUser.name} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-gray-50 flex-shrink-0" />
+                     <SafeImage src={displayUser.avatarUrl} alt={displayUser.name} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-gray-50 flex-shrink-0" fallbackSrc="/images/defaultimage.jpg" />
                    ) : (
                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
                        {getInitials(displayUser.name)}
@@ -450,7 +451,7 @@ function ChatPageContent() {
                              {!isOwn && isLastInGroup && (
                                 <div className="w-7 h-7 flex-shrink-0 mb-1">
                                    {displayUser.avatarUrl ? (
-                                      <img src={displayUser.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover" />
+                                      <SafeImage src={displayUser.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover" fallbackSrc="/images/defaultimage.jpg" />
                                    ) : (
                                       <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
                                          {getInitials(displayUser.name)}

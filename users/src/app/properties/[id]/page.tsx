@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight, MapPin, BedDouble, Bath, Share2, Heart, X, S
 import { useAuth } from '@/context/useAuth';
 import { useLanguage } from '@/context/LanguageContext';
 import Link from 'next/link';
+import SafeImage from '@/components/SafeImage';
 
 
 function formatPrice(price: number): string {
@@ -211,7 +212,7 @@ export default function PropertyDetailsPage() {
                             onClick={() => openFullScreen(idx)}
                             className="w-full h-full flex-shrink-0 snap-center cursor-pointer"
                         >
-                            <img src={img} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" draggable={false} />
+                            <SafeImage src={img} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" draggable={false} fallbackSrc="/images/defaultimage.jpg" />
                         </div>
                     ))}
                 </div>
@@ -316,7 +317,7 @@ export default function PropertyDetailsPage() {
                         <div className="flex flex-wrap gap-2">
                             <Link href={owner.id === user?.id ? '/profile' : `/user/${owner.id}`} className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1.5 hover:bg-gray-100 transition-colors">
                                 {owner.avatarUrl ? (
-                                    <img src={owner.avatarUrl} alt={owner.name} className="w-7 h-7 rounded-full object-cover" />
+                                    <SafeImage src={owner.avatarUrl} alt={owner.name} className="w-7 h-7 rounded-full object-cover" fallbackSrc="/images/defaultimage.jpg" />
                                 ) : (
                                     <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[11px] font-bold">
                                         {getInitials(owner.name)}
@@ -394,7 +395,7 @@ export default function PropertyDetailsPage() {
                     >
                         {images.map((img, idx) => (
                             <div key={idx} onClick={closeFullScreen} className="w-full h-full flex-shrink-0 snap-center flex justify-center items-center p-2 cursor-pointer">
-                                <img src={img} alt={`Fullscreen ${idx}`} className="max-w-full max-h-full object-contain" />
+                                <SafeImage src={img} alt={`Fullscreen ${idx}`} className="max-w-full max-h-full object-contain" fallbackSrc="/images/defaultimage.jpg" />
                             </div>
                         ))}
                     </div>

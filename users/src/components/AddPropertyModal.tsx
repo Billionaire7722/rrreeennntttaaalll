@@ -6,6 +6,8 @@ import { useAuth } from '@/context/useAuth';
 import api, { resolvedApiBaseUrl } from '@/api/axios';
 import dynamic from 'next/dynamic';
 import { getBestAvailableLocation } from '@/utils/location';
+import SafeImage from '@/components/SafeImage';
+import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from '@/utils/safeMedia';
 
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
@@ -181,8 +183,14 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
+        const supportedFiles = files.filter(isSafeImageFile);
+        if (!supportedFiles.length) {
+            alert('Please upload PNG, JPG, GIF, WebP, BMP, or AVIF images only.');
+            if (imageInputRef.current) imageInputRef.current.value = '';
+            return;
+        }
         const remaining = 7 - images.length;
-        const toUpload = files.slice(0, remaining);
+        const toUpload = supportedFiles.slice(0, remaining);
         setUploadingMedia(true);
         try {
             const urls = await Promise.all(toUpload.map(f => uploadFile(f, 'image')));
@@ -283,10 +291,11 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
 
                 {/* Image */}
                 <div className="max-w-[92vw] max-h-[82vh] flex items-center justify-center" onClick={e => e.stopPropagation()}>
-                    <img
+                    <SafeImage
                         src={imagePreviews[previewIndex]}
                         alt={t('preview_image')}
                         className="max-w-full max-h-[82vh] object-contain rounded-xl shadow-2xl"
+                        allowBlob={true}
                     />
                 </div>
 
@@ -469,12 +478,12 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                                 </button>
                             )}
                         </div>
-                        <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+                        <input ref={imageInputRef} type="file" accept={SAFE_IMAGE_ACCEPT} multiple className="hidden" onChange={handleImageSelect} />
                         {imagePreviews.length > 0 && (
                             <div className="grid grid-cols-4 gap-2">
                                 {imagePreviews.map((src, i) => (
                                     <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-                                        <img src={src} alt="" className="w-full h-full object-cover" />
+                                        <SafeImage src={src} alt="" className="w-full h-full object-cover" allowBlob={true} />
                                         {/* Overlay with preview + delete */}
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                             <button

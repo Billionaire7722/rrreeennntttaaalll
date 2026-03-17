@@ -9,6 +9,7 @@ import api from '@/api/axios';
 import { ChevronLeft, MapPin, BedDouble, Bath, Square, MessageCircle, Heart } from 'lucide-react';
 import { useAuth } from '@/context/useAuth';
 import { useLanguage } from '@/context/LanguageContext';
+import SafeImage from '@/components/SafeImage';
 
 function formatPrice(price: number, t: (key: string) => string): string {
     if (price >= 1000000) {
@@ -111,10 +112,11 @@ export default function UserProfilePage() {
 
             {/* Cover Image Hero */}
             <div className="relative w-full h-44 overflow-hidden bg-gray-100">
-                <img
+                <SafeImage
                     src={coverUrl || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80"}
                     alt="Cover"
                     className="w-full h-full object-cover"
+                    fallbackSrc="/images/defaultimage.jpg"
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50" />
             </div>
@@ -124,7 +126,7 @@ export default function UserProfilePage() {
                 {/* Avatar overlapping cover */}
                 <div className="-mt-12 mb-3 relative z-10">
                     {avatarUrl ? (
-                         <img src={avatarUrl} alt={name} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
+                         <SafeImage src={avatarUrl} alt={name} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" fallbackSrc="/images/defaultimage.jpg" />
                     ) : (
                         <div className="w-24 h-24 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-3xl font-bold border-4 border-white shadow-md">
                             {getInitials(name)}
@@ -168,10 +170,11 @@ export default function UserProfilePage() {
                             <div key={house.id} onClick={() => router.push(`/properties/${house.id}`)} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
                                 {/* Auto-sized Image Thumbnail (16:9 approx) */}
                                 <div className="h-48 w-full relative bg-gray-100">
-                                    <img 
+                                    <SafeImage 
                                         src={house.image_url_1 || '/images/defaultimage.jpg'} 
                                         alt={house.name} 
                                         className="w-full h-full object-cover" 
+                                        fallbackSrc="/images/defaultimage.jpg"
                                     />
                                     {/* Status Badge */}
                                     <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-bold text-white shadow-sm ${isAvailable ? 'bg-emerald-500' : 'bg-red-500'}`}>

@@ -9,6 +9,7 @@ import { Bed, Square, MapPin, Locate } from 'lucide-react';
 import { useAuth } from '@/context/useAuth';
 import { useLanguage } from '@/context/LanguageContext';
 import { getBestAvailableLocation } from '@/utils/location';
+import SafeImage from '@/components/SafeImage';
 
 // Dynamic SVG Icons for Available (Green) and Rented (Red)
 const getMarkerIcon = (status?: string | null) => {
@@ -171,11 +172,12 @@ export default function InteractiveMap({ properties, center = [21.0285, 105.8542
                                     <div className="relative w-full h-36">
                                         <div className="flex w-full h-full overflow-x-auto snap-x snap-mandatory hide-scrollbar">
                                             {displayImages.map((img: string, i: number) => (
-                                                <img
+                                                <SafeImage
                                                     key={i}
                                                     src={img}
                                                     className="w-full h-full object-cover flex-shrink-0 snap-center"
                                                     alt={`${property.title} - ${i + 1}`}
+                                                    fallbackSrc="/images/defaultimage.jpg"
                                                 />
                                             ))}
                                         </div>

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { MapPin, Bed, Bath, Square, Heart, Pencil, Trash2, Home, DollarSign } from 'lucide-react';
 import React from 'react';
+import SafeImage from '@/components/SafeImage';
 
 export interface Property {
     id: string;
@@ -88,10 +89,11 @@ export default function PropertyCard({
             <div className="bg-white rounded-xl border border-gray-100 hover:border-teal-100 hover:shadow-md transition-all duration-200 group overflow-hidden">
                 <Link href={`/properties/${property.id}`} className="flex items-center p-3 gap-3">
                     <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                        <img
+                        <SafeImage
                             src={property.image_url || defaultImage}
                             alt={property.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            fallbackSrc={defaultImage}
                         />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -127,10 +129,11 @@ export default function PropertyCard({
             <div className="bg-white rounded-2xl border border-gray-100 hover:border-teal-100 hover:shadow-lg transition-all duration-300 group overflow-hidden">
                 <Link href={`/properties/${property.id}`} className="flex flex-col sm:flex-row h-full">
                     <div className="relative w-full sm:w-48 md:w-56 h-48 sm:h-auto flex-shrink-0 overflow-hidden bg-gray-100">
-                        <img
+                        <SafeImage
                             src={property.image_url || defaultImage}
                             alt={property.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            fallbackSrc={defaultImage}
                         />
                         <div className="absolute top-3 left-3">
                             {statusBadge}
@@ -181,10 +184,11 @@ export default function PropertyCard({
     return (
         <div className="bg-white rounded-[2rem] border border-gray-100 hover:border-teal-100 shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden flex flex-col h-full">
             <Link href={`/properties/${property.id}`} className="relative h-56 w-full overflow-hidden block flex-shrink-0">
-                <img
+                <SafeImage
                     src={property.image_url || defaultImage}
                     alt={property.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    fallbackSrc={defaultImage}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="absolute top-4 left-4">
