@@ -9,11 +9,31 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock } from 'lucide-react';
 import Captcha from '@/components/Captcha';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface FormErrors {
     loginId?: string;
     password?: string;
     captcha?: string;
+}
+
+interface ApiErrorData {
+    message?: string | string[];
+    error?: string | { message?: string };
+}
+
+interface ApiErrorShape {
+    response?: {
+        data?: ApiErrorData;
+    };
+}
+
+function extractErrorMessage(data?: ApiErrorData) {
+    if (!data) return undefined;
+    if (typeof data.message === 'string' || Array.isArray(data.message)) return data.message;
+    if (typeof data.error === 'string') return data.error;
+    if (typeof data.error === 'object' && data.error !== null) return data.error.message;
+    return undefined;
 }
 
 export default function LoginPage() {
@@ -95,20 +115,17 @@ export default function LoginPage() {
         setLoading(true);
         try {
             await login(loginId, password, submittedToken || "dummy_token");
-        } catch (err: any) {
+        } catch (err) {
             let errorMessage = t('err_login_failed');
-            
-            const data = err.response?.data;
+
+            const data = (err as ApiErrorShape).response?.data;
             if (data) {
-                // Check if message is directly in data or inside an 'error' object (from HttpExceptionFilter)
-                const rawMessage = data.message || data.error?.message || data.error;
+                const rawMessage = extractErrorMessage(data);
                 
                 if (typeof rawMessage === 'string') {
                     errorMessage = rawMessage;
                 } else if (Array.isArray(rawMessage)) {
                     errorMessage = rawMessage[0];
-                } else if (typeof rawMessage === 'object' && rawMessage !== null) {
-                    errorMessage = rawMessage.message || JSON.stringify(rawMessage);
                 }
             }
 
@@ -131,7 +148,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="relative min-h-screen overflow-hidden flex">
+        <div className="relative min-h-screen overflow-hidden flex bg-[var(--theme-bg)] text-[var(--theme-text)]">
             {/* Left side - Image */}
             <div className="hidden lg:block lg:w-1/2 relative">
                 <Image
@@ -176,7 +193,10 @@ export default function LoginPage() {
             </div>
 
             {/* Right side - Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-8 bg-slate-50 lg:bg-slate-50 relative">
+            <div className="relative flex w-full items-center justify-center bg-[var(--theme-bg)] px-4 py-8 lg:w-1/2">
+                <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
+                    <ThemeToggle className="bg-white/80" showLabel={false} />
+                </div>
                 {/* Mobile background */}
                 <div className="lg:hidden absolute inset-0">
                     <Image
@@ -218,11 +238,11 @@ export default function LoginPage() {
                         </p>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-8 shadow-xl lg:shadow-sm border border-slate-200/50 lg:border-slate-200">
+                    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-8 shadow-xl lg:shadow-sm">
                         <div className="flex items-start justify-between">
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-900">{t('login_title')}</h2>
-                                <p className="mt-2 text-sm text-slate-500">
+                                <h2 className="text-2xl font-bold text-[var(--theme-text)]">{t('login_title')}</h2>
+                                <p className="mt-2 text-sm text-[var(--theme-text-muted)]">
                                     {t('login_subtitle')}
                                 </p>
                             </div>
@@ -289,7 +309,7 @@ export default function LoginPage() {
                             {loading ? t('signing_in') : t('sign_in_btn')}
                         </button>
 
-                        <p className="pt-1 text-center text-sm text-slate-500">
+                        <p className="pt-1 text-center text-sm text-[var(--theme-text-muted)]">
                             {t('no_account')}{' '}
                             <Link href="/register" className="font-semibold text-teal-600 transition-colors hover:text-teal-700">
                                 {t('create_one')}

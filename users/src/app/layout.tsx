@@ -22,9 +22,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const themeInitScript = `
+    (() => {
+      try {
+        const key = 'rental-theme';
+        const saved = localStorage.getItem(key);
+        const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const theme = saved === 'light' || saved === 'dark' ? saved : system;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      } catch {}
+    })();
+  `;
+
   return (
-    <html lang="en">
-      <body className={`${inter.variable} antialiased bg-gray-50`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} antialiased bg-[var(--theme-bg)] text-[var(--theme-text)]`}>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <Script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js"
           async

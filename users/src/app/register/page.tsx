@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { User, Mail, Lock, Phone } from 'lucide-react';
 import Captcha from '@/components/Captcha';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface FormErrors {
     firstName?: string;
@@ -21,7 +22,26 @@ interface FormErrors {
     acceptTerms?: string;
 }
 
-const passwordRules = (t: any) => [
+interface ApiErrorData {
+    message?: string | string[];
+    error?: string | { message?: string };
+}
+
+interface ApiErrorShape {
+    response?: {
+        data?: ApiErrorData;
+    };
+}
+
+function extractErrorMessage(data?: ApiErrorData) {
+    if (!data) return undefined;
+    if (typeof data.message === 'string' || Array.isArray(data.message)) return data.message;
+    if (typeof data.error === 'string') return data.error;
+    if (typeof data.error === 'object' && data.error !== null) return data.error.message;
+    return undefined;
+}
+
+const passwordRules = (t: (key: string) => string) => [
     { id: 'length', label: t('rule_length'), test: (p: string) => p.length >= 8 && p.length <= 12 },
     { id: 'uppercase', label: t('rule_uppercase'), test: (p: string) => /[A-Z]/.test(p) },
     { id: 'lowercase', label: t('rule_lowercase'), test: (p: string) => /[a-z]/.test(p) },
@@ -53,8 +73,6 @@ export default function RegisterPage() {
         ...rule,
         valid: rule.test(formData.password),
     }));
-
-    const isPasswordValid = passwordValidations.every((v) => v.valid);
 
     const validateField = (name: string, value: string): string | undefined => {
         switch (name) {
@@ -158,19 +176,17 @@ export default function RegisterPage() {
                 confirmPassword: formData.confirmPassword,
                 captchaToken: submittedToken,
             });
-        } catch (err: any) {
+        } catch (err) {
             let errorMessage = t('err_login_failed');
-            
-            const data = err.response?.data;
+
+            const data = (err as ApiErrorShape).response?.data;
             if (data) {
-                const rawMessage = data.message || data.error?.message || data.error;
+                const rawMessage = extractErrorMessage(data);
                 
                 if (typeof rawMessage === 'string') {
                     errorMessage = rawMessage;
                 } else if (Array.isArray(rawMessage)) {
                     errorMessage = rawMessage.join(', ');
-                } else if (typeof rawMessage === 'object' && rawMessage !== null) {
-                    errorMessage = rawMessage.message || JSON.stringify(rawMessage);
                 }
             }
 
@@ -203,7 +219,7 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="relative min-h-screen overflow-hidden flex">
+        <div className="relative min-h-screen overflow-hidden flex bg-[var(--theme-bg)] text-[var(--theme-text)]">
             {/* Left side - Image */}
             <div className="hidden lg:block lg:w-1/2 relative">
                 <Image
@@ -274,7 +290,10 @@ export default function RegisterPage() {
             </div>
 
             {/* Right side - Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-6 lg:py-8 bg-slate-50 lg:bg-slate-50 overflow-y-auto relative min-h-screen">
+            <div className="relative min-h-screen w-full overflow-y-auto bg-[var(--theme-bg)] px-4 py-6 lg:w-1/2 lg:py-8">
+                <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
+                    <ThemeToggle className="bg-white/80" showLabel={false} />
+                </div>
                 {/* Mobile background */}
                 <div className="lg:hidden absolute inset-0">
                     <Image
@@ -316,11 +335,11 @@ export default function RegisterPage() {
                         </p>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-6 shadow-xl lg:shadow-sm border border-slate-200/50 lg:border-slate-200">
+                    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-6 shadow-xl lg:shadow-sm">
                         <div className="flex items-start justify-between">
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-900">{t('register_title')}</h2>
-                                <p className="mt-2 text-sm text-slate-500">{t('register_subtitle')}</p>
+                                <h2 className="text-2xl font-bold text-[var(--theme-text)]">{t('register_title')}</h2>
+                                <p className="mt-2 text-sm text-[var(--theme-text-muted)]">{t('register_subtitle')}</p>
                             </div>
                         </div>
 

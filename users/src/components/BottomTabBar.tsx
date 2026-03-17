@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { Home, User, Plus } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/useAuth';
-import api from '@/api/axios';
 import AddPropertyModal from './AddPropertyModal';
 import LoginPromptModal from './LoginPromptModal';
 
@@ -25,15 +24,15 @@ export default function BottomTabBar() {
     return (
         <>
             <div className="h-[75px]" />
-            <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-100 flex items-center h-[70px] z-[1200] shadow-[0_-8px_20px_rgba(0,0,0,0.05)] px-2">
+            <div className="fixed bottom-0 left-0 right-0 z-[1200] flex h-[70px] items-center border-t border-[var(--theme-border)] bg-[var(--theme-surface)] px-2 backdrop-blur-lg shadow-[0_-8px_20px_rgba(0,0,0,0.05)]">
 
                 {/* Homepage tab */}
                 <Link
                     href="/"
                     className="flex-1 flex flex-col items-center justify-center gap-1 transition-all hover:opacity-70"
                 >
-                    <Home size={22} className={pathname === '/' ? 'text-teal-600' : 'text-gray-400'} />
-                    <span className={`text-[10px] font-bold uppercase tracking-tighter ${pathname === '/' ? 'text-teal-600' : 'text-gray-400'}`}>
+                    <Home size={22} className={pathname === '/' ? 'text-teal-600' : 'text-[var(--theme-text-muted)]'} />
+                    <span className={`text-[10px] font-bold uppercase tracking-tighter ${pathname === '/' ? 'text-teal-600' : 'text-[var(--theme-text-muted)]'}`}>
                         {t('homepage')}
                     </span>
                 </Link>
@@ -42,7 +41,7 @@ export default function BottomTabBar() {
                 <div className="flex-1 flex items-center justify-center relative h-full">
                     <button
                         id="tour-add-btn"
-                        className="absolute -top-8 bg-teal-600 w-15 h-15 w-[60px] h-[60px] rounded-2xl rotate-45 flex items-center justify-center text-white shadow-xl shadow-teal-500/40 hover:bg-teal-700 hover:scale-110 active:scale-90 transition-all outline-none border-4 border-white"
+                        className="absolute -top-8 h-[60px] w-[60px] rotate-45 rounded-2xl border-4 border-[var(--theme-surface)] bg-teal-600 text-white shadow-xl shadow-teal-500/40 transition-all outline-none hover:scale-110 hover:bg-teal-700 active:scale-90"
                         onClick={() => {
                             if (!user) {
                                 setIsLoginPromptOpen(true);
@@ -55,7 +54,7 @@ export default function BottomTabBar() {
                             <Plus size={30} strokeWidth={3} />
                         </div>
                     </button>
-                    <span className="mt-8 text-[10px] font-black text-teal-600 uppercase tracking-widest">
+                    <span className="mt-8 text-[10px] font-black uppercase tracking-widest text-teal-600">
                         {t('post_listing_tab')}
                     </span>
                 </div>
@@ -66,8 +65,8 @@ export default function BottomTabBar() {
                     href="/profile"
                     className="flex-1 flex flex-col items-center justify-center gap-1 transition-all hover:opacity-70"
                 >
-                    <User size={22} className={pathname === '/profile' ? 'text-teal-600' : 'text-gray-400'} />
-                    <span className={`text-[10px] font-bold uppercase tracking-tighter ${pathname === '/profile' ? 'text-teal-600' : 'text-gray-400'}`}>
+                    <User size={22} className={pathname === '/profile' ? 'text-teal-600' : 'text-[var(--theme-text-muted)]'} />
+                    <span className={`text-[10px] font-bold uppercase tracking-tighter ${pathname === '/profile' ? 'text-teal-600' : 'text-[var(--theme-text-muted)]'}`}>
                         {t('profile_tab')}
                     </span>
                 </Link>

@@ -1,8 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --theme-bg: #f8fafc;
+  --theme-surface: rgba(255, 255, 255, 0.92);
+  --theme-surface-2: #f1f5f9;
+  --theme-surface-3: #e2e8f0;
+  --theme-text: #0f172a;
+  --theme-text-muted: #64748b;
+  --theme-border: rgba(148, 163, 184, 0.24);
+  --theme-border-strong: rgba(100, 116, 139, 0.42);
+  --theme-overlay: rgba(15, 23, 42, 0.72);
+}
+
+:root[data-theme="dark"] {
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --theme-bg: #020617;
+  --theme-surface: rgba(15, 23, 42, 0.88);
+  --theme-surface-2: #0f172a;
+  --theme-surface-3: #1e293b;
+  --theme-text: #e2e8f0;
+  --theme-text-muted: #94a3b8;
+  --theme-border: rgba(71, 85, 105, 0.7);
+  --theme-border-strong: rgba(148, 163, 184, 0.3);
+  --theme-overlay: rgba(2, 6, 23, 0.84);
 }
 
 @theme inline {
@@ -18,9 +41,83 @@ body {
 }
 
 body {
-  background: #ffffff;
-  color: #171717;
+  background: var(--theme-bg);
+  color: var(--theme-text);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.theme-shell {
+  background: var(--theme-bg);
+  color: var(--theme-text);
+}
+
+:root[data-theme="dark"] .bg-white,
+:root[data-theme="dark"] .bg-white\/85,
+:root[data-theme="dark"] .bg-white\/90,
+:root[data-theme="dark"] .bg-white\/92,
+:root[data-theme="dark"] .bg-white\/95 {
+  background-color: var(--theme-surface) !important;
+}
+
+:root[data-theme="dark"] .bg-slate-50,
+:root[data-theme="dark"] .bg-slate-50\/70,
+:root[data-theme="dark"] .bg-slate-50\/80,
+:root[data-theme="dark"] .bg-gray-50,
+:root[data-theme="dark"] .bg-gray-50\/50,
+:root[data-theme="dark"] .bg-gray-100 {
+  background-color: var(--theme-surface-2) !important;
+}
+
+:root[data-theme="dark"] .bg-slate-100,
+:root[data-theme="dark"] .bg-gray-200 {
+  background-color: var(--theme-surface-3) !important;
+}
+
+:root[data-theme="dark"] .border-slate-100,
+:root[data-theme="dark"] .border-slate-200,
+:root[data-theme="dark"] .border-gray-100,
+:root[data-theme="dark"] .border-gray-200,
+:root[data-theme="dark"] .border-white\/70,
+:root[data-theme="dark"] .border-white\/80 {
+  border-color: var(--theme-border) !important;
+}
+
+:root[data-theme="dark"] .text-slate-900,
+:root[data-theme="dark"] .text-gray-900,
+:root[data-theme="dark"] .text-gray-800,
+:root[data-theme="dark"] .text-white {
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme="dark"] .text-slate-700,
+:root[data-theme="dark"] .text-slate-600,
+:root[data-theme="dark"] .text-slate-500,
+:root[data-theme="dark"] .text-gray-700,
+:root[data-theme="dark"] .text-gray-600,
+:root[data-theme="dark"] .text-gray-500,
+:root[data-theme="dark"] .text-gray-400,
+:root[data-theme="dark"] .text-slate-400 {
+  color: var(--theme-text-muted) !important;
+}
+
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select {
+  background-color: var(--theme-surface) !important;
+  color: var(--theme-text) !important;
+  border-color: var(--theme-border) !important;
+}
+
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+  color: var(--theme-text-muted) !important;
+}
+
+:root[data-theme="dark"] .shadow-xl,
+:root[data-theme="dark"] .shadow-lg,
+:root[data-theme="dark"] .shadow-sm {
+  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.35) !important;
 }
 
 /* Leaflet Popup Borderless Overrides */

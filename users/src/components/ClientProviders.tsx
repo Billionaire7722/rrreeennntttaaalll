@@ -3,20 +3,22 @@
 import { AuthProvider } from "@/context/AuthContext";
 import { SocketProvider } from "@/contexts/SocketContext";
 import { LanguageProvider } from "@/context/LanguageContext";
-import Navbar from "@/components/Navbar";
+import { ThemeProvider } from "@/context/ThemeContext";
 import BottomTabBar from "@/components/BottomTabBar";
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
     return (
-        <LanguageProvider>
-            <AuthProvider>
-                <SocketProvider>
-                    <div className="flex flex-col min-h-screen w-full relative bg-white">
-                        {children}
-                        <BottomTabBar />
-                    </div>
-                </SocketProvider>
-            </AuthProvider>
-        </LanguageProvider>
+        <ThemeProvider>
+            <LanguageProvider>
+                <AuthProvider>
+                    <SocketProvider>
+                        <div className="theme-shell flex min-h-screen w-full flex-col relative bg-[var(--theme-bg)] text-[var(--theme-text)]">
+                            {children}
+                            <BottomTabBar />
+                        </div>
+                    </SocketProvider>
+                </AuthProvider>
+            </LanguageProvider>
+        </ThemeProvider>
     );
 }

@@ -23,7 +23,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
         if (onFilterChange) {
             onFilterChange({ ...filters, searchQuery });
         }
-    }, [searchQuery, filters]);
+    }, [searchQuery, filters, onFilterChange]);
 
     const handleLogout = async () => {
         await logout();
@@ -31,20 +31,20 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
     };
 
     return (
-        <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 h-[60px] flex items-center justify-between px-3 sm:px-4 w-full">
+        <nav className="sticky top-0 z-50 flex h-[60px] w-full items-center justify-between border-b border-[var(--theme-border)] bg-[var(--theme-surface)] px-3 backdrop-blur sm:px-4">
             {/* Left: User Greeting */}
             <div className="flex-1 flex">
-                <span className="text-sm font-medium text-gray-800 truncate max-w-[80px] sm:max-w-[120px]">
+                <span className="max-w-[80px] truncate text-sm font-medium text-[var(--theme-text)] sm:max-w-[120px]">
                     {t("hello")}, {user ? user.firstName || user.name || t("guest") : t("guest")}
                 </span>
             </div>
 
             {/* Center: Search Bar & Filter */}
-            <div className="flex flex-row items-center gap-2 w-[200px] sm:w-[280px] md:w-[360px]">
-                <div id="tour-search" className="flex-1 flex flex-row items-center bg-gray-100 rounded-lg px-2.5 h-9 min-w-0">
-                    <Search size={16} className="text-gray-500 flex-shrink-0" />
+            <div className="flex w-[200px] flex-row items-center gap-2 sm:w-[280px] md:w-[360px]">
+                <div id="tour-search" className="flex h-9 min-w-0 flex-1 flex-row items-center rounded-lg bg-[var(--theme-surface-2)] px-2.5">
+                    <Search size={16} className="flex-shrink-0 text-[var(--theme-text-muted)]" />
                     <input
-                        className="flex-1 ml-2 text-sm text-gray-800 bg-transparent outline-none placeholder-gray-500 min-w-0"
+                        className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-[var(--theme-text)] outline-none placeholder:text-[var(--theme-text-muted)]"
                         placeholder={t("search_placeholder")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -53,7 +53,7 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
                 <button
                     id="tour-filter"
                     onClick={() => setIsFilterOpen(true)}
-                    className="bg-teal-600 w-9 h-9 rounded-lg flex justify-center items-center flex-shrink-0 hover:bg-teal-700 transition"
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-teal-600 transition hover:bg-teal-700"
                 >
                     <Filter size={18} className="text-white" />
                 </button>
@@ -62,12 +62,12 @@ export default function Navbar({ onFilterChange }: NavbarProps = {}) {
             {/* Right: Logout / Login */}
             <div className="flex-1 flex items-center justify-end gap-1 sm:gap-2">
                 {user ? (
-                    <button onClick={handleLogout} className="p-2 hover:bg-gray-100 rounded-lg transition">
-                        <LogOut size={18} className="text-gray-500" />
+                    <button onClick={handleLogout} className="rounded-lg p-2 transition hover:bg-[var(--theme-surface-2)]">
+                        <LogOut size={18} className="text-[var(--theme-text-muted)]" />
                     </button>
                 ) : (
-                    <button onClick={() => router.push('/login')} className="p-2 hover:bg-gray-100 rounded-lg transition">
-                        <User size={18} className="text-gray-500" />
+                    <button onClick={() => router.push('/login')} className="rounded-lg p-2 transition hover:bg-[var(--theme-surface-2)]">
+                        <User size={18} className="text-[var(--theme-text-muted)]" />
                     </button>
                 )}
             </div>
