@@ -2,19 +2,20 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  Camera, Heart, MessageCircle, User as UserIcon, Home, Pencil, Trash2,
-  MapPin, DollarSign, BedDouble, ChevronRight,
-  Clock, Building2, Settings, Menu, UserCog, Globe, HelpCircle, Info, X
+  Camera, Heart, MessageCircle, Building2, Settings, Menu, UserCog, Globe, HelpCircle, Info, X, Clock, ChevronRight
 } from "lucide-react";
 import api from "@/api/axios";
-import PropertyCard from "@/components/PropertyCard";
 import PropertyList from "@/components/PropertyList";
 import { useAuth } from "@/context/useAuth";
 import { useLanguage, Language } from "@/context/LanguageContext";
 import EditPropertyModal from "@/components/EditPropertyModal";
+import ProfileHeader from "./components/ProfileHeader";
+import ProfileStats from "./components/ProfileStats";
+import ProfileAbout from "./components/ProfileAbout";
+import EditProfileForm from "./components/EditProfileForm";
 
 const FLAGS: Record<Language, { url: string, label: string }> = {
     vi: { url: "https://flagcdn.com/w20/vn.png", label: "Tiếng Việt" },
@@ -109,7 +110,7 @@ function getStatusColor(status?: string) {
 }
 
 export default function ProfilePage() {
-  const { user, loading: authLoading, logout } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const [favorites, setFavorites] = useState<any[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
@@ -232,18 +233,22 @@ export default function ProfilePage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await api.post("/upload/image", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
+      // Remove manual Content-Type to let axios/browser set boundary correctly
+      const response = await api.post("/upload/image", formData);
 
       if (response.data && response.data.url) {
         setAvatarUrl(response.data.url);
         if (user) {
           localStorage.setItem(`avatar_${user.id}`, response.data.url);
-          try { await api.post("/users/avatar", { url: response.data.url }); } catch { }
+          try { await api.post("/users/avatar", { url: response.data.url }); } catch (err) {
+            console.error("Failed to save avatar URL to user profile", err);
+          }
         }
       }
-    } catch { } finally { setIsUploading(false); }
+    } catch (err) {
+      console.error("Profile picture upload failed:", err);
+      alert("Failed to upload profile picture. Please try again.");
+    } finally { setIsUploading(false); }
   };
 
   const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,18 +258,21 @@ export default function ProfilePage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await api.post("/upload/image", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
+      const response = await api.post("/upload/image", formData);
 
       if (response.data && response.data.url) {
         setCoverUrl(response.data.url);
         if (user) {
           localStorage.setItem(`cover_${user.id}`, response.data.url);
-          try { await api.post("/users/cover", { url: response.data.url }); } catch { }
+          try { await api.post("/users/cover", { url: response.data.url }); } catch (err) {
+            console.error("Failed to save cover URL to user profile", err);
+          }
         }
       }
-    } catch { } finally { setIsUploadingCover(false); }
+    } catch (err) {
+      console.error("Cover image upload failed:", err);
+      alert("Failed to upload cover image.");
+    } finally { setIsUploadingCover(false); }
   };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
@@ -408,156 +416,52 @@ export default function ProfilePage() {
         <div className="relative -mt-16 sm:-mt-20 mb-6">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
 
-            {/* Avatar + name row */}
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4 px-5 sm:px-8 pt-5 sm:pt-6 pb-5 sm:pb-6">
-              {/* Avatar */}
-              <div
-                className="relative cursor-pointer group flex-shrink-0 self-center sm:self-auto"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-4 border-white shadow-lg overflow-hidden bg-gradient-to-br from-teal-100 to-teal-50 flex items-center justify-center">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt="Avatar"
-                      className={`w-full h-full object-cover transition-opacity ${isUploading ? "opacity-40" : ""}`}
-                    />
-                  ) : (
-                    <UserIcon className={`w-12 h-12 text-teal-400 ${isUploading ? "opacity-40" : ""}`} />
-                  )}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
-                    {isUploading
-                      ? (
-                        <div className="flex flex-col items-center gap-1">
-                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span className="text-white text-[10px] font-bold">{t("loading")}</span>
-                        </div>
-                      )
-                      : <Camera className="text-white w-6 h-6" />
-                    }
-                  </div>
-                </div>
-                <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center shadow-md border-2 border-white">
-                  <Camera className="w-3.5 h-3.5 text-white" />
-                </div>
-                <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-              </div>
-
-              {/* Name / email / bio / edit form */}
-              <div className="flex-1 text-center sm:text-left min-w-0 flex flex-col items-center sm:items-start">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 justify-center sm:justify-start">
-                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
-                    {editLastName || user.lastName || ""} {editFirstName || user.firstName || user.name || "User"}
-                  </h1>
-                </div>
-                <p className="text-sm text-gray-500 mt-0.5 truncate">{user.email}</p>
-
-                {!isEditingProfile ? (
-                  <>
-                    {editBio && (
-                      <p className="mt-4 text-sm text-gray-700 leading-relaxed max-w-lg break-words whitespace-pre-wrap">
-                        {editBio}
-                      </p>
-                    )}
-                    <button
-                      onClick={() => { setIsEditingProfile(true); setSettingsMessage({type:'', text:''}); }}
-                      className="mt-4 px-4 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-100 rounded-lg transition-colors inline-block"
-                    >
-                      <div className="flex items-center gap-1.5 justify-center"><Pencil className="w-3.5 h-3.5" /> {t("edit_profile")}</div>
-                    </button>
-                    {settingsMessage.text && settingsMessage.type === 'success' && (
-                        <p className="mt-3 text-xs text-emerald-600 font-medium">{settingsMessage.text}</p>
-                    )}
-                  </>
-                ) : (
-                  <form onSubmit={handleSaveSettings} className="mt-5 w-full max-w-lg bg-gray-50 p-4 rounded-xl border border-gray-100/50 text-left">
-                    {settingsMessage.text && (
-                      <div className={`mb-4 p-3 rounded-lg text-sm font-medium ${settingsMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
-                        {settingsMessage.text}
-                      </div>
-                    )}
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-semibold text-gray-700">{t("last_name") || "Họ"}</label>
-                          <input
-                            type="text"
-                            className="w-full mt-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
-                            value={editLastName}
-                            onChange={e => setEditLastName(e.target.value)}
-                            placeholder="Last name"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-semibold text-gray-700">{t("first_name") || "Tên"}</label>
-                          <input
-                            type="text"
-                            className="w-full mt-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
-                            value={editFirstName}
-                            onChange={e => setEditFirstName(e.target.value)}
-                            placeholder="First name"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">{t("change_limit")}</p>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-1.5">
-                            <label className="text-sm font-semibold text-gray-700">{t("bio")}</label>
-                            <span className={`text-xs ${editBio.length > 200 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
-                                {editBio.length}/200
-                            </span>
-                        </div>
-                        <textarea
-                          maxLength={200}
-                          rows={3}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm resize-none"
-                          value={editBio}
-                          onChange={e => setEditBio(e.target.value)}
-                          placeholder={t("bio_placeholder")}
-                        />
-                      </div>
-                      
-                      <div className="flex gap-2 pt-2">
-                        <button
-                          type="button"
-                          onClick={() => { setIsEditingProfile(false); setSettingsMessage({type:'', text:''}); }}
-                          className="flex-1 sm:flex-none px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors text-sm"
-                        >
-                          {t("cancel")}
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={savingSettings || editBio.length > 200}
-                          className="flex-1 sm:flex-none px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed text-sm"
-                        >
-                          {savingSettings ? t("uploading") : t("save_changes")}
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                )}
-              </div>
-
-              {/* Actions */}
-              {/* Removed the extra action div since Menu moved to the cover */}
+            {/* Modular Profile Content */}
+            <div className="transition-all duration-300 ease-in-out">
+              {!isEditingProfile ? (
+                <>
+                  <ProfileHeader
+                    user={user}
+                    avatarUrl={avatarUrl}
+                    isUploading={isUploading}
+                    onAvatarClick={() => fileInputRef.current?.click()}
+                    isEditing={false}
+                    onEditToggle={() => {
+                      setIsEditingProfile(true);
+                      setSettingsMessage({ type: '', text: '' });
+                    }}
+                    t={t}
+                  />
+                  <ProfileAbout 
+                    bio={editBio} 
+                    t={t} 
+                  />
+                  <ProfileStats
+                    favoritesCount={favorites.length}
+                    listingsCount={myHouses.length}
+                    t={t}
+                  />
+                </>
+              ) : (
+                <EditProfileForm
+                  firstName={editFirstName}
+                  lastName={editLastName}
+                  bio={editBio}
+                  setFirstName={setEditFirstName}
+                  setLastName={setEditLastName}
+                  setBio={setEditBio}
+                  onSave={handleSaveSettings}
+                  onCancel={() => {
+                    setIsEditingProfile(false);
+                    setSettingsMessage({ type: '', text: '' });
+                  }}
+                  isSaving={savingSettings}
+                  message={settingsMessage}
+                  t={t}
+                />
+              )}
             </div>
 
-            {/* Stats row */}
-            <div className="grid grid-cols-2 border-t border-gray-100">
-              {[
-                { label: t("saved"), value: favorites.length, icon: Heart, color: "text-rose-500" },
-                { label: t("my_listings"), value: myHouses.length, icon: Building2, color: "text-teal-500" },
-              ].map((stat, i) => (
-                <div key={i} className={`flex flex-col items-center py-4 gap-1 ${i === 0 ? "border-r border-gray-100" : ""}`}>
-                  <stat.icon className={`w-4 h-4 ${stat.color}`} />
-                  <p className="text-xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{stat.label}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 

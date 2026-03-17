@@ -372,10 +372,10 @@ export default function PropertyDetailsPage() {
 
                 <div className="mt-3 border-t border-gray-200 pt-4">
                     <button
-                        onClick={handleContactNow}
+                        onClick={owner?.id === user?.id ? () => router.push('/profile') : handleContactNow}
                         className="w-full max-w-[220px] mx-auto bg-blue-600 text-white py-2.5 rounded-xl text-sm font-bold flex justify-center items-center hover:bg-blue-700 active:scale-[0.98] transition-all"
                     >
-                        {t("contact_now")}
+                        {owner?.id === user?.id ? t("manage_listing") : t("contact_now")}
                     </button>
                 </div>
             </div>
