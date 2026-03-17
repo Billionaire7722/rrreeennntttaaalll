@@ -84,9 +84,6 @@ export const resolveSocketBaseUrl = () => {
 
 const api = axios.create({
     baseURL: resolvedApiBaseUrl,
-    headers: {
-        'Content-Type': 'application/json',
-    },
 });
 
 api.interceptors.request.use(

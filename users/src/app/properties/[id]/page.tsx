@@ -10,7 +10,7 @@ import api from "@/api/axios";
 import SafeImage from "@/components/SafeImage";
 import { useAuth } from "@/context/useAuth";
 import { useLanguage } from "@/context/LanguageContext";
-import { getPropertyStatusTranslationKey, getPropertyTypeTranslationKey } from "@/i18n";
+import { getPropertyStatusTranslationKey, getPropertyTypeTranslationKey, normalizePropertyType } from "@/i18n";
 
 function getInitials(name: string): string {
   return (name || "")
@@ -45,15 +45,23 @@ interface PropertyDetailsData {
   name?: string;
   title?: string;
   address?: string;
+  ward?: string;
   district?: string;
   city?: string;
   price?: number;
+  payment_method?: string;
   bedrooms?: number;
   bathrooms?: number;
   is_private_bathroom?: boolean;
   hasPrivateBathroom?: boolean;
   square?: number;
   description?: string;
+  roomDetails?: {
+    electricityPrice?: number | null;
+    waterPrice?: number | null;
+    paymentMethod?: string | null;
+    otherFees?: string | null;
+  } | null;
 }
 
 export default function PropertyDetailsPage() {
@@ -216,11 +224,14 @@ export default function PropertyDetailsPage() {
         ? "bg-amber-500"
         : "bg-red-500";
   const title = propertyTypeKey ? t(propertyTypeKey) : property.property_type || property.name || property.title;
-  const address = property.address || `${property.district ? `${property.district}, ` : ""}${property.city}`;
+  const address = [property.address, property.ward || property.district, property.city].filter(Boolean).join(", ");
   const postedByAdmins = Array.isArray(property.postedByAdmins) ? property.postedByAdmins : [];
   const owner = property.owner || postedByAdmins[0];
   const formattedPrice = `${formatNumber(property.price || 0)} VND`;
   const bathroomValue = property.is_private_bathroom || property.hasPrivateBathroom ? t("property.fields.privateBath") : `${property.bathrooms || 1}`;
+  const isRoomMiniApartment = normalizePropertyType(property.property_type) === "roomMiniApartment";
+  const roomDetails = property.roomDetails;
+  const paymentMethod = roomDetails?.paymentMethod || property.payment_method || t("property.detail.notProvided");
 
   const handleContactNow = () => {
     const query = new URLSearchParams();
@@ -399,6 +410,40 @@ export default function PropertyDetailsPage() {
         </div>
 
         <div className="mb-6 h-px w-full bg-gray-200" />
+
+        {isRoomMiniApartment ? (
+          <>
+            <div className="mb-6">
+              <h2 className="mb-3 text-lg font-bold text-gray-900">{t("property.detail.roomDetailsTitle")}</h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">{t("property.form.electricityPriceLabel")}</p>
+                  <p className="mt-2 text-base font-bold text-slate-900">
+                    {roomDetails?.electricityPrice != null ? formatNumber(roomDetails.electricityPrice) : t("property.detail.notProvided")}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">{t("property.form.waterPriceLabel")}</p>
+                  <p className="mt-2 text-base font-bold text-slate-900">
+                    {roomDetails?.waterPrice != null ? formatNumber(roomDetails.waterPrice) : t("property.detail.notProvided")}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">{t("property.form.paymentMethodLabel")}</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">{paymentMethod}</p>
+                </div>
+                <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">{t("property.form.otherFeesLabel")}</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">
+                    {roomDetails?.otherFees || t("property.detail.notProvided")}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-6 h-px w-full bg-gray-200" />
+          </>
+        ) : null}
 
         <div className="mb-3">
           <h2 className="mb-3 text-lg font-bold text-gray-900">{t("property.fields.description")}</h2>

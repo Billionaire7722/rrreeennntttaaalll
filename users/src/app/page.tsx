@@ -67,9 +67,9 @@ export default function HomePage() {
       const formatted = rawData.map((h: any) => ({
         id: h.id,
         title: h.name,
-        address: h.address || `${h.district ? `${h.district}, ` : ''}${h.city || ''}`,
+        address: [h.address, h.ward || h.district].filter(Boolean).join(', '),
         city: h.city,
-        district: h.district,
+        district: h.ward || h.district,
         latitude: h.latitude,
         longitude: h.longitude,
         price: h.price,
@@ -248,11 +248,6 @@ export default function HomePage() {
 
     if (filters.maxArea !== null) {
       result = result.filter((property: any) => (property.area || 0) <= filters.maxArea!);
-    }
-
-    if (filters.bathroomType !== null) {
-      const wantsPrivate = filters.bathroomType === 'private';
-      result = result.filter((property: any) => property.hasPrivateBathroom === wantsPrivate);
     }
 
     return result;

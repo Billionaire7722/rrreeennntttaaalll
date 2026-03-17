@@ -87,6 +87,11 @@ const PROPERTY_TYPE_DEFINITIONS = {
     aliases: ["apartment"],
     translationKey: "property.types.apartment",
   },
+  roomMiniApartment: {
+    apiValue: "room/mini apartment",
+    aliases: ["room/mini apartment", "room mini apartment", "room_mini_apartment", "room-mini-apartment"],
+    translationKey: "property.types.roomMiniApartment",
+  },
   condominium: {
     apiValue: "condominium",
     aliases: ["condominium", "condo"],

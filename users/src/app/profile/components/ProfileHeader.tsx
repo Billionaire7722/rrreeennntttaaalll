@@ -97,10 +97,6 @@ export default function ProfileHeader({
                   <span className="min-w-0 break-all">{user.email}</span>
                 </div>
               </div>
-
-              <p className="max-w-2xl text-sm leading-6 text-[var(--theme-text-muted)] sm:text-[15px]">
-                {t("profile.welcomeDescription")}
-              </p>
             </div>
           </div>
 

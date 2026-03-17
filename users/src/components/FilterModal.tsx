@@ -13,7 +13,6 @@ export type FilterOptions = {
   minBedrooms: number | null;
   minArea: number | null;
   maxArea: number | null;
-  bathroomType: "private" | "shared" | null;
 };
 
 export const DEFAULT_FILTERS: FilterOptions = {
@@ -25,7 +24,6 @@ export const DEFAULT_FILTERS: FilterOptions = {
   minBedrooms: null,
   minArea: null,
   maxArea: null,
-  bathroomType: null,
 };
 
 interface Props {
@@ -87,8 +85,8 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 backdrop-blur-sm transition-all duration-300 sm:items-center">
-      <div className="flex h-auto max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl animate-in slide-in-from-bottom-5 sm:w-[500px] sm:rounded-2xl">
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-[calc(env(safe-area-inset-top)+0.75rem)] backdrop-blur-sm transition-all duration-300 sm:items-center sm:px-4 sm:py-4">
+      <div className="mt-auto flex w-full max-w-lg min-h-0 max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-[1.75rem] bg-white shadow-2xl animate-in slide-in-from-bottom-5 sm:mt-0 sm:max-h-[min(720px,calc(100dvh-2rem))]">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
           <h2 className="text-lg font-bold text-gray-900">{t("property.filters.title")}</h2>
           <button onClick={onClose} className="rounded-full p-2 transition hover:bg-gray-100">
@@ -212,34 +210,6 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
                   setLocalFilters((previous) => ({ ...previous, maxArea: Number.isNaN(value) ? null : value }));
                 }}
               />
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-800">{t("property.filters.bathroomType")}</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { value: "private" as const, label: t("property.fields.privateBath") },
-                { value: "shared" as const, label: t("property.fields.sharedBath") },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() =>
-                    setLocalFilters((previous) => ({
-                      ...previous,
-                      bathroomType: previous.bathroomType === option.value ? null : option.value,
-                    }))
-                  }
-                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                    localFilters.bathroomType === option.value
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
             </div>
           </div>
         </div>

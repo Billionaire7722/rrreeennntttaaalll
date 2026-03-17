@@ -59,6 +59,10 @@ export default function PropertyCard({
   const compactPrice = buildCompactPrice(property.price, formatNumber, t("property.units.million"));
   const bathroomLabel = property.hasPrivateBathroom ? t("property.fields.privateBath") : t("property.fields.sharedBath");
   const areaValue = `${property.area} m\u00B2`;
+  const locationLabel =
+    property.address && property.city && property.address.toLowerCase().includes(property.city.toLowerCase())
+      ? property.address
+      : [property.address, property.city].filter(Boolean).join(", ");
 
   const statusBadge = (
     <span
@@ -145,7 +149,7 @@ export default function PropertyCard({
             </div>
 
             <p className="mt-0.5 flex items-center gap-1 truncate text-[10px] text-gray-400">
-              <MapPin size={10} /> {property.address}, {property.city}
+              <MapPin size={10} /> {locationLabel}
             </p>
           </div>
 
@@ -180,9 +184,7 @@ export default function PropertyCard({
 
               <div className="mb-4 mt-1 flex items-center text-sm text-gray-400">
                 <MapPin className="mr-1 h-4 w-4 flex-shrink-0" />
-                <span className="truncate">
-                  {property.address}, {property.city}
-                </span>
+                <span className="truncate">{locationLabel}</span>
               </div>
 
               <div className="flex flex-wrap items-center gap-4">
@@ -227,9 +229,7 @@ export default function PropertyCard({
           <h3 className="mb-1 truncate text-xl font-bold text-gray-900">{propertyTitle}</h3>
           <div className="flex items-center text-sm text-gray-400">
             <MapPin className="mr-1 h-3.5 w-3.5 flex-shrink-0" />
-            <span className="truncate">
-              {property.address}, {property.city}
-            </span>
+            <span className="truncate">{locationLabel}</span>
           </div>
         </div>
 

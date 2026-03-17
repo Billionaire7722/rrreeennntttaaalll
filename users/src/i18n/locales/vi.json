@@ -34,7 +34,9 @@
       "noPosterInfo": "Chưa có thông tin người đăng",
       "noDescription": "Chưa có mô tả.",
       "contactNow": "Liên hệ ngay",
-      "manageListing": "Quản lý tin đăng"
+      "manageListing": "Quản lý tin đăng",
+      "roomDetailsTitle": "Chi tiết phòng / mini apartment",
+      "notProvided": "Chưa cập nhật"
     },
     "status": {
       "available": "Đang cho thuê",
@@ -76,17 +78,19 @@
       "viewDetails": "Xem chi tiết"
     },
     "add": {
-      "title": "Thêm bất động sản",
-      "submitButton": "Xác nhận đăng",
-      "submitting": "Đang xử lý...",
-      "submitSuccess": "Đăng tin thành công",
-      "submitError": "Đăng tin thất bại",
-      "loginRequired": "Vui lòng đăng nhập để đăng tin"
+      "title": "Thêm nhà",
+      "submitButton": "Xác nhận đăng nhà",
+      "submitting": "Đang đăng nhà...",
+      "submitSuccess": "Đăng nhà thành công",
+      "submitError": "Đăng nhà thất bại",
+      "loginRequired": "Vui lòng đăng nhập để thêm nhà"
     },
     "form": {
       "propertyTypeLabel": "Loại bất động sản",
+      "houseTypeLabel": "Loại nhà",
       "cityLabel": "Thành phố",
       "districtLabel": "Quận / Huyện",
+      "wardLabel": "Phường / Xã",
       "addressLabel": "Địa chỉ",
       "exactLocationLabel": "Vị trí chính xác",
       "dragPinHint": "Kéo ghim để chọn đúng vị trí bất động sản",
@@ -104,12 +108,22 @@
       "locationError": "Không thể lấy vị trí của bạn.",
       "invalidImageType": "Vui lòng chỉ tải lên ảnh PNG, JPG, GIF, WebP, BMP hoặc AVIF.",
       "imageUploadError": "Tải lên một hoặc nhiều ảnh thất bại.",
-      "videoUploadError": "Tải lên một hoặc nhiều video thất bại."
+      "videoUploadError": "Tải lên một hoặc nhiều video thất bại.",
+      "roomDetailsTitle": "Thông tin phòng / mini apartment",
+      "roomDetailsHint": "Những ô này chỉ hiện khi bạn chọn loại phòng / mini apartment.",
+      "electricityPriceLabel": "Giá điện (số / tháng)",
+      "waterPriceLabel": "Giá nước (tháng)",
+      "paymentMethodLabel": "Phương thức thanh toán",
+      "paymentMethodPlaceholder": "Chọn phương thức thanh toán",
+      "depositMonthsOption": "Đóng {deposits} cọc + 1 tháng tiền nhà",
+      "otherFeesLabel": "Phí khác",
+      "otherFeesPlaceholder": "Phí giữ xe, internet, dịch vụ..."
     },
     "types": {
       "house": "Nhà",
       "commercialSpace": "Mặt bằng kinh doanh",
       "apartment": "Căn hộ",
+      "roomMiniApartment": "Phòng / Mini apartment",
       "condominium": "Chung cư",
       "hotel": "Khách sạn"
     },
@@ -117,10 +131,10 @@
       "price": "Giá"
     },
     "edit": {
-      "title": "Chỉnh sửa bất động sản",
-      "submitSuccess": "Cập nhật tin đăng thành công!",
-      "submitError": "Cập nhật tin đăng thất bại",
-      "nameLabel": "Tên bất động sản"
+      "title": "Chỉnh sửa nhà",
+      "submitSuccess": "Cập nhật nhà thành công!",
+      "submitError": "Cập nhật nhà thất bại",
+      "nameLabel": "Tên nhà"
     },
     "messages": {
       "deleteConfirm": "Bạn có chắc muốn xóa tin đăng này không? Hành động này không thể hoàn tác.",
@@ -170,8 +184,10 @@
     "editProfile": "Chỉnh sửa hồ sơ",
     "displayName": "Tên hiển thị",
     "bio": "Giới thiệu",
+    "aboutUs": "Giới thiệu",
     "changeLimit": "Đổi tên 1 lần/30 ngày.",
     "bioPlaceholder": "Kể một chút về bản thân...",
+    "useEditProfileHint": "Dùng \"Chỉnh sửa hồ sơ\" để thêm phần giới thiệu.",
     "account": {
       "firstNameLabel": "Tên",
       "lastNameLabel": "Họ",

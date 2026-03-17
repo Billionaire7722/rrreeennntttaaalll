@@ -4,6 +4,13 @@ import { Role } from '../security/roles.enum';
 import { ActivityLogService } from '../admin/activity-log.service';
 import { MonitoringService } from '../admin/monitoring.service';
 
+type NormalizedRoomDetails = {
+    electricityPrice: number | null;
+    waterPrice: number | null;
+    paymentMethod: string | null;
+    otherFees: string | null;
+};
+
 @Injectable()
 export class HousesService {
 
@@ -12,6 +19,38 @@ export class HousesService {
         private activityLogService: ActivityLogService,
         private monitoringService: MonitoringService
     ) { }
+
+    private normalizeOptionalNumber(value: unknown): number | null {
+        if (value === undefined || value === null || value === '') return null;
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    private normalizeOptionalString(value: unknown): string | null {
+        if (value === undefined || value === null) return null;
+        const normalized = String(value).trim();
+        return normalized ? normalized : null;
+    }
+
+    private isRoomMiniApartment(value: unknown): boolean {
+        const normalized = String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[-\s]+/g, '_');
+
+        return normalized === 'room/mini_apartment' || normalized === 'room_mini_apartment';
+    }
+
+    private normalizeRoomDetails(value: unknown): NormalizedRoomDetails {
+        const details = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+
+        return {
+            electricityPrice: this.normalizeOptionalNumber(details.electricityPrice),
+            waterPrice: this.normalizeOptionalNumber(details.waterPrice),
+            paymentMethod: this.normalizeOptionalString(details.paymentMethod),
+            otherFees: this.normalizeOptionalString(details.otherFees),
+        };
+    }
 
     private async fetchCoordinatesFromAddress(queries: string[]): Promise<{ lat: number, lon: number } | null> {
         for (const baseQuery of queries) {
@@ -79,6 +118,7 @@ export class HousesService {
             whereClause.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
                 { address: { contains: search, mode: 'insensitive' } },
+                { ward: { contains: search, mode: 'insensitive' } },
                 { district: { contains: search, mode: 'insensitive' } },
                 { city: { contains: search, mode: 'insensitive' } },
             ];
@@ -100,17 +140,35 @@ export class HousesService {
                     ward: true,
                     district: true,
                     city: true,
+                    property_type: true,
                     price: true,
+                    payment_method: true,
                     bedrooms: true,
                     square: true,
                     description: true,
                     contact_phone: true,
                     image_url_1: true,
+                    image_url_2: true,
+                    image_url_3: true,
+                    image_url_4: true,
+                    image_url_5: true,
+                    image_url_6: true,
+                    image_url_7: true,
+                    video_url_1: true,
+                    video_url_2: true,
                     status: true,
                     is_private_bathroom: true,
                     latitude: true,
                     longitude: true,
                     deleted_at: true,
+                    roomDetails: {
+                        select: {
+                            electricityPrice: true,
+                            waterPrice: true,
+                            paymentMethod: true,
+                            otherFees: true,
+                        }
+                    },
                     owner: {
                         select: {
                             id: true,
@@ -148,6 +206,7 @@ export class HousesService {
                 ...(ownerId ? { owner_id: ownerId } : {}),
             },
             include: {
+                roomDetails: true,
                 owner: {
                     select: {
                         id: true,
@@ -177,6 +236,10 @@ export class HousesService {
         const normalizedWard = String(data.ward || house.ward || '').trim();
         const normalizedDistrict = String(data.district || house.district || '').trim();
         const normalizedCity = String(data.city || house.city || '').trim();
+        const nextPropertyType = data.property_type !== undefined ? data.property_type : house.property_type;
+        const shouldHaveRoomDetails = this.isRoomMiniApartment(nextPropertyType);
+        const shouldSyncRoomDetails = shouldHaveRoomDetails && (data.roomDetails !== undefined || data.property_type !== undefined);
+        const normalizedRoomDetails = this.normalizeRoomDetails(data.roomDetails);
 
         if ((data.latitude === undefined || data.longitude === undefined) && 
             (data.address !== undefined || data.ward !== undefined || data.district !== undefined || data.city !== undefined)) {
@@ -197,36 +260,61 @@ export class HousesService {
             }
         }
 
-        await this.prisma.house.update({
-            where: { id },
-            data: {
-                ...(data.name !== undefined && { name: data.name }),
-                ...(data.address !== undefined && { address: data.address }),
-                ...(data.ward !== undefined && { ward: data.ward }),
-                ...(data.city !== undefined && { city: data.city }),
-                ...(data.district !== undefined && { district: data.district }),
-                ...(data.price !== undefined && { price: Number(data.price) }),
-                ...(data.bedrooms !== undefined && { bedrooms: Number(data.bedrooms) }),
-                ...(data.square !== undefined && { square: Number(data.square) }),
-                ...(data.description !== undefined && { description: data.description }),
-                ...(data.contact_phone !== undefined && { contact_phone: data.contact_phone }),
-                ...(finalLat !== undefined && { latitude: finalLat }),
-                ...(finalLon !== undefined && { longitude: finalLon }),
-                ...(data.image_url_1 !== undefined && { image_url_1: data.image_url_1 }),
-                ...(data.image_url_2 !== undefined && { image_url_2: data.image_url_2 }),
-                ...(data.image_url_3 !== undefined && { image_url_3: data.image_url_3 }),
-                ...(data.image_url_4 !== undefined && { image_url_4: data.image_url_4 }),
-                ...(data.image_url_5 !== undefined && { image_url_5: data.image_url_5 }),
-                ...(data.image_url_6 !== undefined && { image_url_6: data.image_url_6 }),
-                ...(data.image_url_7 !== undefined && { image_url_7: data.image_url_7 }),
-                ...(data.video_url_1 !== undefined && { video_url_1: data.video_url_1 }),
-                ...(data.video_url_2 !== undefined && { video_url_2: data.video_url_2 }),
-            },
+        const houseUpdateData: any = {
+            ...(data.name !== undefined && { name: data.name }),
+            ...(data.property_type !== undefined && { property_type: data.property_type }),
+            ...(data.address !== undefined && { address: data.address }),
+            ...(data.ward !== undefined && { ward: data.ward }),
+            ...(data.city !== undefined && { city: data.city }),
+            ...(data.district !== undefined && { district: data.district }),
+            ...(data.price !== undefined && { price: Number(data.price) }),
+            ...(data.bedrooms !== undefined && { bedrooms: Number(data.bedrooms) }),
+            ...(data.square !== undefined && { square: Number(data.square) }),
+            ...(data.description !== undefined && { description: data.description }),
+            ...(data.contact_phone !== undefined && { contact_phone: data.contact_phone }),
+            ...(finalLat !== undefined && { latitude: finalLat }),
+            ...(finalLon !== undefined && { longitude: finalLon }),
+            ...(data.image_url_1 !== undefined && { image_url_1: data.image_url_1 }),
+            ...(data.image_url_2 !== undefined && { image_url_2: data.image_url_2 }),
+            ...(data.image_url_3 !== undefined && { image_url_3: data.image_url_3 }),
+            ...(data.image_url_4 !== undefined && { image_url_4: data.image_url_4 }),
+            ...(data.image_url_5 !== undefined && { image_url_5: data.image_url_5 }),
+            ...(data.image_url_6 !== undefined && { image_url_6: data.image_url_6 }),
+            ...(data.image_url_7 !== undefined && { image_url_7: data.image_url_7 }),
+            ...(data.video_url_1 !== undefined && { video_url_1: data.video_url_1 }),
+            ...(data.video_url_2 !== undefined && { video_url_2: data.video_url_2 }),
+            ...(shouldSyncRoomDetails && { payment_method: normalizedRoomDetails.paymentMethod }),
+            ...(data.property_type !== undefined && !shouldHaveRoomDetails && { payment_method: null }),
+        };
+
+        await this.prisma.$transaction(async (tx) => {
+            await tx.house.update({
+                where: { id },
+                data: houseUpdateData,
+            });
+
+            if (shouldSyncRoomDetails) {
+                await tx.houseRoomDetail.upsert({
+                    where: { houseId: id },
+                    update: normalizedRoomDetails,
+                    create: {
+                        houseId: id,
+                        ...normalizedRoomDetails,
+                    },
+                });
+            }
+
+            if (data.property_type !== undefined && !shouldHaveRoomDetails) {
+                await tx.houseRoomDetail.deleteMany({
+                    where: { houseId: id },
+                });
+            }
         });
 
         const refreshedHouse = await prismaAny.house.findFirst({
             where: { id, deleted_at: null },
             include: {
+                roomDetails: true,
                 owner: {
                     select: {
                         id: true,
@@ -297,6 +385,9 @@ export class HousesService {
         const fallbackCity = normalizedCity || '';
         const fallbackDistrict = normalizedDistrict || '';
         const fallbackWard = normalizedWard || '';
+        const propertyType = this.normalizeOptionalString(data.property_type);
+        const shouldCreateRoomDetails = this.isRoomMiniApartment(propertyType);
+        const normalizedRoomDetails = this.normalizeRoomDetails(data.roomDetails);
 
         const createdHouse = await this.prisma.house.create({
             data: {
@@ -315,7 +406,8 @@ export class HousesService {
                 status: data.status || 'available',
                 city: fallbackCity,
                 district: fallbackDistrict,
-                property_type: data.property_type,
+                property_type: propertyType,
+                payment_method: shouldCreateRoomDetails ? normalizedRoomDetails.paymentMethod : this.normalizeOptionalString(data.payment_method),
                 image_url_1: data.image_url_1 || null,
                 image_url_2: data.image_url_2 || null,
                 image_url_3: data.image_url_3 || null,
@@ -326,12 +418,20 @@ export class HousesService {
                 video_url_1: data.video_url_1 || null,
                 video_url_2: data.video_url_2 || null,
                 owner_id: actorId,
+                ...(shouldCreateRoomDetails
+                    ? {
+                        roomDetails: {
+                            create: normalizedRoomDetails,
+                        },
+                    }
+                    : {}),
             }
         });
 
         const populatedHouse = await prismaAny.house.findFirst({
             where: { id: createdHouse.id, deleted_at: null },
             include: {
+                roomDetails: true,
                 owner: {
                     select: {
                         id: true,

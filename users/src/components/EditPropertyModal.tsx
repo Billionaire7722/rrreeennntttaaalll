@@ -19,10 +19,11 @@ import "leaflet/dist/leaflet.css";
 import { useMap } from "react-leaflet";
 import api, { resolvedApiBaseUrl } from "@/api/axios";
 import SafeImage from "@/components/SafeImage";
+import RoomMiniApartmentFields, { EMPTY_ROOM_DETAILS } from "@/components/RoomMiniApartmentFields";
 import { useLanguage } from "@/context/LanguageContext";
+import { normalizePropertyType, PROPERTY_TYPE_OPTIONS, toPropertyTypeApiValue } from "@/i18n";
 import { getBestAvailableLocation } from "@/utils/location";
 import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from "@/utils/safeMedia";
-import { PROPERTY_TYPE_OPTIONS, toPropertyTypeApiValue } from "@/i18n";
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
@@ -74,6 +75,12 @@ interface House {
   image_url_7?: string;
   video_url_1?: string;
   video_url_2?: string;
+  roomDetails?: {
+    electricityPrice?: number | null;
+    waterPrice?: number | null;
+    paymentMethod?: string | null;
+    otherFees?: string | null;
+  } | null;
 }
 
 interface EditPropertyModalProps {
@@ -130,7 +137,7 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
     name: "",
     property_type: "house",
     street_address: "",
-    district: "",
+    ward: "",
     city: "",
     price: "",
     square: "",
@@ -139,10 +146,12 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
     contact_phone: "",
     latitude: 21.0285,
     longitude: 105.8542,
+    roomDetails: { ...EMPTY_ROOM_DETAILS },
   });
   const [mapCenter, setMapCenter] = useState<[number, number]>([21.0285, 105.8542]);
   const [shouldGeocode, setShouldGeocode] = useState(false);
-  const { street_address, district, city } = formData;
+  const { street_address, ward, city } = formData;
+  const isRoomMiniApartment = normalizePropertyType(formData.property_type) === "roomMiniApartment";
 
   useEffect(() => {
     if (!house) return;
@@ -151,7 +160,7 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
       name: house.name || "",
       property_type: house.property_type || "house",
       street_address: house.address || "",
-      district: house.district || "",
+      ward: house.ward || house.district || "",
       city: house.city || "",
       price: house.price != null ? String(house.price).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "",
       square: house.square != null ? String(house.square) : "",
@@ -160,6 +169,12 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
       contact_phone: house.contact_phone || "",
       latitude: house.latitude || 21.0285,
       longitude: house.longitude || 105.8542,
+      roomDetails: {
+        electricityPrice: house.roomDetails?.electricityPrice != null ? String(house.roomDetails.electricityPrice) : "",
+        waterPrice: house.roomDetails?.waterPrice != null ? String(house.roomDetails.waterPrice) : "",
+        paymentMethod: house.roomDetails?.paymentMethod || "",
+        otherFees: house.roomDetails?.otherFees || "",
+      },
     });
 
     if (house.latitude && house.longitude) {
@@ -186,13 +201,13 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
   useEffect(() => {
     if (!house || !shouldGeocode) return;
 
-    if (!street_address && !district && !city) return;
+    if (!street_address && !ward && !city) return;
 
     const timer = setTimeout(async () => {
       setIsGeocoding(true);
 
       try {
-        const fullAddress = `${street_address}, ${district}, ${city}, Vietnam`;
+        const fullAddress = `${street_address}, ${ward}, ${city}, Vietnam`;
         const cleanAddress = removeVietnameseTones(fullAddress);
         const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddress)}&format=json&limit=1`;
         const response = await fetch(url, { headers: { "User-Agent": "RentalApp/1.0" } });
@@ -215,7 +230,7 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [city, district, house, shouldGeocode, street_address]);
+  }, [city, house, shouldGeocode, street_address, ward]);
 
   const handleUseCurrentLocation = useCallback(async () => {
     try {
@@ -237,16 +252,29 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name } = event.target;
     let value = event.target.value;
 
-    if (event.target.name === "price") {
+    if (name === "price") {
       const rawValue = value.replace(/\D/g, "");
       value = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
 
-    setFormData((previous) => ({ ...previous, [event.target.name]: value }));
+    if (name.startsWith("roomDetails.")) {
+      const roomDetailField = name.replace("roomDetails.", "");
+      setFormData((previous) => ({
+        ...previous,
+        roomDetails: {
+          ...previous.roomDetails,
+          [roomDetailField]: value,
+        },
+      }));
+      return;
+    }
 
-    if (["street_address", "district", "city"].includes(event.target.name)) {
+    setFormData((previous) => ({ ...previous, [name]: value }));
+
+    if (["street_address", "ward", "city"].includes(name)) {
       setShouldGeocode(true);
     }
   };
@@ -318,15 +346,34 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
     setSubmitState("loading");
 
     try {
-      const fullAddressString = `${formData.street_address}, ${formData.district}, ${formData.city}`.replace(/^, |, $/g, "");
+      const normalizedStreetAddress = formData.street_address.trim();
+      const normalizedWard = formData.ward.trim();
+      const normalizedCity = formData.city.trim();
+      const fullAddressString = [normalizedStreetAddress, normalizedWard, normalizedCity].filter(Boolean).join(", ");
       const payload: Record<string, unknown> = {
-        ...formData,
         property_type: toPropertyTypeApiValue(formData.property_type),
-        address: fullAddressString,
+        address: normalizedStreetAddress,
+        ward: normalizedWard,
+        district: normalizedWard,
+        city: normalizedCity,
         price: formData.price ? Number(String(formData.price).replace(/\./g, "")) : null,
         square: formData.square ? Number(formData.square) : null,
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
+        description: formData.description.trim() || null,
+        contact_phone: formData.contact_phone.trim() || null,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
         name: formData.name || fullAddressString || house.name,
+        ...(isRoomMiniApartment
+          ? {
+              roomDetails: {
+                electricityPrice: formData.roomDetails.electricityPrice ? Number(formData.roomDetails.electricityPrice) : null,
+                waterPrice: formData.roomDetails.waterPrice ? Number(formData.roomDetails.waterPrice) : null,
+                paymentMethod: formData.roomDetails.paymentMethod || null,
+                otherFees: formData.roomDetails.otherFees.trim() || null,
+              },
+            }
+          : {}),
       };
 
       for (let index = 1; index <= 7; index += 1) payload[`image_url_${index}`] = null;
@@ -413,7 +460,7 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
 
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700">
-                {t("property.form.propertyTypeLabel")} <span className="text-red-500">*</span>
+                {t("property.form.houseTypeLabel")} <span className="text-red-500">*</span>
               </label>
               <select
                 required
@@ -446,15 +493,15 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">
-                  {t("property.form.districtLabel")} <span className="text-red-500">*</span>
+                  {t("property.form.wardLabel")} <span className="text-red-500">*</span>
                 </label>
                 <input
                   required
-                  name="district"
-                  value={formData.district}
+                  name="ward"
+                  value={formData.ward}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={t("property.form.districtLabel")}
+                  placeholder={t("property.form.wardLabel")}
                 />
               </div>
             </div>
@@ -583,6 +630,8 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
                 placeholder={t("property.fields.description")}
               />
             </div>
+
+            {isRoomMiniApartment ? <RoomMiniApartmentFields value={formData.roomDetails} onChange={handleChange} t={t} /> : null}
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">

@@ -5,18 +5,18 @@ export const dynamic = "force-dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  AlertCircle,
   Building2,
   Camera,
+  CheckCircle2,
   ChevronRight,
   Clock3,
   Globe,
   Heart,
   HelpCircle,
-  Home,
   Info,
   Menu,
   MessageCircle,
-  Plus,
   Settings,
   UserCog,
   X,
@@ -30,6 +30,8 @@ import { useAuth } from "@/context/useAuth";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import { LOCALE_METADATA, SUPPORTED_LOCALES, type Locale } from "@/i18n";
+import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from "@/utils/safeMedia";
+import AvatarCropModal from "./components/AvatarCropModal";
 import EditProfileForm from "./components/EditProfileForm";
 import ProfileAbout from "./components/ProfileAbout";
 import ProfileHeader from "./components/ProfileHeader";
@@ -59,6 +61,7 @@ interface FavoriteApiItem {
     id: string;
     name: string;
     property_type?: string;
+    ward?: string;
     district?: string;
     city: string;
     price?: number;
@@ -75,6 +78,7 @@ interface MyHouse {
   name: string;
   property_type?: string;
   address: string;
+  ward?: string;
   district: string;
   city: string;
   price?: number;
@@ -93,6 +97,12 @@ interface MyHouse {
   video_url_2?: string;
   status?: string;
   created_at: string;
+  roomDetails?: {
+    electricityPrice?: number | null;
+    waterPrice?: number | null;
+    paymentMethod?: string | null;
+    otherFees?: string | null;
+  } | null;
 }
 
 interface ApiErrorShape {
@@ -100,8 +110,30 @@ interface ApiErrorShape {
     status?: number;
     data?: {
       message?: string;
+      error?: string | { message?: string | string[] };
     };
   };
+}
+
+type FeedbackMessage = {
+  type: "success" | "error" | "";
+  text: string;
+};
+
+type UploadTarget = "avatar" | "cover";
+type HouseStatus = "available" | "rented" | "pending";
+
+interface UploadResponseShape {
+  url?: string;
+}
+
+interface UploadedProfileShape {
+  avatarUrl?: string | null;
+  coverUrl?: string | null;
+}
+
+interface AvatarDraft {
+  previewUrl: string;
 }
 
 function getInitials(name: string) {
@@ -141,6 +173,41 @@ function toPropertyCard(item: {
   } satisfies Property;
 }
 
+function normalizeHouseStatus(status?: string | null): HouseStatus {
+  const normalized = String(status || "").trim().toLowerCase();
+  if (normalized === "rented") return "rented";
+  if (normalized === "pending") return "pending";
+  return "available";
+}
+
+function getApiErrorMessage(error: unknown) {
+  const apiError = error as ApiErrorShape;
+  const responseData = apiError.response?.data;
+
+  if (typeof responseData?.message === "string" && responseData.message.trim()) {
+    return responseData.message;
+  }
+
+  if (typeof responseData?.error === "string" && responseData.error.trim()) {
+    return responseData.error;
+  }
+
+  const nestedMessage = responseData?.error && typeof responseData.error === "object" ? responseData.error.message : undefined;
+  if (typeof nestedMessage === "string" && nestedMessage.trim()) {
+    return nestedMessage;
+  }
+
+  if (Array.isArray(nestedMessage) && nestedMessage.length > 0) {
+    return nestedMessage.join(". ");
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return undefined;
+}
+
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const { t, language, localeTag, setLanguage, formatDate, formatTime } = useLanguage();
@@ -160,8 +227,11 @@ export default function ProfilePage() {
   const [editBio, setEditBio] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState({ type: "", text: "" });
+  const [feedbackMessage, setFeedbackMessage] = useState<FeedbackMessage>({ type: "", text: "" });
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [avatarDraft, setAvatarDraft] = useState<AvatarDraft | null>(null);
+  const [updatingHouseStatusIds, setUpdatingHouseStatusIds] = useState<Record<string, boolean>>({});
   const [editingHouse, setEditingHouse] = useState<MyHouse | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLangExpanded, setIsLangExpanded] = useState(false);
@@ -183,6 +253,10 @@ export default function ProfilePage() {
   const visibleFavorites = favorites.slice(0, visibleCounts.favorites);
   const visibleMyProperties = myHouses.slice(0, visibleCounts["my-properties"]);
   const visibleMessages = conversations.slice(0, visibleCounts.messages);
+
+  const showFeedbackMessage = useCallback((type: FeedbackMessage["type"], text: string) => {
+    setFeedbackMessage({ type, text });
+  }, []);
 
   const formatConversationTime = useCallback(
     (value?: string) => {
@@ -208,7 +282,7 @@ export default function ProfilePage() {
             id: favorite.house.id,
             name: favorite.house.name,
             property_type: favorite.house.property_type,
-            address: `${favorite.house.district ? `${favorite.house.district}, ` : ""}${favorite.house.city}`,
+            address: favorite.house.ward || favorite.house.district || "",
             city: favorite.house.city,
             price: favorite.house.price,
             bedrooms: favorite.house.bedrooms,
@@ -273,6 +347,24 @@ export default function ProfilePage() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (!feedbackMessage.text) return;
+
+    const timer = window.setTimeout(() => {
+      setFeedbackMessage({ type: "", text: "" });
+    }, 4000);
+
+    return () => window.clearTimeout(timer);
+  }, [feedbackMessage]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarDraft?.previewUrl) {
+        URL.revokeObjectURL(avatarDraft.previewUrl);
+      }
+    };
+  }, [avatarDraft?.previewUrl]);
+
+  useEffect(() => {
     if (authLoading || !user) return;
 
     fetchFavorites();
@@ -319,23 +411,124 @@ export default function ProfilePage() {
     } catch {}
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHouseStatusChange = async (house: MyHouse, nextStatus: Exclude<HouseStatus, "pending">) => {
+    if (updatingHouseStatusIds[house.id]) return;
+
+    const currentStatus = normalizeHouseStatus(house.status);
+    if (currentStatus === nextStatus) return;
+
+    const nextStatusLabel = t(`property.status.${nextStatus}`);
+    const confirmationMessage = `Set "${house.name}" as ${nextStatusLabel.toLowerCase()}?`;
+
+    if (!window.confirm(confirmationMessage)) return;
+
+    const previousStatus = house.status || "AVAILABLE";
+
+    setUpdatingHouseStatusIds((previous) => ({ ...previous, [house.id]: true }));
+    setMyHouses((previous) =>
+      previous.map((item) =>
+        item.id === house.id
+          ? {
+              ...item,
+              status: nextStatus,
+            }
+          : item
+      )
+    );
+
+    try {
+      const response = await api.patch(`/houses/${house.id}/status`, { status: nextStatus });
+      const savedStatus = response.data?.status || nextStatus;
+
+      setMyHouses((previous) =>
+        previous.map((item) =>
+          item.id === house.id
+            ? {
+                ...item,
+                status: savedStatus,
+              }
+            : item
+        )
+      );
+
+      showFeedbackMessage("success", `"${house.name}" is now ${nextStatusLabel}.`);
+    } catch (error) {
+      setMyHouses((previous) =>
+        previous.map((item) =>
+          item.id === house.id
+            ? {
+                ...item,
+                status: previousStatus,
+              }
+            : item
+        )
+      );
+
+      showFeedbackMessage("error", getApiErrorMessage(error) || `Couldn't update "${house.name}".`);
+    } finally {
+      setUpdatingHouseStatusIds((previous) => {
+        const next = { ...previous };
+        delete next[house.id];
+        return next;
+      });
+    }
+  };
+
+  const uploadAndSaveProfileImage = useCallback(async (file: Blob | File, target: UploadTarget) => {
+    const uploadFile =
+      file instanceof File
+        ? file
+        : new File([file], `${target}.jpg`, {
+            type: file.type || "image/jpeg",
+          });
+
+    const formData = new FormData();
+    formData.append("file", uploadFile);
+
+    const uploadResponse = await api.post<UploadResponseShape>("/upload/image", formData);
+    if (!uploadResponse.data?.url) {
+      throw new Error("Upload did not return a Cloudinary URL.");
+    }
+
+    const saveResponse = await api.post<UploadedProfileShape>(`/users/${target}`, { url: uploadResponse.data.url });
+    return {
+      url: uploadResponse.data.url,
+      savedProfile: saveResponse.data,
+    };
+  }, []);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !user) return;
+    event.target.value = "";
+
+    if (!file) return;
+
+    if (!isSafeImageFile(file)) {
+      showFeedbackMessage("error", t("property.form.invalidImageType"));
+      return;
+    }
+
+    setFeedbackMessage({ type: "", text: "" });
+    setAvatarDraft({ previewUrl: URL.createObjectURL(file) });
+  };
+
+  const handleAvatarUpload = async (blob: Blob) => {
+    if (!user) return;
 
     setIsUploading(true);
+    setFeedbackMessage({ type: "", text: "" });
+
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await api.post("/upload/image", formData);
-      if (response.data?.url) {
-        setAvatarUrl(response.data.url);
-        localStorage.setItem(`avatar_${user.id}`, response.data.url);
-        await api.post("/users/avatar", { url: response.data.url });
-      }
+      const { url, savedProfile } = await uploadAndSaveProfileImage(blob, "avatar");
+      const nextAvatarUrl = savedProfile.avatarUrl || url;
+
+      setAvatarUrl(nextAvatarUrl);
+      localStorage.setItem(`avatar_${user.id}`, nextAvatarUrl);
+      setAvatarDraft(null);
+      showFeedbackMessage("success", t("profile.messages.profileUpdated"));
     } catch (error) {
-      console.error(error);
-      window.alert(t("profile.uploadAvatarError"));
+      showFeedbackMessage("error", getApiErrorMessage(error) || t("profile.uploadAvatarError"));
+      throw error;
     } finally {
       setIsUploading(false);
     }
@@ -343,21 +536,25 @@ export default function ProfilePage() {
 
   const handleCoverFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    event.target.value = "";
+
     if (!file || !user) return;
 
+    if (!isSafeImageFile(file)) {
+      showFeedbackMessage("error", t("property.form.invalidImageType"));
+      return;
+    }
+
     setIsUploadingCover(true);
+    setFeedbackMessage({ type: "", text: "" });
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await api.post("/upload/image", formData);
-      if (response.data?.url) {
-        setCoverUrl(response.data.url);
-        localStorage.setItem(`cover_${user.id}`, response.data.url);
-        await api.post("/users/cover", { url: response.data.url });
-      }
+      const { url, savedProfile } = await uploadAndSaveProfileImage(file, "cover");
+      const nextCoverUrl = savedProfile.coverUrl || url;
+      setCoverUrl(nextCoverUrl);
+      localStorage.setItem(`cover_${user.id}`, nextCoverUrl);
+      showFeedbackMessage("success", t("profile.messages.profileUpdated"));
     } catch (error) {
-      console.error(error);
-      window.alert(t("profile.uploadCoverError"));
+      showFeedbackMessage("error", getApiErrorMessage(error) || t("profile.uploadCoverError"));
     } finally {
       setIsUploadingCover(false);
     }
@@ -374,13 +571,14 @@ export default function ProfilePage() {
       setIsEditingProfile(false);
       setTimeout(() => setSettingsMessage({ type: "", text: "" }), 3000);
     } catch (error) {
+      const errorMessage = getApiErrorMessage(error);
       const apiError = error as ApiErrorShape;
       setSettingsMessage({
         type: "error",
         text:
           apiError.response?.status === 403
-            ? apiError.response.data?.message || t("profile.messages.nameChangeLimit")
-            : apiError.response?.data?.message || t("profile.messages.editFailed"),
+            ? errorMessage || t("profile.messages.nameChangeLimit")
+            : errorMessage || t("profile.messages.editFailed"),
       });
     } finally {
       setSavingSettings(false);
@@ -396,7 +594,6 @@ export default function ProfilePage() {
       <div className="min-h-[calc(100vh-60px)] bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.18),transparent_32%),linear-gradient(180deg,#f8fafc_0%,#eef2f7_100%)] px-4 py-12">
         <div className="mx-auto max-w-sm rounded-[2rem] border border-white/80 bg-white/85 p-8 text-center shadow-[0_30px_90px_rgba(15,23,42,0.12)] backdrop-blur">
           <h2 className="text-2xl font-black text-slate-900">{t("profile.welcomeTitle")}</h2>
-          <p className="mt-3 text-sm leading-6 text-slate-500">{t("profile.welcomeDescription")}</p>
           <div className="mt-8 space-y-3">
             <Link href="/login" className="flex w-full items-center justify-center rounded-2xl bg-slate-900 px-6 py-3 text-base font-semibold text-white">
               {t("auth.shared.signInButton")}
@@ -427,7 +624,7 @@ export default function ProfilePage() {
           fallbackSrc="/images/defaultimage.jpg"
         />
         <div className="absolute left-0 right-0 top-0 z-10 mx-auto flex max-w-6xl items-start justify-between px-4 pt-4 sm:px-6 lg:px-8">
-          <button type="button" onClick={() => coverInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-2 text-xs font-semibold text-white backdrop-blur">
+          <button type="button" onClick={() => coverInputRef.current?.click()} disabled={isUploadingCover} className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-2 text-xs font-semibold text-white backdrop-blur disabled:cursor-not-allowed disabled:opacity-60">
             <Camera className="h-4 w-4" />
             {isUploadingCover ? t("common.loading") : t("profile.editCover")}
           </button>
@@ -435,12 +632,14 @@ export default function ProfilePage() {
             <Menu className="h-5 w-5" />
           </button>
         </div>
-        <input type="file" accept="image/*" ref={coverInputRef} className="hidden" onChange={handleCoverFileChange} />
+        <input type="file" accept={SAFE_IMAGE_ACCEPT} ref={coverInputRef} className="hidden" onChange={handleCoverFileChange} />
       </section>
 
       <div className="mx-auto -mt-20 max-w-6xl px-4 sm:-mt-24 sm:px-6 lg:px-8">
         <ProfileHeader user={user} avatarUrl={avatarUrl} coverUrl={coverUrl} isUploading={isUploading} onAvatarClick={() => fileInputRef.current?.click()} onEditToggle={() => setIsEditingProfile(true)} t={t} />
-        <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+        <input type="file" accept={SAFE_IMAGE_ACCEPT} ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+
+        {feedbackMessage.text ? <StatusMessage message={feedbackMessage} /> : null}
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
           <div className="space-y-6">
@@ -448,7 +647,7 @@ export default function ProfilePage() {
               <EditProfileForm firstName={editFirstName} lastName={editLastName} bio={editBio} setFirstName={setEditFirstName} setLastName={setEditLastName} setBio={setEditBio} onSave={handleSaveSettings} onCancel={() => setIsEditingProfile(false)} isSaving={savingSettings} message={settingsMessage} t={t} />
             ) : (
               <>
-                <ProfileAbout bio={editBio} onEdit={() => setIsEditingProfile(true)} t={t} />
+                <ProfileAbout bio={editBio} t={t} />
                 <ProfileStats favoritesCount={favorites.length} listingsCount={myHouses.length} chatsCount={conversations.length} t={t} />
               </>
             )}
@@ -502,7 +701,7 @@ export default function ProfilePage() {
                                 id: house.id,
                                 name: house.name,
                                 property_type: house.property_type,
-                                address: [house.address, house.district].filter(Boolean).join(", "),
+                                address: [house.address, house.ward || house.district].filter(Boolean).join(", "),
                                 city: house.city,
                                 price: house.price,
                                 bedrooms: house.bedrooms,
@@ -514,11 +713,19 @@ export default function ProfilePage() {
                               onEdit={() => setEditingHouse(house)}
                               onDelete={() => handleDeleteHouse(house.id)}
                             />
-                            <p className="mt-3 text-sm text-[var(--theme-text-muted)]">
-                              {t("profile.createdOn", {
-                                date: formatDate(house.created_at, { day: "2-digit", month: "2-digit", year: "numeric" }),
-                              })}
-                            </p>
+                            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <p className="text-sm text-[var(--theme-text-muted)]">
+                                {t("profile.createdOn", {
+                                  date: formatDate(house.created_at, { day: "2-digit", month: "2-digit", year: "numeric" }),
+                                })}
+                              </p>
+                              <HouseStatusToggle
+                                currentStatus={normalizeHouseStatus(house.status)}
+                                isUpdating={Boolean(updatingHouseStatusIds[house.id])}
+                                onChange={(status) => handleHouseStatusChange(house, status)}
+                                t={t}
+                              />
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -578,6 +785,19 @@ export default function ProfilePage() {
       </div>
 
       {editingHouse ? <EditPropertyModal house={editingHouse} onClose={() => setEditingHouse(null)} onSuccess={() => { setEditingHouse(null); fetchMyHouses(); }} /> : null}
+      {avatarDraft ? (
+        <AvatarCropModal
+          previewUrl={avatarDraft.previewUrl}
+          isSubmitting={isUploading}
+          onCancel={() => {
+            if (!isUploading) {
+              setAvatarDraft(null);
+            }
+          }}
+          onConfirm={handleAvatarUpload}
+          t={t}
+        />
+      ) : null}
 
       {isDrawerOpen ? (
         <div className="fixed inset-0 z-50 flex justify-end">
@@ -627,6 +847,63 @@ export default function ProfilePage() {
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function StatusMessage({ message }: { message: FeedbackMessage }) {
+  const isSuccess = message.type === "success";
+
+  return (
+    <div
+      className={`mt-6 flex items-start gap-3 rounded-[1.5rem] border px-4 py-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] ${
+        isSuccess
+          ? "border-emerald-200 bg-emerald-50/90 text-emerald-800"
+          : "border-rose-200 bg-rose-50/90 text-rose-800"
+      }`}
+    >
+      {isSuccess ? <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0" /> : <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />}
+      <p className="text-sm font-semibold leading-6">{message.text}</p>
+    </div>
+  );
+}
+
+function HouseStatusToggle({
+  currentStatus,
+  isUpdating,
+  onChange,
+  t,
+}: {
+  currentStatus: HouseStatus;
+  isUpdating: boolean;
+  onChange: (status: Exclude<HouseStatus, "pending">) => void;
+  t: (key: string) => string;
+}) {
+  const options: Array<Exclude<HouseStatus, "pending">> = ["available", "rented"];
+
+  return (
+    <div className="inline-flex items-center rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] p-1">
+      {options.map((status) => {
+        const isActive = currentStatus === status;
+
+        return (
+          <button
+            key={status}
+            type="button"
+            disabled={isUpdating || isActive}
+            onClick={() => onChange(status)}
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+              isActive
+                ? status === "available"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-rose-100 text-rose-700"
+                : "text-[var(--theme-text-muted)] hover:bg-[var(--theme-surface-2)]"
+            } disabled:cursor-not-allowed disabled:opacity-70`}
+          >
+            {isUpdating && isActive ? t("common.loading") : t(`property.status.${status}`)}
+          </button>
+        );
+      })}
     </div>
   );
 }

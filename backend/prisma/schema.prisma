@@ -51,11 +51,27 @@ model House {
   reports             PropertyReport[]
   propertyFraudAlerts PropertyFraudAlert[]
   owner               User?    @relation("HouseOwner", fields: [owner_id], references: [id], onDelete: SetNull)
+  roomDetails         HouseRoomDetail?
 
   @@index([city])
   @@index([district])
   @@index([price])
   @@index([owner_id])
+}
+
+model HouseRoomDetail {
+  id               String   @id @default(uuid())
+  houseId          String   @unique @map("house_id")
+  electricityPrice Int?     @map("electricity_price")
+  waterPrice       Int?     @map("water_price")
+  paymentMethod    String?  @map("payment_method")
+  otherFees        String?  @map("other_fees")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  house            House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
+
+  @@map("house_room_details")
 }
 
 model AuditLog {
