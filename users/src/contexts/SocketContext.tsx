@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { resolvedApiBaseUrl } from '../api/axios';
+import { resolveSocketBaseUrl } from '../api/axios';
 
 interface SocketContextType {
     socket: Socket | null;
@@ -18,41 +18,6 @@ const SocketContext = createContext<SocketContextType>({
 });
 
 export const useSocket = () => useContext(SocketContext);
-
-const normalizeApiBaseUrl = (value?: string) => {
-    if (!value) return '';
-    const trimmed = value.trim();
-    if (!trimmed) return '';
-
-    const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
-    try {
-        const url = new URL(candidate);
-        if (!['http:', 'https:'].includes(url.protocol)) return '';
-        if (url.username || url.password) return '';
-        return `${url.origin}${url.pathname}`.replace(/\/+$/, '');
-    } catch {
-        return '';
-    }
-};
-
-const resolveSocketBaseUrl = () => {
-    const envUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
-    if (envUrl) return envUrl;
-
-    if (resolvedApiBaseUrl.startsWith('http')) {
-        try {
-            return new URL(resolvedApiBaseUrl).origin;
-        } catch {
-            return resolvedApiBaseUrl;
-        }
-    }
-
-    if (typeof window !== 'undefined' && window.location?.origin) {
-        return window.location.origin;
-    }
-
-    return 'http://localhost:3000';
-};
 
 export function SocketProvider({ children }: { children: ReactNode }) {
     const authContext = useContext(AuthContext);
@@ -72,10 +37,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
         const socketInstance = io(`${resolveSocketBaseUrl()}/messages`, {
             auth: { token },
+            path: '/socket.io',
             transports: ['websocket', 'polling'],
             reconnection: true,
-            reconnectionAttempts: 5,
+            reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
         });
 
         socketInstance.on('connect', () => {

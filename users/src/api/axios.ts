@@ -66,6 +66,22 @@ export const resolveApiBaseUrl = () => {
 
 export const resolvedApiBaseUrl = resolveApiBaseUrl();
 
+export const resolveSocketBaseUrl = () => {
+    if (resolvedApiBaseUrl.startsWith('http')) {
+        try {
+            return new URL(resolvedApiBaseUrl).origin;
+        } catch {
+            return resolvedApiBaseUrl;
+        }
+    }
+
+    if (typeof window !== 'undefined' && window.location?.origin) {
+        return window.location.origin;
+    }
+
+    return 'http://localhost:3000';
+};
+
 const api = axios.create({
     baseURL: resolvedApiBaseUrl,
     headers: {
