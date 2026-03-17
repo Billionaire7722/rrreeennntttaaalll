@@ -9,6 +9,7 @@ export type FilterOptions = {
     minPrice: number | null;
     maxPrice: number | null;
     province: string | null;
+    ward: string | null;
     minBedrooms: number | null;
     minArea: number | null;
     maxArea: number | null;
@@ -20,6 +21,7 @@ export const DEFAULT_FILTERS: FilterOptions = {
     minPrice: null,
     maxPrice: null,
     province: null,
+    ward: null,
     minBedrooms: null,
     minArea: null,
     maxArea: null,
