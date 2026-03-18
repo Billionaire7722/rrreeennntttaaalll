@@ -659,7 +659,16 @@ export default function ProfilePage() {
               <p className="mt-1 text-sm font-semibold text-[var(--theme-text)]">{t("profile.sectionsDescription")}</p>
               <div className="mt-4 grid grid-cols-3 gap-2">
                 {tabs.map((tab) => (
-                  <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key)} className={`rounded-2xl px-3 py-3 text-left ${activeTab === tab.key ? "bg-slate-900 text-white" : "bg-[var(--theme-surface-2)] text-[var(--theme-text-muted)]"}`}>
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`rounded-2xl px-3 py-3 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-teal-600)] ${
+                      activeTab === tab.key
+                        ? "bg-[var(--color-teal-600)] text-white shadow-lg shadow-black/10 hover:brightness-95 active:brightness-90"
+                        : "bg-[var(--theme-surface-2)] text-[var(--theme-text-muted)] hover:bg-[var(--theme-surface)]"
+                    }`}
+                  >
                     <tab.icon className="h-4 w-4" />
                     <p className="mt-3 text-sm font-semibold">{tab.label}</p>
                   </button>

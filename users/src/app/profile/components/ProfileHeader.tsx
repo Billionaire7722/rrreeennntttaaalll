@@ -103,7 +103,7 @@ export default function ProfileHeader({
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[220px]">
             <button
               onClick={onEditToggle}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition-all hover:-translate-y-0.5 hover:bg-slate-800"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--color-teal-600)] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5 hover:brightness-95 active:brightness-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-teal-600)]"
             >
               <Pencil className="h-4 w-4" />
               {t("profile.editProfile")}
