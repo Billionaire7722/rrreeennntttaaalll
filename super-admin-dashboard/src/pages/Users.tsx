@@ -1,21 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { 
-    UserX, 
-    UserCheck, 
-    Trash2, 
-    Edit2, 
-    Plus, 
-    X, 
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+    UserX,
+    UserCheck,
+    Trash2,
+    Edit2,
+    Plus,
+    X,
     Search,
     Filter,
-    Download,
     Eye,
-    EyeOff
+    EyeOff,
+    RotateCcw,
+    Activity,
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import css from './Table.module.css';
 import { UserTimelineModal } from '../components/UserTimelineModal';
-import { Activity } from 'lucide-react';
+import { ExportMenu, type ExportFormat } from '../components/ExportMenu';
+import { downloadCsv, downloadExcel, type ExportColumn } from '../utils/export';
 
 interface User {
     id: string;
@@ -28,8 +31,19 @@ interface User {
     created_at: string;
     last_login?: string;
     avatarUrl?: string | null;
-    riskScore?: { score: number; factors?: any; updatedAt?: string };
+    deleted_at?: string | null;
+    riskScore?: { score: number; factors?: Record<string, unknown>; updatedAt?: string };
 }
+
+type UserFilter = 'all' | 'ACTIVE' | 'LOCKED' | 'deleted';
+
+const normalizeUserFilter = (value: string | null): UserFilter => {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized === 'restricted' || normalized === 'locked') return 'LOCKED';
+    if (normalized === 'active') return 'ACTIVE';
+    if (normalized === 'deleted') return 'deleted';
+    return 'all';
+};
 
 export const Users: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -38,9 +52,10 @@ export const Users: React.FC = () => {
     const take = 10;
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'ACTIVE' | 'LOCKED' | 'deleted'>('all');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const statusFilter = useMemo(() => normalizeUserFilter(searchParams.get('status')), [searchParams]);
+    const isDeletedView = statusFilter === 'deleted';
 
-    // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -50,14 +65,40 @@ export const Users: React.FC = () => {
     const [riskDetailsUser, setRiskDetailsUser] = useState<User | null>(null);
     const [timelineUser, setTimelineUser] = useState<User | null>(null);
 
-    // Form states
     const [formData, setFormData] = useState({
         name: '',
         username: '',
         email: '',
         phone: '',
-        password: ''
+        password: '',
     });
+
+    const exportColumns: ExportColumn<User>[] = [
+        { key: 'id', header: 'ID' },
+        { key: 'name', header: 'Name' },
+        { key: 'username', header: 'Username' },
+        { key: 'email', header: 'Email' },
+        { key: 'phone', header: 'Phone' },
+        {
+            key: 'status',
+            header: 'Status',
+            format: (_value, user) => (user.deleted_at ? 'DELETED' : user.status),
+        },
+        { key: 'created_at', header: 'Created At' },
+        {
+            key: 'last_login',
+            header: 'Last Login',
+            format: (value) => (typeof value === 'string' ? value : ''),
+        },
+        {
+            key: 'riskScore',
+            header: 'Risk Score',
+            format: (value) => {
+                const riskScore = value as User['riskScore'];
+                return riskScore?.score ?? '';
+            },
+        },
+    ];
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -74,11 +115,22 @@ export const Users: React.FC = () => {
     };
 
     useEffect(() => {
-        const timer = setTimeout(() => {
+        const timer = window.setTimeout(() => {
             fetchUsers();
         }, 300);
-        return () => clearTimeout(timer);
+        return () => window.clearTimeout(timer);
     }, [skip, searchQuery, statusFilter]);
+
+    const updateFilter = (nextStatus: UserFilter) => {
+        const nextParams = new URLSearchParams(searchParams);
+        if (nextStatus === 'all') {
+            nextParams.delete('status');
+        } else {
+            nextParams.set('status', nextStatus);
+        }
+        setSkip(0);
+        setSearchParams(nextParams);
+    };
 
     const handleStatusToggle = async (userId: string, currentStatus: string) => {
         const newStatus = currentStatus === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
@@ -108,6 +160,15 @@ export const Users: React.FC = () => {
         }
     };
 
+    const handleRestore = async (userId: string) => {
+        try {
+            await api.post(`/admin/users/${userId}/restore`);
+            fetchUsers();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to restore user');
+        }
+    };
+
     const handleCreateSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -124,7 +185,7 @@ export const Users: React.FC = () => {
         e.preventDefault();
         if (!selectedUser) return;
         try {
-            const payload: any = { ...formData };
+            const payload: Record<string, string> = { ...formData };
             if (!payload.password) delete payload.password;
             await api.patch(`/admin/users/${selectedUser.id}`, payload);
             setIsEditModalOpen(false);
@@ -135,29 +196,13 @@ export const Users: React.FC = () => {
         }
     };
 
-    const exportCsv = () => {
-        const header = ['id', 'name', 'username', 'email', 'phone', 'status', 'created_at', 'last_login', 'risk_score'];
-        const rows = users.map((u) => [
-            u.id,
-            u.name,
-            u.username,
-            u.email,
-            u.phone || '',
-            u.status,
-            u.created_at,
-            u.last_login || '',
-            String(u.riskScore?.score ?? ''),
-        ]);
-        const csv = [header, ...rows]
-            .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
-            .join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `users_export_${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+    const handleExport = (format: ExportFormat) => {
+        const baseName = isDeletedView ? 'deleted_users_export' : 'users_export';
+        if (format === 'xlsx') {
+            downloadExcel(users, exportColumns, baseName, isDeletedView ? 'Deleted Users' : 'Users');
+            return;
+        }
+        downloadCsv(users, exportColumns, baseName);
     };
 
     const openEditModal = (user: User) => {
@@ -167,7 +212,7 @@ export const Users: React.FC = () => {
             username: user.username,
             email: user.email,
             phone: user.phone || '',
-            password: ''
+            password: '',
         });
         setIsEditModalOpen(true);
     };
@@ -180,8 +225,8 @@ export const Users: React.FC = () => {
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Manage and monitor platform users</p>
                 </div>
                 <div className={css.headerActions}>
-                    <button className="btn btn-outline" onClick={exportCsv}><Download size={16} /> Export CSV</button>
-                    <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
+                    <ExportMenu onSelect={handleExport} disabled={users.length === 0} />
+                    <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)} disabled={isDeletedView}>
                         <Plus size={16} /> Add User
                     </button>
                 </div>
@@ -190,9 +235,9 @@ export const Users: React.FC = () => {
             <div className={css.tableControls}>
                 <div className={css.searchWrapper}>
                     <Search className={css.searchIcon} size={16} />
-                    <input 
-                        type="text" 
-                        placeholder="Search by name, email or username..." 
+                    <input
+                        type="text"
+                        placeholder="Search by name, email or username..."
                         className={`input-field ${css.searchInput}`}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -204,13 +249,13 @@ export const Users: React.FC = () => {
                         <select
                             className="btn btn-outline"
                             value={statusFilter}
-                            onChange={(e) => { setSkip(0); setStatusFilter(e.target.value as any); }}
+                            onChange={(e) => updateFilter(e.target.value as UserFilter)}
                             style={{ background: 'transparent', color: 'inherit' }}
                             aria-label="Status filter"
                         >
                             <option value="all">All</option>
                             <option value="ACTIVE">Active</option>
-                            <option value="LOCKED">Locked</option>
+                            <option value="LOCKED">Restricted</option>
                             <option value="deleted">Deleted</option>
                         </select>
                     </div>
@@ -237,61 +282,71 @@ export const Users: React.FC = () => {
                             ) : users.length === 0 ? (
                                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px' }}>No users found matching your search.</td></tr>
                             ) : (
-                                users.map(u => (
-                                    <tr key={u.id}>
+                                users.map((user) => (
+                                    <tr key={user.id}>
                                         <td>
                                             <div className={css.userCell}>
-                                                {u.avatarUrl ? (
-                                                    <img src={u.avatarUrl} className={css.avatar} alt="" />
+                                                {user.avatarUrl ? (
+                                                    <img src={user.avatarUrl} className={css.avatar} alt="" />
                                                 ) : (
                                                     <div className={css.avatar} style={{ background: 'var(--accent-soft)', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '0.75rem' }}>
-                                                        {(u.name || 'U')[0].toUpperCase()}
+                                                        {(user.name || 'U')[0].toUpperCase()}
                                                     </div>
                                                 )}
                                                 <div>
-                                                    <div className={css.userName}>{u.name}</div>
-                                                    <div className={css.userEmail}>{u.email}</div>
+                                                    <div className={css.userName}>{user.name}</div>
+                                                    <div className={css.userEmail}>{user.email}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td><span className="badge badge-admin">{u.role}</span></td>
+                                        <td><span className="badge badge-admin">{user.role}</span></td>
                                         <td>
-                                            <span className={`badge ${u.status === 'ACTIVE' ? 'badge-active' : 'badge-banned'}`}>
-                                                {u.status}
+                                            <span className={`badge ${isDeletedView ? 'badge-banned' : user.status === 'ACTIVE' ? 'badge-active' : 'badge-banned'}`}>
+                                                {isDeletedView ? 'DELETED' : user.status}
                                             </span>
                                         </td>
                                         <td>
-                                            <div 
+                                            <div
                                                 className={css.riskScoreCell}
-                                                onClick={() => setRiskDetailsUser(u)}
-                                                style={{ 
+                                                onClick={() => setRiskDetailsUser(user)}
+                                                style={{
                                                     cursor: 'pointer',
-                                                    color: (u.riskScore?.score || 0) > 60 ? 'var(--danger-color)' : (u.riskScore?.score || 0) > 30 ? 'var(--warning-color)' : 'var(--success-color)',
+                                                    color: (user.riskScore?.score || 0) > 60 ? 'var(--danger-color)' : (user.riskScore?.score || 0) > 30 ? 'var(--warning-color)' : 'var(--success-color)',
                                                     fontWeight: 'bold',
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    gap: '8px'
+                                                    gap: '8px',
                                                 }}
                                             >
-                                                <div style={{ 
-                                                    width: '8px', 
-                                                    height: '8px', 
-                                                    borderRadius: '50%', 
-                                                    background: (u.riskScore?.score || 0) > 60 ? 'var(--danger-color)' : (u.riskScore?.score || 0) > 30 ? 'var(--warning-color)' : 'var(--success-color)' 
-                                                }} />
-                                                {u.riskScore?.score || 0}%
+                                                <div
+                                                    style={{
+                                                        width: '8px',
+                                                        height: '8px',
+                                                        borderRadius: '50%',
+                                                        background: (user.riskScore?.score || 0) > 60 ? 'var(--danger-color)' : (user.riskScore?.score || 0) > 30 ? 'var(--warning-color)' : 'var(--success-color)',
+                                                    }}
+                                                />
+                                                {user.riskScore?.score || 0}%
                                             </div>
                                         </td>
-                                        <td style={{ color: 'var(--text-muted)' }}>{new Date(u.created_at).toLocaleDateString()}</td>
-                                        <td style={{ color: 'var(--text-muted)' }}>{u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never'}</td>
+                                        <td style={{ color: 'var(--text-muted)' }}>{new Date(user.created_at).toLocaleDateString()}</td>
+                                        <td style={{ color: 'var(--text-muted)' }}>{user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}</td>
                                         <td>
                                             <div className={css.actions}>
-                                                <button onClick={() => setTimelineUser(u)} className="btn btn-outline" style={{ padding: '6px' }} title="Activity Timeline"><Activity size={14} /></button>
-                                                <button onClick={() => openEditModal(u)} className="btn btn-outline" style={{ padding: '6px' }} title="Edit"><Edit2 size={14} /></button>
-                                                <button onClick={() => handleStatusToggle(u.id, u.status)} className="btn btn-outline" style={{ padding: '6px' }} title="Toggle Status">
-                                                    {u.status === 'ACTIVE' ? <UserX size={14} /> : <UserCheck size={14} />}
-                                                </button>
-                                                <button onClick={() => setDeleteTarget(u)} className="btn btn-outline" style={{ padding: '6px', color: 'var(--danger-color)' }} title="Delete"><Trash2 size={14} /></button>
+                                                <button onClick={() => setTimelineUser(user)} className="btn btn-outline" style={{ padding: '6px' }} title="Activity Timeline"><Activity size={14} /></button>
+                                                {isDeletedView ? (
+                                                    <button onClick={() => handleRestore(user.id)} className="btn btn-outline" style={{ padding: '6px', color: 'var(--success-color)' }} title="Restore">
+                                                        <RotateCcw size={14} />
+                                                    </button>
+                                                ) : (
+                                                    <>
+                                                        <button onClick={() => openEditModal(user)} className="btn btn-outline" style={{ padding: '6px' }} title="Edit"><Edit2 size={14} /></button>
+                                                        <button onClick={() => handleStatusToggle(user.id, user.status)} className="btn btn-outline" style={{ padding: '6px' }} title="Toggle Status">
+                                                            {user.status === 'ACTIVE' ? <UserX size={14} /> : <UserCheck size={14} />}
+                                                        </button>
+                                                        <button onClick={() => setDeleteTarget(user)} className="btn btn-outline" style={{ padding: '6px', color: 'var(--danger-color)' }} title="Delete"><Trash2 size={14} /></button>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -303,30 +358,29 @@ export const Users: React.FC = () => {
 
                 <div className={css.pagination}>
                     <span className={css.pageText}>
-                        Showing {skip + 1} to {Math.min(skip + take, total)} of {total} users
+                        {total === 0 ? 'Showing 0 of 0 users' : `Showing ${skip + 1} to ${Math.min(skip + take, total)} of ${total} users`}
                     </span>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <button className="btn btn-outline" disabled={skip === 0} onClick={() => setSkip(s => Math.max(0, s - take))}>Previous</button>
-                        <button className="btn btn-outline" disabled={skip + take >= total} onClick={() => setSkip(s => s + take)}>Next</button>
+                        <button className="btn btn-outline" disabled={skip === 0} onClick={() => setSkip((current) => Math.max(0, current - take))}>Previous</button>
+                        <button className="btn btn-outline" disabled={skip + take >= total} onClick={() => setSkip((current) => current + take)}>Next</button>
                     </div>
                 </div>
             </div>
 
-            {/* MODALS */}
             {(isCreateModalOpen || isEditModalOpen) && (
                 <div className="modal-overlay" onClick={() => { setIsCreateModalOpen(false); setIsEditModalOpen(false); }}>
-                    <div className="modal-content glass-panel" onClick={e => e.stopPropagation()} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-strong)', color: 'var(--text-primary)' }}>
+                    <div className="modal-content glass-panel" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-strong)', color: 'var(--text-primary)' }}>
                         <div className="modal-header" style={{ borderBottom: '1px solid var(--border-color)' }}>
                             <h3 style={{ color: 'var(--text-primary)' }}>{isCreateModalOpen ? 'Create User' : 'Edit User'}</h3>
                             <button className="modal-close" onClick={() => { setIsCreateModalOpen(false); setIsEditModalOpen(false); }}><X size={18} /></button>
                         </div>
                         <form onSubmit={isCreateModalOpen ? handleCreateSubmit : handleEditSubmit} className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <input required placeholder="Full Name" className="input-field" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                            <input required placeholder="Username" className="input-field" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
-                            <input required type="email" placeholder="Email" className="input-field" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                            <input placeholder="Phone" className="input-field" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                            <input required placeholder="Full Name" className="input-field" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                            <input required placeholder="Username" className="input-field" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} />
+                            <input required type="email" placeholder="Email" className="input-field" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                            <input placeholder="Phone" className="input-field" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                             <div style={{ position: 'relative' }}>
-                                <input type={showPassword ? "text" : "password"} placeholder={isEditModalOpen ? "New Password (optional)" : "Password"} className="input-field" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                                <input type={showPassword ? 'text' : 'password'} placeholder={isEditModalOpen ? 'New Password (optional)' : 'Password'} className="input-field" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
@@ -364,21 +418,25 @@ export const Users: React.FC = () => {
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
                                 <div>
                                     <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Current Risk Score</div>
-                                    <div style={{ 
-                                        fontSize: '2.5rem', 
-                                        fontWeight: 'bold', 
-                                        color: (riskDetailsUser.riskScore?.score || 0) > 60 ? 'var(--danger-color)' : (riskDetailsUser.riskScore?.score || 0) > 30 ? 'var(--warning-color)' : 'var(--success-color)' 
-                                    }}>
+                                    <div
+                                        style={{
+                                            fontSize: '2.5rem',
+                                            fontWeight: 'bold',
+                                            color: (riskDetailsUser.riskScore?.score || 0) > 60 ? 'var(--danger-color)' : (riskDetailsUser.riskScore?.score || 0) > 30 ? 'var(--warning-color)' : 'var(--success-color)',
+                                        }}
+                                    >
                                         {riskDetailsUser.riskScore?.score || 0}%
                                     </div>
                                 </div>
-                                <div style={{ 
-                                    padding: '8px 16px', 
-                                    borderRadius: '20px', 
-                                    background: (riskDetailsUser.riskScore?.score || 0) > 60 ? 'rgba(239, 68, 68, 0.1)' : (riskDetailsUser.riskScore?.score || 0) > 30 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-                                    color: (riskDetailsUser.riskScore?.score || 0) > 60 ? 'var(--danger-color)' : (riskDetailsUser.riskScore?.score || 0) > 30 ? 'var(--warning-color)' : 'var(--success-color)',
-                                    fontWeight: '600'
-                                }}>
+                                <div
+                                    style={{
+                                        padding: '8px 16px',
+                                        borderRadius: '20px',
+                                        background: (riskDetailsUser.riskScore?.score || 0) > 60 ? 'rgba(239, 68, 68, 0.1)' : (riskDetailsUser.riskScore?.score || 0) > 30 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                                        color: (riskDetailsUser.riskScore?.score || 0) > 60 ? 'var(--danger-color)' : (riskDetailsUser.riskScore?.score || 0) > 30 ? 'var(--warning-color)' : 'var(--success-color)',
+                                        fontWeight: '600',
+                                    }}
+                                >
                                     {(riskDetailsUser.riskScore?.score || 0) > 60 ? 'High Risk' : (riskDetailsUser.riskScore?.score || 0) > 30 ? 'Moderate Risk' : 'Low Risk'}
                                 </div>
                             </div>
@@ -389,14 +447,14 @@ export const Users: React.FC = () => {
                                     Object.entries(riskDetailsUser.riskScore.factors).map(([key, value]) => (
                                         <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-soft)', borderRadius: '8px' }}>
                                             <span style={{ textTransform: 'capitalize' }}>{key.replace('_', ' ')}</span>
-                                            <span style={{ fontWeight: 'bold', color: 'var(--danger-color)' }}>+{(value as any)}</span>
+                                            <span style={{ fontWeight: 'bold', color: 'var(--danger-color)' }}>+{String(value)}</span>
                                         </div>
                                     ))
                                 ) : (
                                     <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>No significant risk factors detected for this user.</div>
                                 )}
                             </div>
-                            
+
                             <div style={{ marginTop: '32px', display: 'flex', gap: '12px' }}>
                                 <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setRiskDetailsUser(null)}>Dismiss</button>
                                 <button className="btn btn-danger" style={{ flex: 1 }} onClick={() => { handleStatusToggle(riskDetailsUser.id, riskDetailsUser.status); setRiskDetailsUser(null); }}>
@@ -407,11 +465,12 @@ export const Users: React.FC = () => {
                     </div>
                 </div>
             )}
+
             {timelineUser && (
-                <UserTimelineModal 
-                    userId={timelineUser.id} 
-                    userName={timelineUser.name} 
-                    onClose={() => setTimelineUser(null)} 
+                <UserTimelineModal
+                    userId={timelineUser.id}
+                    userName={timelineUser.name}
+                    onClose={() => setTimelineUser(null)}
                 />
             )}
 

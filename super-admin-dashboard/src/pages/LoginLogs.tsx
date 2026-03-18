@@ -14,12 +14,16 @@ import css from './Table.module.css';
 
 interface LoginLog {
     id: string;
-    userId: string;
-    username: string;
-    ipAddress: string;
-    userAgent: string;
-    status: string;
-    createdAt: string;
+    ipAddress: string | null;
+    userAgent: string | null;
+    success: boolean;
+    timestamp: string;
+    user?: {
+        id: string;
+        name: string | null;
+        username?: string | null;
+        email: string | null;
+    } | null;
 }
 
 export const LoginLogs: React.FC = () => {
@@ -33,8 +37,14 @@ export const LoginLogs: React.FC = () => {
     const fetchLogs = async () => {
         setLoading(true);
         try {
-            const res = await api.get(`/admin/login-logs?skip=${skip}&take=${take}&search=${searchQuery}`);
-            setLogs(res.data.logs || []);
+            const res = await api.get('/admin/login-logs', {
+                params: {
+                    skip,
+                    take,
+                    search: searchQuery || undefined,
+                },
+            });
+            setLogs(res.data.items || []);
             setTotal(res.data.total || 0);
         } catch (err) {
             console.error('Failed to fetch login logs', err);
@@ -99,7 +109,7 @@ export const LoginLogs: React.FC = () => {
                                         <td style={{ whiteSpace: 'nowrap', width: '180px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                                 <Clock size={14} />
-                                                {new Date(log.createdAt).toLocaleString()}
+                                                {new Date(log.timestamp).toLocaleString()}
                                             </div>
                                         </td>
                                         <td>
@@ -107,18 +117,18 @@ export const LoginLogs: React.FC = () => {
                                                 <div className={css.avatar} style={{ width: '24px', height: '24px', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                     <User size={12} />
                                                 </div>
-                                                <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{log.username}</div>
+                                                <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{log.user?.name || log.user?.username || log.user?.email || 'Unknown user'}</div>
                                             </div>
                                         </td>
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                {log.status === 'SUCCESS' ? (
+                                                {log.success ? (
                                                     <span className="badge badge-active" style={{ gap: '4px' }}>
-                                                        <CheckCircle size={10} /> {log.status}
+                                                        <CheckCircle size={10} /> SUCCESS
                                                     </span>
                                                 ) : (
                                                     <span className="badge badge-banned" style={{ gap: '4px' }}>
-                                                        <XCircle size={10} /> {log.status}
+                                                        <XCircle size={10} /> FAILED
                                                     </span>
                                                 )}
                                             </div>
@@ -126,12 +136,12 @@ export const LoginLogs: React.FC = () => {
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
                                                 <Globe size={12} style={{ color: 'var(--text-muted)' }} />
-                                                {log.ipAddress}
+                                                {log.ipAddress || 'Unknown'}
                                             </div>
                                         </td>
                                         <td>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={log.userAgent}>
-                                                {log.userAgent}
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={log.userAgent || ''}>
+                                                {log.userAgent || 'Unknown'}
                                             </div>
                                         </td>
                                     </tr>

@@ -124,19 +124,21 @@ export class AdminController {
     async getAuditLogs(
         @Query('skip') skip?: number,
         @Query('take') take?: number,
+        @Query('search') search?: string,
         @Query('adminId') adminId?: string,
         @Query('actionType') actionType?: string,
     ) {
-        return this.auditService.getLogs({ skip, take, adminId, actionType });
+        return this.auditService.getLogs({ skip, take, search, adminId, actionType });
     }
 
     @Get('login-logs')
     async getLoginLogs(
         @Query('skip') skip?: number,
         @Query('take') take?: number,
-        @Query('status') status?: string
+        @Query('status') status?: string,
+        @Query('search') search?: string,
     ) {
-        return this.adminService.getLoginLogs(skip, take, status);
+        return this.adminService.getLoginLogs(skip, take, status, search);
     }
 
     @Get('metrics')
@@ -157,6 +159,11 @@ export class AdminController {
     @Get('analytics/user-growth')
     async getUserGrowth(@Query('range') range: string) {
         return this.adminService.getUserGrowth(range);
+    }
+
+    @Get('analytics/property-activity')
+    async getPropertyActivity(@Query('range') range: string) {
+        return this.adminService.getPropertyActivity(range);
     }
 
     @Get('analytics/platform-activity')

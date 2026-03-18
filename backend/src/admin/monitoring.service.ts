@@ -269,19 +269,20 @@ export class MonitoringService {
             select: { timestamp: true }
         });
 
-        // Group by day-offset and hour
+        // Group by weekday and hour for the weekly heatmap shown in the dashboard
         const heatmap: Record<string, number> = {};
 
         logs.forEach(log => {
-            const date = log.timestamp.toISOString().split('T')[0];
             const hour = log.timestamp.getHours();
-            const key = `${date}:${hour}`;
+            const jsDay = log.timestamp.getDay();
+            const day = jsDay === 0 ? 7 : jsDay;
+            const key = `${day}:${hour}`;
             heatmap[key] = (heatmap[key] || 0) + 1;
         });
 
         return Object.entries(heatmap).map(([key, count]) => {
-            const [date, hour] = key.split(':');
-            return { date, hour: parseInt(hour), count };
+            const [day, hour] = key.split(':');
+            return { day: parseInt(day, 10), hour: parseInt(hour, 10), count };
         });
     }
 }

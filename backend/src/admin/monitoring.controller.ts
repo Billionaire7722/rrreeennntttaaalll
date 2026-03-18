@@ -42,6 +42,17 @@ export class MonitoringController {
 
     @Get('property-fraud-alerts')
     async getPropertyFraudAlerts() {
+        const houses = await this.prisma.house.findMany({
+            where: { deleted_at: null },
+            orderBy: { created_at: 'desc' },
+            select: { id: true },
+            take: 200,
+        });
+
+        for (const house of houses) {
+            await this.monitoringService.detectPropertyFraud(house.id);
+        }
+
         return this.prisma.propertyFraudAlert.findMany({
             include: {
                 property: true,

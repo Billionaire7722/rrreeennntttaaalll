@@ -40,16 +40,26 @@ export class AuditService {
     async getLogs(params: {
         skip?: number;
         take?: number;
+        search?: string;
         adminId?: string;
         actionType?: string;
         startDate?: string;
         endDate?: string;
     }) {
-        const { skip = 0, take = 50, adminId, actionType, startDate, endDate } = params;
+        const { skip = 0, take = 50, search, adminId, actionType, startDate, endDate } = params;
 
         const where: any = {};
         if (adminId) where.actorId = adminId;
         if (actionType) where.actionType = actionType;
+        if (search) {
+            where.OR = [
+                { actionType: { contains: search, mode: 'insensitive' } },
+                { entityType: { contains: search, mode: 'insensitive' } },
+                { entityId: { contains: search, mode: 'insensitive' } },
+                { actor: { is: { name: { contains: search, mode: 'insensitive' } } } },
+                { actor: { is: { email: { contains: search, mode: 'insensitive' } } } },
+            ];
+        }
         if (startDate || endDate) {
             where.createdAt = {};
             if (startDate) where.createdAt.gte = new Date(startDate);

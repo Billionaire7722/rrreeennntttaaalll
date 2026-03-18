@@ -36,7 +36,7 @@ function App() {
               
               {/* Properties Management */}
               <Route path="houses" element={<HousesSheet />} />
-              <Route path="houses-sheet" element={<HousesSheet />} />
+              <Route path="houses-sheet" element={<Navigate to="/houses" replace />} />
               
               {/* Reports & Support */}
               <Route path="reports/users" element={<UserReports />} />

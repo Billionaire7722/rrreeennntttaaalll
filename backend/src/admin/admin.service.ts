@@ -377,16 +377,27 @@ export class AdminService {
         });
     }
 
-    async getLoginLogs(skip = 0, take = 50, status?: string) {
+    async getLoginLogs(skip = 0, take = 50, status?: string, search?: string) {
         const where: any = {};
-        if (status === 'failed') {
+        const normalizedStatus = String(status || '').trim().toLowerCase();
+        if (normalizedStatus === 'failed') {
             where.success = false;
-        } else if (status === 'success') {
+        } else if (normalizedStatus === 'success') {
             where.success = true;
         }
 
+        if (search) {
+            where.OR = [
+                { ipAddress: { contains: search, mode: 'insensitive' } },
+                { userAgent: { contains: search, mode: 'insensitive' } },
+                { user: { is: { name: { contains: search, mode: 'insensitive' } } } },
+                { user: { is: { username: { contains: search, mode: 'insensitive' } } } },
+                { user: { is: { email: { contains: search, mode: 'insensitive' } } } },
+            ];
+        }
+
         const [items, total] = await Promise.all([
-            this.prisma.loginLog. findMany({
+            this.prisma.loginLog.findMany({
                 where,
                 skip: Number(skip),
                 take: Number(take),
@@ -396,6 +407,7 @@ export class AdminService {
                         select: {
                             id: true,
                             name: true,
+                            username: true,
                             email: true,
                             role: true,
                         }

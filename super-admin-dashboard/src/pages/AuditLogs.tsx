@@ -12,15 +12,15 @@ import css from './Table.module.css';
 
 interface AuditLog {
     id: string;
-    action: string;
-    description: string;
-    targetModel: string;
-    targetId: string;
+    actionType: string;
+    entityType: string;
+    entityId: string;
     createdAt: string;
-    admin: {
-        name: string;
-        email: string;
-    };
+    afterData?: Record<string, unknown> | null;
+    actor?: {
+        name: string | null;
+        email: string | null;
+    } | null;
 }
 
 export const AuditLogs: React.FC = () => {
@@ -31,11 +31,23 @@ export const AuditLogs: React.FC = () => {
     const [skip, setSkip] = useState(0);
     const take = 15;
 
+    const buildDescription = (log: AuditLog) => {
+        const reason = typeof log.afterData?.reason === 'string' ? log.afterData.reason : null;
+        if (reason) return reason;
+        return `${log.actionType.replace(/_/g, ' ')} on ${log.entityType} ${log.entityId.slice(0, 8)}`;
+    };
+
     const fetchLogs = async () => {
         setLoading(true);
         try {
-            const res = await api.get(`/admin/audit-logs?skip=${skip}&take=${take}&search=${searchQuery}`);
-            setLogs(res.data.logs || []);
+            const res = await api.get('/admin/audit-logs', {
+                params: {
+                    skip,
+                    take,
+                    search: searchQuery || undefined,
+                },
+            });
+            setLogs(res.data.items || []);
             setTotal(res.data.total || 0);
         } catch (err) {
             console.error('Failed to fetch audit logs', err);
@@ -52,7 +64,7 @@ export const AuditLogs: React.FC = () => {
     const getActionColor = (action: string) => {
         if (action.includes('CREATE')) return 'var(--success-color)';
         if (action.includes('DELETE')) return 'var(--danger-color)';
-        if (action.includes('UPDATE')) return 'var(--accent-color)';
+        if (action.includes('UPDATE') || action.includes('CHANGE') || action.includes('LOCK') || action.includes('UNLOCK')) return 'var(--accent-color)';
         return 'var(--text-secondary)';
     };
 
@@ -113,30 +125,30 @@ export const AuditLogs: React.FC = () => {
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <User size={14} style={{ color: 'var(--text-muted)' }} />
-                                                <div style={{ fontSize: '0.875rem' }}>{log.admin?.name}</div>
+                                                <div style={{ fontSize: '0.875rem' }}>{log.actor?.name || log.actor?.email || 'System'}</div>
                                             </div>
                                         </td>
                                         <td>
                                             <span style={{ 
                                                 fontSize: '0.75rem', 
                                                 fontWeight: 700, 
-                                                color: getActionColor(log.action),
+                                                color: getActionColor(log.actionType),
                                                 padding: '2px 6px',
                                                 borderRadius: '4px',
-                                                background: `${getActionColor(log.action)}15`
+                                                background: `${getActionColor(log.actionType)}15`
                                             }}>
-                                                {log.action}
+                                                {log.actionType}
                                             </span>
                                         </td>
                                         <td style={{ maxWidth: '300px' }}>
                                             <div style={{ fontSize: '0.875rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                {log.description}
+                                                {buildDescription(log)}
                                             </div>
                                         </td>
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                                                 <Activity size={12} />
-                                                {log.targetModel} ({log.targetId ? log.targetId.slice(-6) : 'N/A'})
+                                                {log.entityType} ({log.entityId ? log.entityId.slice(-6) : 'N/A'})
                                             </div>
                                         </td>
                                     </tr>

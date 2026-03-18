@@ -12,7 +12,6 @@ import {
     Activity,
     History,
     Radar,
-    Table2,
     Home,
     Trash2,
     Search,
@@ -80,7 +79,7 @@ export const DashboardLayout: React.FC = () => {
             title: 'Users',
             links: [
                 { to: '/users', label: 'All Users', icon: <Users size={18} /> },
-                { to: '/users?status=restricted', label: 'Restricted', icon: <UserMinus size={18} /> },
+                { to: '/users?status=LOCKED', label: 'Restricted', icon: <UserMinus size={18} /> },
                 { to: '/users?status=deleted', label: 'Deleted', icon: <UserX size={18} /> },
             ]
         },
@@ -89,7 +88,6 @@ export const DashboardLayout: React.FC = () => {
             links: [
                 { to: '/houses', label: 'All Properties', icon: <Home size={18} /> },
                 { to: '/houses?status=deleted', label: 'Deleted', icon: <Trash2 size={18} /> },
-                { to: '/houses-sheet', label: 'Houses Sheet', icon: <Table2 size={18} /> },
             ]
         },
         {
@@ -195,4 +193,3 @@ export const DashboardLayout: React.FC = () => {
         </div>
     );
 };
-

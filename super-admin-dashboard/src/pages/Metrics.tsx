@@ -39,7 +39,7 @@ export const Metrics: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [mRes, ugRes, paRes, ltRes, idRes, hRes] = await Promise.all([
+            const [mRes, ugRes, paRes, ltRes, idRes, hRes] = await Promise.allSettled([
                 api.get('/admin/metrics'),
                 api.get(`/admin/analytics/user-growth?range=${timeRange}`),
                 api.get(`/admin/analytics/property-activity?range=${timeRange}`),
@@ -47,13 +47,17 @@ export const Metrics: React.FC = () => {
                 api.get('/admin/analytics/ip-distribution'),
                 api.get('/admin/monitoring/heatmap')
             ]);
-            setMetrics(mRes.data.overview);
+
+            if (mRes.status === 'fulfilled') {
+                setMetrics(mRes.value.data.overview);
+            }
+
             setCharts({
-                userGrowth: ugRes.data,
-                propertyActivity: paRes.data,
-                loginTraffic: ltRes.data,
-                ipDist: idRes.data,
-                heatmap: hRes.data
+                userGrowth: ugRes.status === 'fulfilled' ? ugRes.value.data : [],
+                propertyActivity: paRes.status === 'fulfilled' ? paRes.value.data : [],
+                loginTraffic: ltRes.status === 'fulfilled' ? ltRes.value.data : [],
+                ipDist: idRes.status === 'fulfilled' ? idRes.value.data : [],
+                heatmap: hRes.status === 'fulfilled' ? hRes.value.data : []
             });
         } catch (err) {
             console.error('Failed to fetch metrics', err);
