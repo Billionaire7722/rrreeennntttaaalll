@@ -163,8 +163,9 @@
     "signInRequiredDescription": "Debes iniciar sesión para ver tu historial de chats.",
     "emptyTitle": "Aún no hay conversaciones",
     "emptyDescription": "Tu historial de chats aparecerá aquí.",
-    "initialPropertyMessage": "Hola, me gustaría contactarte sobre el anuncio \"{title}\" (ID: {id}).",
-    "loadingMessages": "Cargando mensajes..."
+    "initialPropertyMessage": "Hola, me gustar?a contactarte sobre el anuncio \"{title}\".",
+    "loadingMessages": "Cargando mensajes...",
+    "lastSeenAt": "Visto por ?ltima vez {time}"
   },
   "profile": {
     "editProfile": "Editar Perfil",

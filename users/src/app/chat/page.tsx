@@ -43,6 +43,12 @@ interface RecipientUser {
   avatarUrl?: string | null;
 }
 
+interface UserPresence {
+  userId: string;
+  isOnline: boolean;
+  lastSeenAt: string | null;
+}
+
 function sortMessages(items: Message[]) {
   return [...items].sort((left, right) => new Date(left.created_at).getTime() - new Date(right.created_at).getTime());
 }
@@ -80,10 +86,14 @@ function ChatPageContent() {
   const [newMessage, setNewMessage] = useState("");
   const [loadingConv, setLoadingConv] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(searchParams.get("recipientId"));
+  const searchRecipientId = searchParams.get("recipientId");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(searchRecipientId);
   const [searchTerm, setSearchTerm] = useState("");
   const [recipientUser, setRecipientUser] = useState<RecipientUser | null>(null);
+  const [presenceByUserId, setPresenceByUserId] = useState<Record<string, UserPresence>>({});
+  const [isSending, setIsSending] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const hasSentInitialRef = useRef(false);
   const activeThreadRequestRef = useRef(0);
   const shouldAutoScrollRef = useRef(false);
@@ -100,6 +110,22 @@ function ChatPageContent() {
     return formatDate(date, { day: "2-digit", month: "2-digit" });
   };
 
+  const formatPresenceLabel = useCallback((presence?: UserPresence | null) => {
+    if (!presence) return t("chat.offline");
+    if (presence.isOnline) return t("chat.online");
+    if (!presence.lastSeenAt) return t("chat.offline");
+
+    const lastSeen = new Date(presence.lastSeenAt);
+    const formatted = new Intl.DateTimeFormat(localeTag, {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(lastSeen);
+
+    return t("chat.lastSeenAt", { time: formatted });
+  }, [localeTag, t]);
+
   const isNearBottom = useCallback(() => {
     const container = messagesContainerRef.current;
     if (!container) return true;
@@ -110,6 +136,25 @@ function ChatPageContent() {
     const container = messagesContainerRef.current;
     if (!container) return;
     container.scrollTo({ top: container.scrollHeight, behavior });
+  }, []);
+
+  const syncSelectedUserFromQuery = useCallback(() => {
+    setSelectedUserId((current) => {
+      if (searchRecipientId === current) return current;
+      return searchRecipientId;
+    });
+  }, [searchRecipientId]);
+
+  const fetchPresence = useCallback(async (targetUserId: string) => {
+    try {
+      const response = await api.get(`/presence/${targetUserId}`);
+      setPresenceByUserId((previous) => ({
+        ...previous,
+        [targetUserId]: response.data,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch presence", error);
+    }
   }, []);
 
   const fetchConversations = async () => {
@@ -170,6 +215,10 @@ function ChatPageContent() {
   }, [user]);
 
   useEffect(() => {
+    syncSelectedUserFromQuery();
+  }, [syncSelectedUserFromQuery]);
+
+  useEffect(() => {
     if (!selectedUserId || !user) {
       activeThreadRequestRef.current += 1;
       setMessages([]);
@@ -181,6 +230,10 @@ function ChatPageContent() {
     setMessages([]);
     fetchMessages(selectedUserId);
   }, [selectedUserId, user]);
+
+  useEffect(() => {
+    hasSentInitialRef.current = false;
+  }, [selectedUserId, targetHouseId, targetHouseTitle]);
 
   useEffect(() => {
     if (!selectedUserId) {
@@ -199,6 +252,19 @@ function ChatPageContent() {
       .then((response) => setRecipientUser(response.data))
       .catch((error) => console.error("Failed to fetch recipient info", error));
   }, [conversations, selectedUserId]);
+
+  useEffect(() => {
+    if (!selectedUserId) return;
+
+    fetchPresence(selectedUserId);
+    const interval = window.setInterval(() => {
+      fetchPresence(selectedUserId);
+    }, 20_000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [fetchPresence, selectedUserId]);
 
   useEffect(() => {
     if (!socket) return;
@@ -259,11 +325,41 @@ function ChatPageContent() {
       });
     };
 
+    const handlePresenceChanged = (presence: UserPresence) => {
+      if (!presence?.userId) return;
+      setPresenceByUserId((previous) => ({
+        ...previous,
+        [presence.userId]: presence,
+      }));
+    };
+
+    const handleConversationSeen = (payload: { seenByUserId: string; messageIds: string[]; seenAt: string }) => {
+      if (!payload?.seenByUserId || payload.seenByUserId !== selectedUserId) return;
+
+      const seenIds = new Set(payload.messageIds || []);
+      if (seenIds.size === 0) return;
+
+      setMessages((previous) =>
+        previous.map((message) =>
+          seenIds.has(message.id)
+            ? {
+                ...message,
+                seen_at: payload.seenAt,
+              }
+            : message
+        )
+      );
+    };
+
     socket.on("new_message", handleNewMessage);
     socket.on("message_sent", handleNewMessage);
+    socket.on("presence_changed", handlePresenceChanged);
+    socket.on("conversation_seen", handleConversationSeen);
     return () => {
       socket.off("new_message", handleNewMessage);
       socket.off("message_sent", handleNewMessage);
+      socket.off("presence_changed", handlePresenceChanged);
+      socket.off("conversation_seen", handleConversationSeen);
     };
   }, [isNearBottom, recipientUser, selectedUserId, socket, t, user?.id]);
 
@@ -275,7 +371,6 @@ function ChatPageContent() {
       .post("/users/messages", {
         content: t("chat.initialPropertyMessage", {
           title: targetHouseTitle || targetHouseId,
-          id: targetHouseId,
         }),
         recipientId: selectedUserId,
         houseId: targetHouseId,
@@ -301,17 +396,45 @@ function ChatPageContent() {
     return () => window.cancelAnimationFrame(animationFrame);
   }, [messages, scrollToBottom, selectedUserId]);
 
-  const handleSend = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!newMessage.trim() || !selectedUserId || !user) return;
+  useEffect(() => {
+    const composer = composerRef.current;
+    if (!composer) return;
+    composer.style.height = "0px";
+    composer.style.height = `${Math.min(composer.scrollHeight, 160)}px`;
+  }, [newMessage]);
+
+  useEffect(() => {
+    if (!selectedUserId) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      composerRef.current?.focus();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedUserId]);
+
+  const handleSend = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+    if (!newMessage.trim() || !selectedUserId || !user || isSending) return;
     const content = newMessage.trim();
-    setNewMessage("");
     shouldAutoScrollRef.current = true;
     pendingScrollBehaviorRef.current = "smooth";
+    setIsSending(true);
     try {
       await api.post("/users/messages", { content, recipientId: selectedUserId });
+      setNewMessage("");
     } catch (error) {
       console.error("Failed to send message", error);
+      setNewMessage((previous) => previous || content);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleComposerKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+      event.preventDefault();
+      void handleSend();
     }
   };
 
@@ -324,6 +447,7 @@ function ChatPageContent() {
   const displayUser =
     selectedConversation?.otherUser ||
     (recipientUser ? { id: recipientUser.id, name: recipientUser.name, avatarUrl: recipientUser.avatarUrl } : null);
+  const selectedPresence = selectedUserId ? presenceByUserId[selectedUserId] : null;
 
   if (!user) {
     return (
@@ -341,7 +465,7 @@ function ChatPageContent() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
+    <div className="flex h-[100dvh] max-h-[100dvh] overflow-hidden bg-white">
       <div className={`w-full flex-shrink-0 border-r border-gray-100 md:w-[360px] ${selectedUserId ? "hidden md:flex" : "flex"} flex-col`}>
         <div className="sticky top-0 z-10 border-b border-gray-50 bg-white p-4">
           <div className="mb-4 flex items-center justify-between">
@@ -401,44 +525,44 @@ function ChatPageContent() {
         </div>
       </div>
 
-      <div className={`min-w-0 flex-1 flex-col bg-white ${!selectedUserId ? "hidden md:flex" : "flex"}`}>
+      <div className={`min-h-0 min-w-0 flex-1 flex-col bg-white ${!selectedUserId ? "hidden md:flex" : "flex"}`}>
         {selectedUserId && displayUser ? (
           <>
-            <div className="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-gray-100 bg-white/80 px-4 backdrop-blur-md sm:px-6">
-              <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <div className="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-gray-100 bg-white/80 px-3 backdrop-blur-md sm:px-6">
+              <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                 <button onClick={() => setSelectedUserId(null)} className="rounded-full p-2 transition-colors hover:bg-gray-100 md:hidden">
                   <ArrowLeft className="h-5 w-5 text-gray-600" />
                 </button>
-                <Link href={`/user/${displayUser.id}`} className="flex min-w-0 items-center gap-3">
+                <Link href={`/user/${displayUser.id}`} className="flex min-w-0 flex-1 items-center gap-3">
                   {displayUser.avatarUrl ? (
                     <SafeImage src={displayUser.avatarUrl} alt={displayUser.name} className="h-10 w-10 rounded-full object-cover" fallbackSrc="/images/defaultimage.jpg" />
                   ) : (
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">{getInitials(displayUser.name)}</div>
                   )}
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h2 className="truncate font-bold text-gray-900">{displayUser.name}</h2>
-                    <p className="flex items-center gap-1 text-[11px] font-semibold text-green-500">
-                      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                      {t("chat.online")}
+                    <p className={`flex items-center gap-1 text-[11px] font-semibold ${selectedPresence?.isOnline ? "text-green-500" : "text-gray-400"}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${selectedPresence?.isOnline ? "bg-green-500" : "bg-gray-300"}`} />
+                      <span className="truncate">{formatPresenceLabel(selectedPresence)}</span>
                     </p>
                   </div>
                 </Link>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="ml-3 flex flex-shrink-0 items-center gap-2 sm:gap-3">
                 {targetHouseId ? (
                   <Link href={`/properties/${targetHouseId}`} className="hidden items-center gap-2 rounded-full border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 sm:flex">
                     <MapPin className="h-3 w-3 text-red-500" />
                     {targetHouseTitle || t("chat.viewProperty")}
                   </Link>
                 ) : null}
-                <button className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100">
+                <button className="hidden rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 sm:flex">
                   <MoreVertical className="h-5 w-5" />
                 </button>
               </div>
             </div>
 
-            <div ref={messagesContainerRef} className="hide-scrollbar flex-1 space-y-6 overflow-y-auto bg-gray-50/30 p-4 sm:p-6">
+            <div ref={messagesContainerRef} className="hide-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto bg-gray-50/30 p-4 sm:p-6">
               {loadingMsgs ? <div className="text-center text-sm text-gray-400">{t("chat.loadingMessages")}</div> : null}
               {!loadingMsgs && messages.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center p-8 text-center">
@@ -489,16 +613,19 @@ function ChatPageContent() {
               ) : null}
             </div>
 
-            <div className="border-t border-gray-100 bg-white p-4 sm:p-6">
+            <div className="sticky bottom-0 z-10 border-t border-gray-100 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6">
               <form onSubmit={handleSend} className="mx-auto flex max-w-4xl items-end gap-3 rounded-[28px] bg-gray-50 p-1.5 ring-1 ring-gray-100 transition-all focus-within:ring-2 focus-within:ring-blue-100">
-                <input
-                  type="text"
+                <textarea
+                  ref={composerRef}
                   value={newMessage}
                   onChange={(event) => setNewMessage(event.target.value)}
+                  onKeyDown={handleComposerKeyDown}
                   placeholder={t("chat.typeMessagePlaceholder")}
-                  className="flex-1 border-none bg-transparent px-4 py-2.5 text-[15px] text-gray-800 outline-none placeholder:text-gray-400 focus:ring-0"
+                  rows={1}
+                  autoComplete="off"
+                  className="max-h-40 flex-1 resize-none border-none bg-transparent px-4 py-2.5 text-[15px] text-gray-800 outline-none placeholder:text-gray-400 focus:ring-0"
                 />
-                <button type="submit" disabled={!newMessage.trim()} className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white transition-all duration-200 hover:bg-blue-700 disabled:opacity-30">
+                <button type="submit" disabled={!newMessage.trim() || isSending} className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white transition-all duration-200 hover:bg-blue-700 disabled:opacity-30">
                   <Send className="ml-0.5 h-5 w-5" />
                 </button>
               </form>

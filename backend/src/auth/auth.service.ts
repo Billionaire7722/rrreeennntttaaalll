@@ -12,12 +12,9 @@ import { ActivityLogService } from '../admin/activity-log.service';
 // Password validation regex patterns
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_MAX_LENGTH = 12;
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,12}$/;
 
 @Injectable()
 export class AuthService {
-    private readonly MAX_LOGIN_ATTEMPTS = 5;
-    private readonly LOCK_DURATION_MINUTES = 15;
     private readonly TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
     constructor(
@@ -110,43 +107,27 @@ export class AuthService {
     }
 
     private async generateAdminSession(user: any, ip: string, ua: string) {
-        const tokens = this.generateToken(user);
-        const refreshToken = randomBytes(40).toString('hex');
-        
-        await (this.prisma as any).refreshToken.create({
-            data: {
-                userId: user.id,
-                token: refreshToken, // ideally hashed
-                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-                ipAddress: ip,
-                userAgent: ua
-            }
-        });
-
-        return {
-            ...tokens,
-            refresh_token: refreshToken
-        };
+        return this.createSession(user, ip, ua);
     }
 
     async refreshAdminToken(token: string, ip: string, ua: string) {
-        const session = await (this.prisma as any).refreshToken.findUnique({
-            where: { token },
-            include: { user: true }
-        });
+        const session = await this.getValidRefreshSession(token);
 
-        if (!session || session.revokedAt || session.expiresAt < new Date()) {
+        if (session.user.role !== Role.SUPER_ADMIN) {
             throw new UnauthorizedException('Session expired');
         }
 
-        // Token rotation
-        const newRefreshToken = randomBytes(40).toString('hex');
-        await (this.prisma as any).refreshToken.update({
-            where: { id: session.id },
-            data: { revokedAt: new Date() }
-        });
+        return this.rotateRefreshSession(session, ip, ua);
+    }
 
-        return this.generateAdminSession(session.user, ip, ua);
+    async refreshUserToken(token: string, ip?: string, ua?: string) {
+        const session = await this.getValidRefreshSession(token);
+
+        if (session.user.role !== Role.USER || session.user.status !== 'ACTIVE') {
+            throw new UnauthorizedException('Session expired');
+        }
+
+        return this.rotateRefreshSession(session, ip, ua);
     }
 
     async revokeRefreshToken(token: string) {
@@ -267,7 +248,7 @@ export class AuthService {
         });
 
         await this.logLoginAttempt(newUser.id, newUser.role, true, ipAddress, userAgent);
-        return this.generateToken(newUser);
+        return this.createSession(newUser, ipAddress, userAgent);
     }
 
     async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string) {
@@ -298,7 +279,7 @@ export class AuthService {
         }
 
         await this.logLoginAttempt(user.id, user.role, true, ipAddress, userAgent);
-        return this.generateToken(user);
+        return this.createSession(user, ipAddress, userAgent);
     }
 
     private async logLoginAttempt(userId: string | null, role: string | null, success: boolean, ipAddress?: string, userAgent?: string) {
@@ -342,7 +323,7 @@ export class AuthService {
                 }
             });
         }
-        return this.generateToken(user);
+        return this.createSession(user);
     }
 
     async forgotPassword(email: string) {
@@ -351,8 +332,8 @@ export class AuthService {
         return { message: 'Password reset link sent to your email', mock_token: this.jwtService.sign({ sub: user.id, reset: true }, { expiresIn: '10m' }) };
     }
 
-    private generateToken(user: any) {
-        const payload = {
+    private buildJwtPayload(user: any) {
+        return {
             username: user.username,
             sub: user.id,
             name: user.name,
@@ -362,8 +343,14 @@ export class AuthService {
             email: user.email,
             phone: user.phone,
         };
+    }
+
+    private buildTokenResponse(user: any) {
+        const payload = this.buildJwtPayload(user);
+        const accessToken = this.jwtService.sign(payload);
+
         return {
-            access_token: this.jwtService.sign(payload),
+            access_token: accessToken,
             user: {
                 id: user.id,
                 name: user.name,
@@ -375,5 +362,53 @@ export class AuthService {
                 role: user.role
             }
         };
+    }
+
+    private async createRefreshSession(user: any, ip?: string, ua?: string) {
+        const refreshToken = randomBytes(40).toString('hex');
+
+        await (this.prisma as any).refreshToken.create({
+            data: {
+                userId: user.id,
+                token: refreshToken,
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                ipAddress: ip || null,
+                userAgent: ua || null,
+            }
+        });
+
+        return refreshToken;
+    }
+
+    private async createSession(user: any, ip?: string, ua?: string) {
+        const tokens = this.buildTokenResponse(user);
+        const refreshToken = await this.createRefreshSession(user, ip, ua);
+
+        return {
+            ...tokens,
+            refresh_token: refreshToken,
+        };
+    }
+
+    private async getValidRefreshSession(token: string) {
+        const session = await (this.prisma as any).refreshToken.findUnique({
+            where: { token },
+            include: { user: true }
+        });
+
+        if (!session || session.revokedAt || session.expiresAt < new Date()) {
+            throw new UnauthorizedException('Session expired');
+        }
+
+        return session;
+    }
+
+    private async rotateRefreshSession(session: any, ip?: string, ua?: string) {
+        await (this.prisma as any).refreshToken.update({
+            where: { id: session.id },
+            data: { revokedAt: new Date() }
+        });
+
+        return this.createSession(session.user, ip, ua);
     }
 }

@@ -177,8 +177,9 @@
     "signInRequiredDescription": "Bạn cần đăng nhập để xem lịch sử trò chuyện.",
     "emptyTitle": "Chưa có cuộc trò chuyện nào",
     "emptyDescription": "Lịch sử trò chuyện của bạn sẽ xuất hiện tại đây.",
-    "initialPropertyMessage": "Xin chào, tôi muốn liên hệ về tin đăng \"{title}\" (ID: {id}).",
-    "loadingMessages": "Đang tải tin nhắn..."
+    "initialPropertyMessage": "Xin ch?o, t?i mu?n li?n h? v? tin ??ng \"{title}\".",
+    "loadingMessages": "Đang tải tin nhắn...",
+    "lastSeenAt": "Ho?t ??ng l?n cu?i {time}"
   },
   "profile": {
     "editProfile": "Chỉnh sửa hồ sơ",

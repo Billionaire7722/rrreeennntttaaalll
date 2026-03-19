@@ -12,6 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '../security/roles.enum';
+import { PresenceService } from '../presence/presence.service';
 
 interface AuthenticatedSocket extends Socket {
     user?: {
@@ -38,6 +39,7 @@ export class MessagesGateway
     constructor(
         private jwtService: JwtService,
         private prisma: PrismaService,
+        private presenceService: PresenceService,
     ) { }
 
     afterInit(server: Server) {
@@ -67,6 +69,14 @@ export class MessagesGateway
                 this.userSockets.set(client.user.userId, new Set());
             }
             this.userSockets.get(client.user.userId)?.add(client.id);
+            this.presenceService.markSocketConnected({
+                userId: client.user.userId,
+                role: client.user.role,
+                username: payload.username,
+                name: payload.name,
+                email: payload.email,
+            }, client.id);
+            this.broadcastPresenceUpdate(client.user.userId);
 
             console.log(`Client connected: ${client.user.userId} (${client.user.role}) - ${client.id}`);
         } catch (error) {
@@ -85,6 +95,8 @@ export class MessagesGateway
                     this.userSockets.delete(client.user.userId);
                 }
             }
+            this.presenceService.markSocketDisconnected(client.user.userId, client.id);
+            this.broadcastPresenceUpdate(client.user.userId);
             console.log(`Client disconnected: ${client.user.userId} - ${client.id}`);
         }
     }
@@ -202,5 +214,15 @@ export class MessagesGateway
             if (socket.user?.role !== Role.SUPER_ADMIN) return;
             socket.emit('new_support_ticket', ticket);
         });
+    }
+
+    private broadcastPresenceUpdate(userId: string) {
+        const presence = this.presenceService.getPresence(userId) || {
+            userId,
+            isOnline: false,
+            lastSeenAt: null,
+        };
+
+        this.server.emit('presence_changed', presence);
     }
 }

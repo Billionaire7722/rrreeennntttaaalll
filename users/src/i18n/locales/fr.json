@@ -163,8 +163,9 @@
     "signInRequiredDescription": "Vous devez vous connecter pour voir votre historique de discussion.",
     "emptyTitle": "Aucune conversation pour le moment",
     "emptyDescription": "Votre historique de discussion apparaîtra ici.",
-    "initialPropertyMessage": "Bonjour, je souhaite vous contacter au sujet de l'annonce « {title} » (ID : {id}).",
-    "loadingMessages": "Chargement des messages..."
+    "initialPropertyMessage": "Bonjour, je souhaite vous contacter au sujet de l'annonce \"{title}\".",
+    "loadingMessages": "Chargement des messages...",
+    "lastSeenAt": "Vu pour la derni?re fois {time}"
   },
   "profile": {
     "editProfile": "Modifier le Profil",

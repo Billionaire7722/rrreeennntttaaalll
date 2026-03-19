@@ -163,8 +163,9 @@
     "signInRequiredDescription": "Anda perlu masuk untuk melihat riwayat obrolan.",
     "emptyTitle": "Belum ada percakapan",
     "emptyDescription": "Riwayat obrolan Anda akan muncul di sini.",
-    "initialPropertyMessage": "Halo, saya ingin menghubungi Anda mengenai iklan \"{title}\" (ID: {id}).",
-    "loadingMessages": "Memuat pesan..."
+    "initialPropertyMessage": "Halo, saya ingin menghubungi Anda tentang listing \"{title}\".",
+    "loadingMessages": "Memuat pesan...",
+    "lastSeenAt": "Terakhir terlihat {time}"
   },
   "profile": {
     "editProfile": "Edit Profil",

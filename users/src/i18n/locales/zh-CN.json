@@ -163,8 +163,9 @@
     "signInRequiredDescription": "你需要登录后才能查看聊天记录。",
     "emptyTitle": "还没有对话",
     "emptyDescription": "你的聊天记录会显示在这里。",
-    "initialPropertyMessage": "你好，我想咨询一下房源“{title}”（ID：{id}）。",
-    "loadingMessages": "正在加载消息..."
+    "initialPropertyMessage": "????????????{title}??",
+    "loadingMessages": "正在加载消息...",
+    "lastSeenAt": "???? {time}"
   },
   "profile": {
     "editProfile": "编辑资料",

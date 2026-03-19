@@ -755,8 +755,8 @@ export default function ProfilePage() {
                         {visibleMessages.map((conversation) => {
                           const query = new URLSearchParams({ recipientId: conversation.otherUser.id }).toString();
                           return (
-                            <Link key={conversation.otherUser.id} href={`/chat?${query}`} className={`flex items-center gap-4 rounded-[1.5rem] border p-4 ${conversation.unreadCount > 0 ? "border-emerald-200 bg-emerald-50/60" : "border-[var(--theme-border)] bg-[var(--theme-surface)]"}`}>
-                              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-slate-900 via-teal-700 to-emerald-400 text-lg font-black text-white">
+                            <Link key={conversation.otherUser.id} href={`/chat?${query}`} className={`flex items-start gap-3 rounded-[1.5rem] border p-4 sm:items-center sm:gap-4 ${conversation.unreadCount > 0 ? "border-emerald-200 bg-emerald-50/60" : "border-[var(--theme-border)] bg-[var(--theme-surface)]"}`}>
+                              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-slate-900 via-teal-700 to-emerald-400 text-lg font-black text-white">
                                 {conversation.otherUser.avatarUrl ? (
                                   <SafeImage src={conversation.otherUser.avatarUrl} alt={conversation.otherUser.name} className="h-full w-full object-cover" fallbackSrc="/images/defaultimage.jpg" />
                                 ) : (
@@ -764,7 +764,7 @@ export default function ProfilePage() {
                                 )}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <div className="flex items-start justify-between gap-3">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                   <div className="min-w-0">
                                     <p className="truncate font-bold text-[var(--theme-text)]">{conversation.otherUser.name}</p>
                                     <p className="truncate text-sm text-[var(--theme-text-muted)]">
@@ -772,13 +772,18 @@ export default function ProfilePage() {
                                       {conversation.lastMessage.content}
                                     </p>
                                   </div>
-                                  <div className="flex items-center gap-1 text-xs text-[var(--theme-text-muted)]">
+                                  <div className="flex flex-shrink-0 items-center gap-2 self-start text-xs text-[var(--theme-text-muted)]">
                                     <Clock3 className="h-3.5 w-3.5" />
                                     {formatConversationTime(conversation.lastMessage.created_at)}
+                                    {conversation.unreadCount > 0 ? (
+                                      <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                                        {conversation.unreadCount}
+                                      </span>
+                                    ) : null}
                                   </div>
                                 </div>
                               </div>
-                              <ChevronRight className="h-4 w-4 text-[var(--theme-text-muted)]" />
+                              <ChevronRight className="hidden h-4 w-4 flex-shrink-0 text-[var(--theme-text-muted)] sm:block" />
                             </Link>
                           );
                         })}

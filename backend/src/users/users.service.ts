@@ -239,6 +239,22 @@ export class UsersService {
     }
 
     async markConversationSeen(userId: string, otherId: string) {
+        const unseenMessages = await this.prisma.message.findMany({
+            where: {
+                userId: otherId,
+                receiverId: userId,
+                seen_at: null,
+            },
+            select: {
+                id: true,
+            },
+        });
+
+        if (unseenMessages.length === 0) {
+            return { updated: 0 };
+        }
+
+        const seenAt = new Date();
         const result = await this.prisma.message.updateMany({
             where: {
                 userId: otherId,
@@ -246,8 +262,14 @@ export class UsersService {
                 seen_at: null,
             },
             data: {
-                seen_at: new Date(),
+                seen_at: seenAt,
             },
+        });
+
+        await this.messagesGateway.emitToUser(otherId, 'conversation_seen', {
+            seenByUserId: userId,
+            messageIds: unseenMessages.map((message) => message.id),
+            seenAt: seenAt.toISOString(),
         });
 
         return { updated: result.count };

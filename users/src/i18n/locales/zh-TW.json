@@ -163,8 +163,9 @@
     "signInRequiredDescription": "你需要登入後才能查看聊天記錄。",
     "emptyTitle": "尚無對話",
     "emptyDescription": "你的聊天記錄將顯示在這裡。",
-    "initialPropertyMessage": "你好，我想詢問房源「{title}」（ID：{id}）。",
-    "loadingMessages": "正在載入訊息..."
+    "initialPropertyMessage": "??????????{title}??",
+    "loadingMessages": "正在載入訊息...",
+    "lastSeenAt": "???? {time}"
   },
   "profile": {
     "editProfile": "編輯簡況",

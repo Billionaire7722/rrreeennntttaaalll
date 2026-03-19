@@ -163,8 +163,9 @@
     "signInRequiredDescription": "คุณต้องเข้าสู่ระบบเพื่อดูประวัติการสนทนา",
     "emptyTitle": "ยังไม่มีบทสนทนา",
     "emptyDescription": "ประวัติการแชตของคุณจะแสดงที่นี่",
-    "initialPropertyMessage": "สวัสดี ฉันต้องการติดต่อเกี่ยวกับประกาศ \"{title}\" (ID: {id})",
-    "loadingMessages": "กำลังโหลดข้อความ..."
+    "initialPropertyMessage": "?????? ??????????????????????????????? \"{title}\"",
+    "loadingMessages": "กำลังโหลดข้อความ...",
+    "lastSeenAt": "???????????? {time}"
   },
   "profile": {
     "editProfile": "แก้ไขโปรไฟล์",

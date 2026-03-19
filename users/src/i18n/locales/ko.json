@@ -163,8 +163,9 @@
     "signInRequiredDescription": "채팅 기록을 보려면 로그인해야 합니다.",
     "emptyTitle": "아직 대화가 없습니다",
     "emptyDescription": "채팅 기록이 여기에 표시됩니다.",
-    "initialPropertyMessage": "안녕하세요. \"{title}\" 매물(ID: {id})에 대해 문의드리고 싶습니다.",
-    "loadingMessages": "메시지를 불러오는 중..."
+    "initialPropertyMessage": "?????. \"{title}\" ??? ?? ???? ????.",
+    "loadingMessages": "메시지를 불러오는 중...",
+    "lastSeenAt": "??? ?? {time}"
   },
   "profile": {
     "editProfile": "프로필 수정",

@@ -177,8 +177,9 @@
     "signInRequiredDescription": "You need to sign in to see your chat history.",
     "emptyTitle": "No conversations yet",
     "emptyDescription": "Your chat history will appear here.",
-    "initialPropertyMessage": "Hello, I'd like to contact you about the listing \"{title}\" (ID: {id}).",
-    "loadingMessages": "Loading messages..."
+    "initialPropertyMessage": "Hello, I'd like to contact you about the listing \"{title}\".",
+    "loadingMessages": "Loading messages...",
+    "lastSeenAt": "Last seen {time}"
   },
   "profile": {
     "editProfile": "Edit Profile",

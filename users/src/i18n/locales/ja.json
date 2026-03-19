@@ -163,8 +163,9 @@
     "signInRequiredDescription": "チャット履歴を見るにはサインインが必要です。",
     "emptyTitle": "まだ会話はありません",
     "emptyDescription": "チャット履歴はここに表示されます。",
-    "initialPropertyMessage": "こんにちは。物件「{title}」（ID: {id}）について問い合わせしたいです。",
-    "loadingMessages": "メッセージを読み込み中..."
+    "initialPropertyMessage": "?????????{title}????????????????",
+    "loadingMessages": "メッセージを読み込み中...",
+    "lastSeenAt": "?????? {time}"
   },
   "profile": {
     "editProfile": "プロフィールを編集",

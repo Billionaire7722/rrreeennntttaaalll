@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PresenceService } from './presence.service';
@@ -23,11 +23,19 @@ export class PresenceController {
         return { ok: true };
     }
 
+    @Get(':userId')
+    getPresence(@Param('userId') userId: string) {
+        return this.presenceService.getPresence(userId) || {
+            userId,
+            isOnline: false,
+            lastSeenAt: null,
+        };
+    }
+
     @Post('offline')
-    offline(@Body() body: { userId?: string }, @Req() req: Request) {
+    offline(@Req() req: Request) {
         const user: any = (req as any).user;
-        const targetUserId = body?.userId || user.userId;
-        this.presenceService.markOffline(targetUserId);
+        this.presenceService.markOffline(user.userId);
         return { ok: true };
     }
 }

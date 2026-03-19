@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
 import { resolveSocketBaseUrl } from '../api/axios';
@@ -24,14 +24,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const token = authContext?.token;
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
+    const socketRef = useRef<Socket | null>(null);
 
     useEffect(() => {
         if (!token) {
-            if (socket) {
-                socket.disconnect();
-                setSocket(null);
-                setIsConnected(false);
-            }
+            socketRef.current?.disconnect();
+            socketRef.current = null;
             return;
         }
 
@@ -45,13 +43,19 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             reconnectionDelayMax: 5000,
         });
 
+        socketRef.current = socketInstance;
+
         socketInstance.on('connect', () => {
             console.log('Socket connected');
+            setSocket(socketInstance);
             setIsConnected(true);
         });
 
         socketInstance.on('disconnect', () => {
             console.log('Socket disconnected');
+            if (socketRef.current === socketInstance) {
+                setSocket(null);
+            }
             setIsConnected(false);
         });
 
@@ -60,16 +64,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             setIsConnected(false);
         });
 
-        setSocket(socketInstance);
-
         return () => {
             socketInstance.disconnect();
+            if (socketRef.current === socketInstance) {
+                socketRef.current = null;
+                setIsConnected(false);
+            }
         };
     }, [token]);
 
     const sendMessage = (content: string, recipientId?: string) => {
-        if (socket && isConnected) {
-            socket.emit('send_message', { content, recipientId });
+        if (socketRef.current && isConnected) {
+            socketRef.current.emit('send_message', { content, recipientId });
         }
     };
 
