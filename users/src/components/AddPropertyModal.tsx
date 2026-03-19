@@ -34,12 +34,12 @@ const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.Map
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
 
-const MapViewUpdater = ({ center }: { center: [number, number] }) => {
+const MapViewUpdater = ({ center, zoom }: { center: [number, number]; zoom: number }) => {
   const map = useMap();
 
   useEffect(() => {
-    map.setView(center, 16);
-  }, [center, map]);
+    map.setView(center, zoom);
+  }, [center, map, zoom]);
 
   return null;
 };
@@ -124,6 +124,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
   const markerRef = useRef<L.Marker | null>(null);
   const [formData, setFormData] = useState(createInitialFormData);
   const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_COORDINATES);
+  const [mapZoom, setMapZoom] = useState(13);
   const { street_address, ward, city } = formData;
   const isRoomMiniApartment = normalizePropertyType(formData.property_type) === "roomMiniApartment";
 
@@ -143,6 +144,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     setUploadingMedia(false);
     setIsGeocoding(false);
     setMapCenter(DEFAULT_COORDINATES);
+    setMapZoom(13);
 
     if (imageInputRef.current) imageInputRef.current.value = "";
     if (videoInputRef.current) videoInputRef.current.value = "";
@@ -164,9 +166,10 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
 
         if (!result) return;
 
-        const { lat, lon } = result;
+        const { lat, lon, zoom } = result;
         setFormData((previous) => ({ ...previous, latitude: lat, longitude: lon }));
         setMapCenter([lat, lon]);
+        setMapZoom(zoom);
       } catch (error) {
         console.error("Geocoding error:", error);
       } finally {
@@ -199,6 +202,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
       const location = await getBestAvailableLocation();
       setFormData((previous) => ({ ...previous, latitude: location.lat, longitude: location.lng }));
       setMapCenter([location.lat, location.lng]);
+      setMapZoom(16);
     } catch (error) {
       console.error("Error getting location:", error);
       window.alert(t("property.form.locationError"));
@@ -560,7 +564,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                 <div className="relative">
                   <div className="z-10 h-[200px] w-full overflow-hidden rounded-xl border border-gray-200">
                     {typeof window !== "undefined" ? (
-                      <MapContainer center={mapCenter} zoom={13} style={{ height: "100%", width: "100%" }}>
+                      <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: "100%", width: "100%" }}>
                         <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
                         <Marker
                           draggable
@@ -569,7 +573,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                           ref={markerRef}
                           icon={customIcon}
                         />
-                        <MapViewUpdater center={mapCenter} />
+                        <MapViewUpdater center={mapCenter} zoom={mapZoom} />
                       </MapContainer>
                     ) : null}
                   </div>

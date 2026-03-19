@@ -27,6 +27,19 @@ type AnchorLocation = {
   viewbox?: string;
 };
 
+type GeocodedLocation = {
+  lat: number;
+  lon: number;
+  zoom: number;
+};
+
+type BestMatch = {
+  lat: number;
+  lon: number;
+  score: number;
+  streetMatched: boolean;
+};
+
 type AddressTokens = {
   city: string;
   ward: string;
@@ -229,25 +242,30 @@ async function resolveAnchor(ward: string, city: string) {
   return null;
 }
 
-export async function geocodeVietnameseAddress(input: { streetAddress?: string; ward?: string; city?: string }) {
+export async function geocodeVietnameseAddress(input: { streetAddress?: string; ward?: string; city?: string }): Promise<GeocodedLocation | null> {
   const streetAddress = input.streetAddress?.trim() || "";
   const ward = input.ward?.trim() || "";
   const city = input.city?.trim() || "";
 
   if (!streetAddress && !ward && !city) return null;
 
+  if (city && !ward && !streetAddress) {
+    const cityAnchor = await resolveAnchor("", city);
+    return cityAnchor ? { lat: cityAnchor.lat, lon: cityAnchor.lon, zoom: 12 } : null;
+  }
+
+  if (city && ward && !streetAddress) {
+    const wardAnchor = await resolveAnchor(ward, city);
+    if (wardAnchor) {
+      return { lat: wardAnchor.lat, lon: wardAnchor.lon, zoom: 14 };
+    }
+  }
+
   const anchor = await resolveAnchor(ward, city);
   const tokens = buildAddressTokens(streetAddress, ward, city);
   const queries = buildQueries(streetAddress, ward, city);
 
-  let bestMatch:
-    | {
-        lat: number;
-        lon: number;
-        score: number;
-        streetMatched: boolean;
-      }
-    | null = null;
+  let bestMatch: BestMatch | null = null;
 
   for (const query of queries) {
     const variants = dedupe([query, removeVietnameseTones(query)]);
@@ -272,22 +290,43 @@ export async function geocodeVietnameseAddress(input: { streetAddress?: string; 
       }
     }
 
-    if (bestMatch && bestMatch.score >= 70 && (bestMatch.streetMatched || !tokens.streetCore)) {
+    const currentBest = bestMatch;
+    if (currentBest && currentBest.score >= 70 && (currentBest.streetMatched || !tokens.streetCore)) {
       break;
     }
   }
 
-  if (bestMatch && (!tokens.streetCore || bestMatch.streetMatched || bestMatch.score >= 65)) {
-    return { lat: bestMatch.lat, lon: bestMatch.lon };
+  const finalBestMatch = bestMatch;
+
+  if (finalBestMatch && (!tokens.streetCore || finalBestMatch.streetMatched || finalBestMatch.score >= 65)) {
+    return {
+      lat: finalBestMatch.lat,
+      lon: finalBestMatch.lon,
+      zoom: finalBestMatch.streetMatched ? 17 : 15,
+    };
   }
 
   if (!streetAddress && anchor) {
-    return { lat: anchor.lat, lon: anchor.lon };
+    return {
+      lat: anchor.lat,
+      lon: anchor.lon,
+      zoom: ward ? 14 : 12,
+    };
   }
 
-  if (anchor && bestMatch && bestMatch.score >= 20) {
-    return { lat: anchor.lat, lon: anchor.lon };
+  if (anchor && finalBestMatch && finalBestMatch.score >= 20) {
+    return {
+      lat: anchor.lat,
+      lon: anchor.lon,
+      zoom: ward ? 14 : 12,
+    };
   }
 
-  return bestMatch ? { lat: bestMatch.lat, lon: bestMatch.lon } : null;
+  return finalBestMatch
+    ? {
+        lat: finalBestMatch.lat,
+        lon: finalBestMatch.lon,
+        zoom: 16,
+      }
+    : null;
 }
