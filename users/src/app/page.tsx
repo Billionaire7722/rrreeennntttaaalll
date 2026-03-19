@@ -67,6 +67,7 @@ export default function HomePage() {
       const formatted = rawData.map((h: any) => ({
         id: h.id,
         title: h.name,
+        property_type: h.property_type,
         address: [h.address, h.ward || h.district].filter(Boolean).join(', '),
         city: h.city,
         district: h.ward || h.district,

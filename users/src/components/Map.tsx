@@ -10,7 +10,7 @@ import SafeImage from "@/components/SafeImage";
 import { useAuth } from "@/context/useAuth";
 import { useLanguage } from "@/context/LanguageContext";
 import { getBestAvailableLocation } from "@/utils/location";
-import { getPropertyStatusTranslationKey } from "@/i18n";
+import { getPropertyStatusTranslationKey, getPropertyTypeTranslationKey } from "@/i18n";
 
 const getMarkerIcon = (status?: string | null) => {
   const normalized = status?.toLowerCase();
@@ -40,6 +40,7 @@ const userIcon = L.divIcon({
 interface Property {
   id: string;
   title: string;
+  property_type?: string;
   price: number;
   latitude: number;
   longitude: number;
@@ -157,7 +158,11 @@ export default function InteractiveMap({
           if (Number.isNaN(latitude) || Number.isNaN(longitude) || (latitude === 0 && longitude === 0)) return null;
 
           const statusKey = getPropertyStatusTranslationKey(property.status);
+          const typeKey = getPropertyTypeTranslationKey(property.property_type);
           const statusLabel = statusKey ? t(statusKey) : property.status;
+          const propertyTypeLabel = typeKey
+            ? t(typeKey)
+            : property.property_type?.trim() || t("property.form.houseTypeLabel");
           const statusColor =
             property.status?.toLowerCase() === "available"
               ? "bg-emerald-500"
@@ -196,6 +201,7 @@ export default function InteractiveMap({
 
                   <div className="p-3">
                     <h4 className="mb-1 truncate text-[15px] font-bold leading-tight text-gray-900">{property.title}</h4>
+                    <p className="mb-1 truncate text-xs font-medium uppercase tracking-wide text-gray-500">{propertyTypeLabel}</p>
                     <p className="mb-2 text-sm font-extrabold text-blue-600">
                       {formatNumber(property.price || 0)} VND{t("property.units.monthAbbr")}
                     </p>
