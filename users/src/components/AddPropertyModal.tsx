@@ -71,6 +71,28 @@ const API_BASE = () => {
   return "http://localhost:3000";
 };
 
+const DEFAULT_COORDINATES: [number, number] = [21.0285, 105.8542];
+
+function createInitialFormData() {
+  return {
+    name: "",
+    property_type: "house",
+    street_address: "",
+    ward: "",
+    city: "",
+    price: "",
+    square: "",
+    bedrooms: "",
+    floors: "",
+    toilets: "",
+    description: "",
+    contact_phone: "",
+    latitude: DEFAULT_COORDINATES[0],
+    longitude: DEFAULT_COORDINATES[1],
+    roomDetails: { ...EMPTY_ROOM_DETAILS },
+  };
+}
+
 function removeVietnameseTones(value: string) {
   return value
     .normalize("NFD")
@@ -107,26 +129,31 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const markerRef = useRef<L.Marker | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    property_type: "house",
-    street_address: "",
-    ward: "",
-    city: "",
-    price: "",
-    square: "",
-    bedrooms: "",
-    floors: "",
-    toilets: "",
-    description: "",
-    contact_phone: "",
-    latitude: 21.0285,
-    longitude: 105.8542,
-    roomDetails: { ...EMPTY_ROOM_DETAILS },
-  });
-  const [mapCenter, setMapCenter] = useState<[number, number]>([21.0285, 105.8542]);
+  const [formData, setFormData] = useState(createInitialFormData);
+  const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_COORDINATES);
   const { street_address, ward, city } = formData;
   const isRoomMiniApartment = normalizePropertyType(formData.property_type) === "roomMiniApartment";
+
+  const resetForm = useCallback(() => {
+    imagePreviews.forEach((preview) => {
+      if (preview.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+    });
+
+    setFormData(createInitialFormData());
+    setImages([]);
+    setVideos([]);
+    setImagePreviews([]);
+    setPreviewIndex(null);
+    setSubmitState("idle");
+    setUploadingMedia(false);
+    setIsGeocoding(false);
+    setMapCenter(DEFAULT_COORDINATES);
+
+    if (imageInputRef.current) imageInputRef.current.value = "";
+    if (videoInputRef.current) videoInputRef.current.value = "";
+  }, [imagePreviews]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -272,6 +299,11 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
   };
 
   const removeImage = (index: number) => {
+    const previewToRemove = imagePreviews[index];
+    if (previewToRemove?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewToRemove);
+    }
+
     setImages((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
     setImagePreviews((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
   };
@@ -280,7 +312,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     setVideos((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = useCallback(async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!user) {
@@ -335,15 +367,15 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
       setSubmitState("success");
 
       setTimeout(() => {
+        resetForm();
         onSuccess?.();
         onClose();
-        setTimeout(() => setSubmitState("idle"), 300);
       }, 2000);
     } catch (error) {
       console.error(error);
       setSubmitState("error");
     }
-  };
+  }, [formData, images, isRoomMiniApartment, onClose, onSuccess, resetForm, t, user, videos]);
 
   if (!isOpen) return null;
 

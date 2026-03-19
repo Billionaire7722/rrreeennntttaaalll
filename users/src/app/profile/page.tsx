@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
+  Bed,
   Building2,
   Camera,
   CheckCircle2,
@@ -15,9 +16,13 @@ import {
   Heart,
   HelpCircle,
   Info,
+  MapPin,
   Menu,
   MessageCircle,
+  Pencil,
+  Square,
   Settings,
+  Trash2,
   UserCog,
   X,
 } from "lucide-react";
@@ -210,7 +215,7 @@ function getApiErrorMessage(error: unknown) {
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
-  const { t, language, localeTag, setLanguage, formatDate, formatTime } = useLanguage();
+  const { t, language, localeTag, setLanguage, formatDate, formatNumber, formatTime } = useLanguage();
   const { resolvedTheme } = useTheme();
   const [favorites, setFavorites] = useState<Property[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -702,41 +707,96 @@ export default function ProfilePage() {
                   {!loadingMyHouses && myHouses.length === 0 ? <EmptyState icon={<Building2 className="h-6 w-6" />} title={t("profile.myPropertiesEmptyTitle")} description={t("profile.myPropertiesSectionDescription")} /> : null}
                   {!loadingMyHouses && myHouses.length > 0 ? (
                     <>
-                      <div className="space-y-4">
-                        {visibleMyProperties.map((house) => (
-                          <div key={house.id} className="rounded-[1.5rem] border border-[var(--theme-border)] bg-[var(--theme-surface-2)] p-4">
-                            <PropertyCard
-                              property={toPropertyCard({
-                                id: house.id,
-                                name: house.name,
-                                property_type: house.property_type,
-                                address: [house.address, house.ward || house.district].filter(Boolean).join(", "),
-                                city: house.city,
-                                price: house.price,
-                                bedrooms: house.bedrooms,
-                                square: house.square,
-                                status: house.status,
-                                image_url: house.image_url_1 || house.image_url_2 || "/images/defaultimage.jpg",
-                              })}
-                              variant="list"
-                              onEdit={() => setEditingHouse(house)}
-                              onDelete={() => handleDeleteHouse(house.id)}
-                            />
-                            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                              <p className="text-sm text-[var(--theme-text-muted)]">
-                                {t("profile.createdOn", {
-                                  date: formatDate(house.created_at, { day: "2-digit", month: "2-digit", year: "numeric" }),
-                                })}
-                              </p>
-                              <HouseStatusToggle
-                                currentStatus={normalizeHouseStatus(house.status)}
-                                isUpdating={Boolean(updatingHouseStatusIds[house.id])}
-                                onChange={(status) => handleHouseStatusChange(house, status)}
-                                t={t}
-                              />
+                      <div className="space-y-3">
+                        {visibleMyProperties.map((house) => {
+                          const status = normalizeHouseStatus(house.status);
+                          const locationText = [house.address, house.ward || house.district, house.city].filter(Boolean).join(", ");
+                          const imageSrc = house.image_url_1 || house.image_url_2 || "/images/defaultimage.jpg";
+                          const priceText = house.price ? `${formatNumber(house.price)} VND${t("property.units.monthAbbr")}` : t("property.detail.notProvided");
+                          const statusClass =
+                            status === "available"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : status === "pending"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-rose-100 text-rose-700";
+
+                          return (
+                            <div key={house.id} className="rounded-[1.5rem] border border-[var(--theme-border)] bg-[var(--theme-surface-2)] p-3 sm:p-4">
+                              <div className="flex items-start gap-3">
+                                <Link href={`/properties/${house.id}`} className="h-20 w-24 flex-shrink-0 overflow-hidden rounded-[1rem] bg-slate-200 sm:h-24 sm:w-28">
+                                  <SafeImage src={imageSrc} alt={house.name} className="h-full w-full object-cover" fallbackSrc="/images/defaultimage.jpg" />
+                                </Link>
+
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <Link href={`/properties/${house.id}`} className="line-clamp-2 text-sm font-bold text-[var(--theme-text)] transition-colors hover:text-[var(--color-teal-600)] sm:text-base">
+                                        {house.name}
+                                      </Link>
+                                      <p className="mt-1 flex items-start gap-1 text-xs text-[var(--theme-text-muted)]">
+                                        <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                                        <span className="line-clamp-2">{locationText}</span>
+                                      </p>
+                                    </div>
+                                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${statusClass}`}>
+                                      {t(`property.status.${status}`)}
+                                    </span>
+                                  </div>
+
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-teal-700)]">
+                                      {priceText}
+                                    </span>
+                                    {house.bedrooms != null ? (
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-[var(--theme-text-muted)]">
+                                        <Bed className="h-3.5 w-3.5 text-[var(--color-teal-600)]" />
+                                        {house.bedrooms} {t("property.fields.bedrooms")}
+                                      </span>
+                                    ) : null}
+                                    {house.square != null ? (
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-[var(--theme-text-muted)]">
+                                        <Square className="h-3.5 w-3.5 text-[var(--color-teal-600)]" />
+                                        {house.square} m²
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="mt-3 flex flex-col gap-3 border-t border-[var(--theme-border)] pt-3 lg:flex-row lg:items-center lg:justify-between">
+                                <p className="text-xs text-[var(--theme-text-muted)]">
+                                  {t("profile.createdOn", {
+                                    date: formatDate(house.created_at, { day: "2-digit", month: "2-digit", year: "numeric" }),
+                                  })}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingHouse(house)}
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--theme-border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--theme-text)] transition-colors hover:border-[var(--color-teal-300)] hover:text-[var(--color-teal-700)]"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                    {t("common.edit")}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteHouse(house.id)}
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    {t("common.delete")}
+                                  </button>
+                                  <HouseStatusToggle
+                                    currentStatus={status}
+                                    isUpdating={Boolean(updatingHouseStatusIds[house.id])}
+                                    onChange={(nextStatus) => handleHouseStatusChange(house, nextStatus)}
+                                    t={t}
+                                  />
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       <LoadMoreControl shown={visibleMyProperties.length} total={myHouses.length} onClick={() => setVisibleCounts((previous) => ({ ...previous, "my-properties": previous["my-properties"] + PAGE_SIZE }))} label={t("common.loadMore")} />
                     </>
