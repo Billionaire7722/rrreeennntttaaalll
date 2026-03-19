@@ -36,6 +36,11 @@ jobs:
         run: npm ci
         working-directory: ${{ matrix.app.path }}
 
+      - name: Generate Prisma client
+        if: ${{ matrix.app.path == 'backend' }}
+        run: npx prisma generate
+        working-directory: ${{ matrix.app.path }}
+
       - name: Run build
         run: npm run build --if-present
         working-directory: ${{ matrix.app.path }}
