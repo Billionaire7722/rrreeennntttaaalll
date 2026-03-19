@@ -25,8 +25,11 @@ export const DEFAULT_PROPERTY_COORDINATES: [number, number] = [21.0285, 105.8542
 
 const DEFAULT_MAP_ZOOM = 13;
 const DETAIL_GEOCODE_DEBOUNCE_MS = 700;
+const MIN_ACCEPTED_STREET_CONFIDENCE = 0.72;
 
 type GeocodingStage = "province" | "ward" | "detail" | "reverse" | null;
+
+export type ViewportSource = "province" | "ward" | "street" | "manual";
 
 export interface PropertyLocationFormValue {
   city: string;
@@ -40,9 +43,19 @@ export interface PropertyLocationFormValue {
 
 type PropertyLocationPatch = Partial<PropertyLocationFormValue>;
 
-type MapState = {
-  center: [number, number];
-  zoom: number;
+export type PropertyLocationViewportState = {
+  viewportCenter: [number, number];
+  viewportZoom: number;
+  viewportSource: ViewportSource | null;
+};
+
+type ResolvedPropertyLocationState = {
+  markerLat: number;
+  markerLng: number;
+  locationPrecision: LocationPrecision;
+  locationConfidence: number;
+  requiresManualConfirmation: boolean;
+  displayName: string;
 };
 
 type UsePropertyLocationPickerOptions = {
@@ -58,10 +71,41 @@ export type PropertyLocationStatus = {
   hasManualPinOverride: boolean;
   resolvedLabel: string;
   normalizedStreetAddress: string;
+  viewportSource: ViewportSource | null;
 };
 
-function hasValidCoordinates(latitude: number, longitude: number) {
-  return Number.isFinite(latitude) && Number.isFinite(longitude) && !(latitude === 0 && longitude === 0);
+function createDefaultResolvedLocationState(): ResolvedPropertyLocationState {
+  return {
+    markerLat: DEFAULT_PROPERTY_COORDINATES[0],
+    markerLng: DEFAULT_PROPERTY_COORDINATES[1],
+    locationPrecision: "province",
+    locationConfidence: 0,
+    requiresManualConfirmation: true,
+    displayName: "",
+  };
+}
+
+function toViewportState(center: [number, number], zoom: number, source: ViewportSource | null): PropertyLocationViewportState {
+  return {
+    viewportCenter: center,
+    viewportZoom: zoom,
+    viewportSource: source,
+  };
+}
+
+function getAreaViewportSource(precision: LocationPrecision): ViewportSource {
+  return precision === "ward" ? "ward" : "province";
+}
+
+function toResolvedLocationState(resolution: LocationResolution): ResolvedPropertyLocationState {
+  return {
+    markerLat: resolution.lat,
+    markerLng: resolution.lon,
+    locationPrecision: resolution.precision,
+    locationConfidence: resolution.confidence,
+    requiresManualConfirmation: resolution.requiresManualConfirmation,
+    displayName: resolution.displayName,
+  };
 }
 
 export function usePropertyLocationPicker({ isOpen, value, onChange }: UsePropertyLocationPickerOptions) {
@@ -69,14 +113,17 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
   const [wards, setWards] = useState<VietnamWard[]>([]);
   const [isLocationsLoading, setIsLocationsLoading] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
-  const [mapState, setMapState] = useState<MapState>({
-    center: DEFAULT_PROPERTY_COORDINATES,
-    zoom: DEFAULT_MAP_ZOOM,
-  });
-  const [resolvedPinLabel, setResolvedPinLabel] = useState("");
-  const [lastResolution, setLastResolution] = useState<LocationResolution | null>(null);
-  const [hasManualPinOverride, setHasManualPinOverride] = useState(false);
   const [lastStage, setLastStage] = useState<GeocodingStage>(null);
+  const [viewportState, setViewportState] = useState<PropertyLocationViewportState>(() =>
+    toViewportState(DEFAULT_PROPERTY_COORDINATES, DEFAULT_MAP_ZOOM, null)
+  );
+  const [resolvedLocationState, setResolvedLocationState] = useState<ResolvedPropertyLocationState>(() =>
+    createDefaultResolvedLocationState()
+  );
+  const [resolvedPinLabel, setResolvedPinLabel] = useState("");
+  const [areaResolution, setAreaResolution] = useState<LocationResolution | null>(null);
+  const [detailResolution, setDetailResolution] = useState<LocationResolution | null>(null);
+  const [hasManualPinOverride, setHasManualPinOverride] = useState(false);
   const requestIdRef = useRef(0);
   const activeControllerRef = useRef<AbortController | null>(null);
   const detailDebounceRef = useRef<number | null>(null);
@@ -101,44 +148,26 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
   }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
-
-    const latitude = value.latitude;
-    const longitude = value.longitude;
-    if (hasValidCoordinates(latitude, longitude)) {
-      setMapState({
-        center: [latitude, longitude],
-        zoom: value.streetAddress ? 17 : value.ward ? 14 : value.city ? 11 : DEFAULT_MAP_ZOOM,
-      });
-      return;
-    }
-
-    setMapState({
-      center: DEFAULT_PROPERTY_COORDINATES,
-      zoom: DEFAULT_MAP_ZOOM,
-    });
-  }, [isOpen, value.city, value.latitude, value.longitude, value.streetAddress, value.ward]);
-
-  useEffect(() => {
     if (!isOpen || provinces.length === 0) return;
 
-    const selectedProvince = findProvinceByCode(provinces, value.cityCode) || findProvinceByName(provinces, value.city);
-    const selectedWard =
+    const nextSelectedProvince =
+      findProvinceByCode(provinces, value.cityCode) || findProvinceByName(provinces, value.city);
+    const nextSelectedWard =
       findWardByCode(wards, value.wardCode) ||
-      findWardByName(wards, value.ward, selectedProvince?.code ?? value.cityCode ?? undefined);
+      findWardByName(wards, value.ward, nextSelectedProvince?.code ?? value.cityCode ?? undefined);
 
-      const patch: PropertyLocationPatch = {};
-    if (selectedProvince && selectedProvince.code !== value.cityCode) {
-      patch.cityCode = selectedProvince.code;
+    const patch: PropertyLocationPatch = {};
+    if (nextSelectedProvince && nextSelectedProvince.code !== value.cityCode) {
+      patch.cityCode = nextSelectedProvince.code;
     }
-    if (selectedProvince && selectedProvince.name !== value.city) {
-      patch.city = selectedProvince.name;
+    if (nextSelectedProvince && nextSelectedProvince.name !== value.city) {
+      patch.city = nextSelectedProvince.name;
     }
-    if (selectedWard && selectedWard.code !== value.wardCode) {
-      patch.wardCode = selectedWard.code;
+    if (nextSelectedWard && nextSelectedWard.code !== value.wardCode) {
+      patch.wardCode = nextSelectedWard.code;
     }
-    if (selectedWard && selectedWard.name !== value.ward) {
-      patch.ward = selectedWard.name;
+    if (nextSelectedWard && nextSelectedWard.name !== value.ward) {
+      patch.ward = nextSelectedWard.name;
     }
 
     if (Object.keys(patch).length > 0) {
@@ -151,6 +180,7 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
   const selectedWard =
     findWardByCode(wards, value.wardCode) ||
     findWardByName(wards, value.ward, selectedProvince?.code ?? value.cityCode ?? undefined);
+
   const cityAliases = useMemo(
     () => [selectedProvince?.name_with_type, selectedProvince?.slug].filter((alias): alias is string => Boolean(alias)),
     [selectedProvince?.name_with_type, selectedProvince?.slug]
@@ -162,6 +192,8 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
       ),
     [selectedWard?.name_with_type, selectedWard?.path, selectedWard?.path_with_type, selectedWard?.slug]
   );
+  const cityAliasKey = useMemo(() => cityAliases.join("|"), [cityAliases]);
+  const wardAliasKey = useMemo(() => wardAliases.join("|"), [wardAliases]);
 
   const availableWards = useMemo(() => {
     const provinceCode = selectedProvince?.code ?? value.cityCode;
@@ -172,285 +204,341 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
       .sort((first, second) => first.name.localeCompare(second.name, "vi", { sensitivity: "base" }));
   }, [selectedProvince?.code, value.cityCode, wards]);
 
-  const cancelPendingWork = useCallback(() => {
+  const normalizedStreetAddress = useMemo(
+    () => normalizeVietnamStreetAddressInput(value.streetAddress, value.ward, value.city),
+    [value.city, value.streetAddress, value.ward]
+  );
+
+  const invalidatePendingRequests = useCallback(() => {
     if (detailDebounceRef.current !== null) {
       window.clearTimeout(detailDebounceRef.current);
       detailDebounceRef.current = null;
     }
 
+    requestIdRef.current += 1;
     activeControllerRef.current?.abort();
+    activeControllerRef.current = null;
+    setIsGeocoding(false);
+    setLastStage(null);
+  }, []);
+
+  useEffect(() => invalidatePendingRequests, [invalidatePendingRequests]);
+
+  const beginRequest = useCallback(
+    (stage: GeocodingStage) => {
+      invalidatePendingRequests();
+      const controller = new AbortController();
+      activeControllerRef.current = controller;
+      requestIdRef.current += 1;
+      setIsGeocoding(true);
+      setLastStage(stage);
+      return { controller, requestId: requestIdRef.current };
+    },
+    [invalidatePendingRequests]
+  );
+
+  const finishRequest = useCallback((requestId: number) => {
+    if (requestId !== requestIdRef.current) return;
+
+    setIsGeocoding(false);
+    setLastStage(null);
     activeControllerRef.current = null;
   }, []);
 
-  useEffect(() => cancelPendingWork, [cancelPendingWork]);
+  const commitCoordinatesIfChanged = useCallback(
+    (latitude: number, longitude: number) => {
+      if (value.latitude === latitude && value.longitude === longitude) return;
 
-  const beginRequest = useCallback((stage: GeocodingStage) => {
-    cancelPendingWork();
-    const controller = new AbortController();
-    activeControllerRef.current = controller;
-    requestIdRef.current += 1;
-    setIsGeocoding(true);
-    setLastStage(stage);
-    if (stage !== "reverse") {
+      onChange({
+        latitude,
+        longitude,
+      });
+    },
+    [onChange, value.latitude, value.longitude]
+  );
+
+  const applyDefaultState = useCallback(
+    (shouldCommitCoordinates: boolean) => {
+      setAreaResolution(null);
+      setDetailResolution(null);
       setResolvedPinLabel("");
-    }
-    return { controller, requestId: requestIdRef.current };
-  }, [cancelPendingWork]);
+      setViewportState(toViewportState(DEFAULT_PROPERTY_COORDINATES, DEFAULT_MAP_ZOOM, null));
+      setResolvedLocationState(createDefaultResolvedLocationState());
 
-  const finishRequest = useCallback((requestId: number) => {
-    if (requestId === requestIdRef.current) {
-      setIsGeocoding(false);
-      setLastStage(null);
-      activeControllerRef.current = null;
-    }
-  }, []);
+      if (shouldCommitCoordinates) {
+        commitCoordinatesIfChanged(DEFAULT_PROPERTY_COORDINATES[0], DEFAULT_PROPERTY_COORDINATES[1]);
+      }
+    },
+    [commitCoordinatesIfChanged]
+  );
 
-  const applyResolvedLocation = useCallback(
-    (requestId: number, patch: PropertyLocationPatch, nextMapState: MapState, resolution: LocationResolution) => {
-      if (requestId !== requestIdRef.current) return false;
-
-      setHasManualPinOverride(false);
-      setLastResolution(resolution);
+  const applyAreaResolution = useCallback(
+    (resolution: LocationResolution, source: ViewportSource) => {
+      setAreaResolution(resolution);
+      setDetailResolution(null);
       setResolvedPinLabel(resolution.displayName);
-      onChange(patch);
-      setMapState(nextMapState);
-      return true;
+      setViewportState(toViewportState([resolution.lat, resolution.lon], resolution.zoom, source));
+      setResolvedLocationState(toResolvedLocationState(resolution));
+      commitCoordinatesIfChanged(resolution.lat, resolution.lon);
     },
-    [onChange]
+    [commitCoordinatesIfChanged]
   );
 
-  const resolveProvinceStage = useCallback(
-    async (nextCity: string) => {
-      if (!nextCity.trim()) {
-        cancelPendingWork();
-        onChange({
-          city: "",
-          cityCode: "",
-          ward: "",
-          wardCode: "",
-          latitude: DEFAULT_PROPERTY_COORDINATES[0],
-          longitude: DEFAULT_PROPERTY_COORDINATES[1],
-        });
-        setMapState({ center: DEFAULT_PROPERTY_COORDINATES, zoom: DEFAULT_MAP_ZOOM });
-        return;
-      }
+  const restoreAreaFallback = useCallback(() => {
+    if (areaResolution) {
+      applyAreaResolution(areaResolution, getAreaViewportSource(areaResolution.precision));
+      return;
+    }
 
-      const { controller, requestId } = beginRequest("province");
+    applyDefaultState(true);
+  }, [applyAreaResolution, applyDefaultState, areaResolution]);
 
+  const applyStreetResolution = useCallback(
+    (resolution: LocationResolution) => {
+      setDetailResolution(resolution);
+      setResolvedPinLabel(resolution.displayName);
+      setViewportState(toViewportState([resolution.lat, resolution.lon], resolution.zoom, "street"));
+      setResolvedLocationState(toResolvedLocationState(resolution));
+      commitCoordinatesIfChanged(resolution.lat, resolution.lon);
+    },
+    [commitCoordinatesIfChanged]
+  );
+
+  useEffect(() => {
+    if (!isOpen || provinces.length === 0) return;
+
+    const nextCity = selectedProvince?.name || value.city.trim();
+    const nextWard = selectedWard?.name || value.ward.trim();
+
+    if (!nextCity) {
+      setHasManualPinOverride(false);
+      applyDefaultState(false);
+      return;
+    }
+
+    const stage = nextWard ? "ward" : "province";
+    const { controller, requestId } = beginRequest(stage);
+
+    const resolveArea = async () => {
       try {
-        const result = await resolveVietnamProvinceCenter(nextCity, controller.signal, cityAliases);
-        if (!result) return;
+        const resolution = nextWard
+          ? await resolveVietnamWardCenter({ ward: nextWard, city: nextCity, wardAliases, cityAliases }, controller.signal)
+          : await resolveVietnamProvinceCenter(nextCity, controller.signal, cityAliases);
 
-        applyResolvedLocation(
-          requestId,
-          {
-            latitude: result.lat,
-            longitude: result.lon,
-          },
-          { center: [result.lat, result.lon], zoom: result.zoom },
-          result
-        );
+        if (!resolution || requestId !== requestIdRef.current) return;
+
+        setHasManualPinOverride(false);
+        applyAreaResolution(resolution, nextWard ? "ward" : "province");
       } catch {
         if (!controller.signal.aborted) {
-          setResolvedPinLabel("");
+          setHasManualPinOverride(false);
+          applyDefaultState(true);
         }
       } finally {
         finishRequest(requestId);
       }
-    },
-    [applyResolvedLocation, beginRequest, cancelPendingWork, cityAliases, finishRequest, onChange]
-  );
+    };
 
-  const resolveWardStage = useCallback(
-    async (nextWard: string, nextCity: string) => {
-      if (!nextCity.trim()) return;
+    void resolveArea();
+  }, [
+    applyAreaResolution,
+    applyDefaultState,
+    beginRequest,
+    cityAliasKey,
+    cityAliases,
+    finishRequest,
+    isOpen,
+    provinces.length,
+    selectedProvince?.code,
+    selectedProvince?.name,
+    selectedWard?.code,
+    selectedWard?.name,
+    value.city,
+    value.ward,
+    wardAliasKey,
+    wardAliases,
+  ]);
 
-      const { controller, requestId } = beginRequest("ward");
+  useEffect(() => {
+    if (!isOpen) return;
 
-      try {
-        const result = await resolveVietnamWardCenter({ ward: nextWard, city: nextCity, wardAliases, cityAliases }, controller.signal);
-        if (!result) return;
-
-        applyResolvedLocation(
-          requestId,
-          {
-            latitude: result.lat,
-            longitude: result.lon,
-          },
-          { center: [result.lat, result.lon], zoom: result.zoom },
-          result
-        );
-      } catch {
-        if (!controller.signal.aborted) {
-          setResolvedPinLabel("");
-        }
-      } finally {
-        finishRequest(requestId);
+    if (!normalizedStreetAddress) {
+      setDetailResolution(null);
+      if (!hasManualPinOverride) {
+        restoreAreaFallback();
       }
-    },
-    [applyResolvedLocation, beginRequest, cityAliases, finishRequest, wardAliases]
-  );
+      return;
+    }
 
-  const scheduleDetailResolution = useCallback(
-    (nextValue: PropertyLocationFormValue) => {
-      if (!nextValue.city.trim()) return;
+    if (hasManualPinOverride) return;
+    if (!selectedProvince?.name && !value.city.trim()) return;
+    if (!areaResolution) return;
 
-      if (detailDebounceRef.current !== null) {
-        window.clearTimeout(detailDebounceRef.current);
-      }
+    if (detailDebounceRef.current !== null) {
+      window.clearTimeout(detailDebounceRef.current);
+    }
 
-      detailDebounceRef.current = window.setTimeout(async () => {
-        const { controller, requestId } = beginRequest("detail");
+    detailDebounceRef.current = window.setTimeout(() => {
+      const { controller, requestId } = beginRequest("detail");
 
+      const resolveDetail = async () => {
         try {
-          const result = await resolveVietnamDetailedAddress(
+          const resolution = await resolveVietnamDetailedAddress(
             {
-              streetAddress: nextValue.streetAddress,
-              ward: nextValue.ward,
-              city: nextValue.city,
+              streetAddress: value.streetAddress,
+              ward: selectedWard?.name || value.ward,
+              city: selectedProvince?.name || value.city,
               wardAliases,
               cityAliases,
             },
             controller.signal
           );
 
-          if (!result) return;
+          if (requestId !== requestIdRef.current) return;
 
-          applyResolvedLocation(
-            requestId,
-            {
-              latitude: result.lat,
-              longitude: result.lon,
-            },
-            { center: [result.lat, result.lon], zoom: result.zoom },
-            result
-          );
+          if (
+            !resolution ||
+            (resolution.precision !== "exact" &&
+              !(resolution.precision === "street" && resolution.confidence >= MIN_ACCEPTED_STREET_CONFIDENCE))
+          ) {
+            setDetailResolution(null);
+            restoreAreaFallback();
+            return;
+          }
+
+          applyStreetResolution(resolution);
         } catch {
           if (!controller.signal.aborted) {
-            setResolvedPinLabel("");
+            setDetailResolution(null);
+            restoreAreaFallback();
           }
         } finally {
           finishRequest(requestId);
         }
-      }, DETAIL_GEOCODE_DEBOUNCE_MS);
-    },
-    [applyResolvedLocation, beginRequest, cityAliases, finishRequest, wardAliases]
-  );
+      };
+
+      void resolveDetail();
+    }, DETAIL_GEOCODE_DEBOUNCE_MS);
+  }, [
+    areaResolution,
+    applyStreetResolution,
+    beginRequest,
+    cityAliases,
+    finishRequest,
+    hasManualPinOverride,
+    isOpen,
+    normalizedStreetAddress,
+    restoreAreaFallback,
+    selectedProvince?.name,
+    selectedWard?.name,
+    value.city,
+    value.streetAddress,
+    value.ward,
+    wardAliases,
+  ]);
 
   const handleProvinceChange = useCallback(
-    async (provinceCode: string) => {
+    (provinceCode: string) => {
       const province = findProvinceByCode(provinces, provinceCode);
-      const nextCity = province?.name || "";
-      const nextValue = {
-        ...value,
-        city: nextCity,
+
+      invalidatePendingRequests();
+      setHasManualPinOverride(false);
+      setDetailResolution(null);
+      setAreaResolution(null);
+      setResolvedPinLabel("");
+      setViewportState(toViewportState(DEFAULT_PROPERTY_COORDINATES, DEFAULT_MAP_ZOOM, null));
+      setResolvedLocationState(createDefaultResolvedLocationState());
+
+      onChange({
+        city: province?.name || "",
         cityCode: province?.code || "",
         ward: "",
         wardCode: "",
-      };
-
-      setHasManualPinOverride(false);
-      setLastResolution(null);
-      setResolvedPinLabel("");
-      onChange({
-        city: nextValue.city,
-        cityCode: nextValue.cityCode,
-        ward: "",
-        wardCode: "",
+        latitude: DEFAULT_PROPERTY_COORDINATES[0],
+        longitude: DEFAULT_PROPERTY_COORDINATES[1],
       });
-
-      await resolveProvinceStage(nextCity);
-      if (normalizeVietnamStreetAddressInput(nextValue.streetAddress, "", nextCity)) {
-        scheduleDetailResolution(nextValue);
-      }
     },
-    [onChange, provinces, resolveProvinceStage, scheduleDetailResolution, value]
+    [invalidatePendingRequests, onChange, provinces]
   );
 
   const handleWardChange = useCallback(
-    async (wardCode: string) => {
+    (wardCode: string) => {
       const ward = findWardByCode(availableWards, wardCode);
-      const nextWard = ward?.name || "";
-      const nextValue = {
-        ...value,
-        ward: nextWard,
-        wardCode: ward?.code || "",
-      };
 
+      invalidatePendingRequests();
       setHasManualPinOverride(false);
-      setLastResolution(null);
+      setDetailResolution(null);
+      setAreaResolution(null);
       setResolvedPinLabel("");
-      onChange({
-        ward: nextValue.ward,
-        wardCode: nextValue.wardCode,
-      });
+      setViewportState(toViewportState(DEFAULT_PROPERTY_COORDINATES, DEFAULT_MAP_ZOOM, null));
+      setResolvedLocationState(createDefaultResolvedLocationState());
 
-      await resolveWardStage(nextWard, value.city);
-      if (normalizeVietnamStreetAddressInput(nextValue.streetAddress, nextWard, value.city)) {
-        scheduleDetailResolution(nextValue);
-      }
+      onChange({
+        ward: ward?.name || "",
+        wardCode: ward?.code || "",
+        latitude: DEFAULT_PROPERTY_COORDINATES[0],
+        longitude: DEFAULT_PROPERTY_COORDINATES[1],
+      });
     },
-    [availableWards, onChange, resolveWardStage, scheduleDetailResolution, value]
+    [availableWards, invalidatePendingRequests, onChange]
   );
 
   const handleStreetAddressChange = useCallback(
     (streetAddress: string) => {
-      const nextValue = {
-        ...value,
-        streetAddress,
-      };
-      const normalizedStreetAddress = normalizeVietnamStreetAddressInput(streetAddress, value.ward, value.city);
+      if (detailDebounceRef.current !== null) {
+        window.clearTimeout(detailDebounceRef.current);
+        detailDebounceRef.current = null;
+      }
 
-      setHasManualPinOverride(false);
-      setLastResolution(null);
-      setResolvedPinLabel("");
+      if (lastStage === "detail") {
+        requestIdRef.current += 1;
+        activeControllerRef.current?.abort();
+        activeControllerRef.current = null;
+        setIsGeocoding(false);
+        setLastStage(null);
+      }
+
+      setDetailResolution(null);
       onChange({ streetAddress });
 
-      if (normalizedStreetAddress.trim()) {
-        scheduleDetailResolution(nextValue);
-        return;
-      }
-
-      if (value.ward.trim()) {
-        void resolveWardStage(value.ward, value.city);
-        return;
-      }
-
-      if (value.city.trim()) {
-        void resolveProvinceStage(value.city);
+      if (!normalizeVietnamStreetAddressInput(streetAddress, value.ward, value.city) && !hasManualPinOverride) {
+        restoreAreaFallback();
       }
     },
-    [onChange, resolveProvinceStage, resolveWardStage, scheduleDetailResolution, value]
+    [hasManualPinOverride, lastStage, onChange, restoreAreaFallback, value.city, value.ward]
   );
 
   const handleManualCoordinatesChange = useCallback(
     async (latitude: number, longitude: number, options?: { refreshLabel?: boolean }) => {
-      cancelPendingWork();
+      invalidatePendingRequests();
       setHasManualPinOverride(true);
-      onChange({ latitude, longitude });
-      setMapState((current) => ({
-        center: [latitude, longitude],
-        zoom: Math.max(current.zoom, 17),
-      }));
+      setDetailResolution(null);
+      setResolvedLocationState({
+        markerLat: latitude,
+        markerLng: longitude,
+        locationPrecision: "exact",
+        locationConfidence: 1,
+        requiresManualConfirmation: false,
+        displayName: resolvedPinLabel,
+      });
+      setViewportState((current) =>
+        toViewportState([latitude, longitude], Math.max(current.viewportZoom, 17), "manual")
+      );
+      commitCoordinatesIfChanged(latitude, longitude);
 
       if (!options?.refreshLabel) return;
 
       const { controller, requestId } = beginRequest("reverse");
       try {
         const reversed = await reverseGeocodeVietnamCoordinates({ lat: latitude, lon: longitude }, controller.signal);
-        if (requestId === requestIdRef.current) {
-          setResolvedPinLabel(reversed?.displayName || "");
-          setLastResolution((previous) =>
-            previous
-              ? {
-                  ...previous,
-                  lat: latitude,
-                  lon: longitude,
-                  displayName: reversed?.displayName || previous.displayName,
-                }
-              : null
-          );
-        }
+        if (requestId !== requestIdRef.current) return;
+
+        const displayName = reversed?.displayName || "";
+        setResolvedPinLabel(displayName);
+        setResolvedLocationState((current) => ({
+          ...current,
+          displayName,
+        }));
       } catch {
         if (!controller.signal.aborted) {
           setResolvedPinLabel("");
@@ -459,7 +547,7 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
         finishRequest(requestId);
       }
     },
-    [beginRequest, cancelPendingWork, finishRequest, onChange]
+    [beginRequest, commitCoordinatesIfChanged, finishRequest, invalidatePendingRequests, resolvedPinLabel]
   );
 
   const handleUseCurrentLocation = useCallback(async () => {
@@ -468,23 +556,36 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
   }, [handleManualCoordinatesChange]);
 
   const locationStatus = useMemo<PropertyLocationStatus>(() => {
-    const normalizedStreetAddress = normalizeVietnamStreetAddressInput(value.streetAddress, value.ward, value.city);
-    const resolution = lastResolution;
+    const bestResolution = detailResolution || areaResolution;
     const hasTypedStreet = Boolean(normalizedStreetAddress);
-    const derivedPrecision: LocationPrecision = resolution?.precision || (value.ward ? "ward" : "province");
-    const requiresManualPinConfirmation = resolution
-      ? resolution.requiresManualConfirmation && !hasManualPinOverride
-      : hasTypedStreet && !hasManualPinOverride;
+    const precision = resolvedLocationState.locationPrecision || (value.ward ? "ward" : "province");
+    const requiresManualPinConfirmation = hasManualPinOverride
+      ? false
+      : hasTypedStreet
+        ? !detailResolution || resolvedLocationState.requiresManualConfirmation
+        : resolvedLocationState.requiresManualConfirmation;
 
     return {
-      precision: derivedPrecision,
-      confidence: resolution?.confidence || 0,
+      precision,
+      confidence: resolvedLocationState.locationConfidence || bestResolution?.confidence || 0,
       requiresManualPinConfirmation,
       hasManualPinOverride,
       resolvedLabel: resolvedPinLabel,
       normalizedStreetAddress,
+      viewportSource: viewportState.viewportSource,
     };
-  }, [hasManualPinOverride, lastResolution, resolvedPinLabel, value.city, value.streetAddress, value.ward]);
+  }, [
+    areaResolution,
+    detailResolution,
+    hasManualPinOverride,
+    normalizedStreetAddress,
+    resolvedLocationState.locationConfidence,
+    resolvedLocationState.locationPrecision,
+    resolvedLocationState.requiresManualConfirmation,
+    resolvedPinLabel,
+    value.ward,
+    viewportState.viewportSource,
+  ]);
 
   return {
     provinces,
@@ -492,7 +593,8 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
     isLocationsLoading,
     isGeocoding,
     lastStage,
-    mapState,
+    viewportState,
+    resolvedLocationState,
     resolvedPinLabel,
     locationStatus,
     selectedProvinceCode: selectedProvince?.code || value.cityCode,

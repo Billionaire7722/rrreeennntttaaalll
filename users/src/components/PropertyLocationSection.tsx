@@ -98,7 +98,8 @@ export default function PropertyLocationSection({ isOpen, value, onChange, onSta
     availableWards,
     isLocationsLoading,
     isGeocoding,
-    mapState,
+    viewportState,
+    resolvedLocationState,
     resolvedPinLabel,
     locationStatus,
     selectedProvinceCode,
@@ -119,13 +120,8 @@ export default function PropertyLocationSection({ isOpen, value, onChange, onSta
   }, [locationStatus, onStatusChange]);
 
   const markerPosition = useMemo<[number, number]>(() => {
-    const hasExplicitCoordinates = Number.isFinite(value.latitude) && Number.isFinite(value.longitude);
-    if (hasExplicitCoordinates) {
-      return [value.latitude, value.longitude];
-    }
-
-    return DEFAULT_PROPERTY_COORDINATES;
-  }, [value.latitude, value.longitude]);
+    return [resolvedLocationState.markerLat, resolvedLocationState.markerLng];
+  }, [resolvedLocationState.markerLat, resolvedLocationState.markerLng]);
 
   const helperTone = locationStatus.requiresManualPinConfirmation ? "text-amber-700" : "text-emerald-700";
   const helperBg = locationStatus.requiresManualPinConfirmation ? "bg-amber-50 border-amber-200" : "bg-emerald-50 border-emerald-200";
@@ -234,7 +230,11 @@ export default function PropertyLocationSection({ isOpen, value, onChange, onSta
                     },
                   }}
                 />
-                <MapViewportController center={mapState.center} zoom={mapState.zoom} isOpen={isOpen} />
+                <MapViewportController
+                  center={viewportState.viewportCenter}
+                  zoom={viewportState.viewportZoom}
+                  isOpen={isOpen}
+                />
                 <MapInteractionHandler onPick={(latitude, longitude) => void handleManualCoordinatesChange(latitude, longitude, { refreshLabel: true })} />
               </MapContainer>
             ) : null}
