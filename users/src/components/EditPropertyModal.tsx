@@ -22,6 +22,7 @@ import SafeImage from "@/components/SafeImage";
 import RoomMiniApartmentFields, { EMPTY_ROOM_DETAILS } from "@/components/RoomMiniApartmentFields";
 import { useLanguage } from "@/context/LanguageContext";
 import { normalizePropertyType, PROPERTY_TYPE_OPTIONS, toPropertyTypeApiValue } from "@/i18n";
+import { geocodeVietnameseAddress } from "@/utils/geocoding";
 import { getBestAvailableLocation } from "@/utils/location";
 import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from "@/utils/safeMedia";
 
@@ -100,14 +101,6 @@ const API_BASE = () => {
   if (typeof window !== "undefined") return `${window.location.origin}/api`;
   return "http://localhost:3000";
 };
-
-function removeVietnameseTones(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\u0111/g, "d")
-    .replace(/\u0110/g, "D");
-}
 
 async function uploadFile(file: File, type: "image" | "video"): Promise<string> {
   const formData = new FormData();
@@ -213,18 +206,15 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
       setIsGeocoding(true);
 
       try {
-        const fullAddress = `${street_address}, ${ward}, ${city}, Vietnam`;
-        const cleanAddress = removeVietnameseTones(fullAddress);
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddress)}&format=json&limit=1`;
-        const response = await fetch(url, { headers: { "User-Agent": "RentalApp/1.0" } });
+        const result = await geocodeVietnameseAddress({
+          streetAddress: street_address,
+          ward,
+          city,
+        });
 
-        if (!response.ok) return;
+        if (!result) return;
 
-        const data = await response.json();
-        if (!data?.length) return;
-
-        const lat = Number.parseFloat(data[0].lat);
-        const lon = Number.parseFloat(data[0].lon);
+        const { lat, lon } = result;
         setFormData((previous) => ({ ...previous, latitude: lat, longitude: lon }));
         setMapCenter([lat, lon]);
       } catch (error) {
