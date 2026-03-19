@@ -19,6 +19,7 @@
     "showingOf": "Showing {shown} of {total}",
     "showingRange": "Showing {start}-{end} of {total}",
     "theme": "Theme",
+    "status": "Status",
     "view": "View",
     "edit": "Edit",
     "delete": "Delete",

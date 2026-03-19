@@ -19,6 +19,7 @@
     "showingOf": "Hiển thị {shown} trên {total}",
     "showingRange": "Hiển thị {start}-{end} trên {total}",
     "theme": "Giao diện",
+    "status": "Trạng thái",
     "view": "Xem",
     "edit": "Chỉnh sửa",
     "delete": "Xóa",

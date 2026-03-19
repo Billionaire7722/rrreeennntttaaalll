@@ -954,30 +954,43 @@ function HouseStatusToggle({
   t: (key: string) => string;
 }) {
   const options: Array<Exclude<HouseStatus, "pending">> = ["available", "rented"];
+  const selectableStatus = options.includes(currentStatus as Exclude<HouseStatus, "pending">) ? (currentStatus as Exclude<HouseStatus, "pending">) : "available";
+  const statusClass =
+    currentStatus === "available"
+      ? "bg-emerald-100 text-emerald-700"
+      : currentStatus === "pending"
+        ? "bg-amber-100 text-amber-700"
+        : "bg-rose-100 text-rose-700";
 
   return (
-    <div className="inline-flex items-center rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] p-1">
-      {options.map((status) => {
-        const isActive = currentStatus === status;
+    <div className="flex min-w-[190px] items-center justify-between gap-3 rounded-2xl border border-[var(--theme-border)] bg-white px-3 py-2">
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--theme-text-muted)]">{t("common.status")}</p>
+        <span className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${statusClass}`}>
+          {isUpdating ? t("common.loading") : t(`property.status.${currentStatus}`)}
+        </span>
+      </div>
 
-        return (
-          <button
-            key={status}
-            type="button"
-            disabled={isUpdating || isActive}
-            onClick={() => onChange(status)}
-            className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-              isActive
-                ? status === "available"
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-rose-100 text-rose-700"
-                : "text-[var(--theme-text-muted)] hover:bg-[var(--theme-surface-2)]"
-            } disabled:cursor-not-allowed disabled:opacity-70`}
-          >
-            {isUpdating && isActive ? t("common.loading") : t(`property.status.${status}`)}
-          </button>
-        );
-      })}
+      <div className="relative">
+        <select
+          value={selectableStatus}
+          disabled={isUpdating}
+          onChange={(event) => {
+            const nextStatus = event.target.value as Exclude<HouseStatus, "pending">;
+            if (nextStatus !== selectableStatus) {
+              onChange(nextStatus);
+            }
+          }}
+          className="min-w-[112px] appearance-none rounded-xl border border-[var(--theme-border)] bg-[var(--theme-surface)] px-3 py-2 pr-8 text-xs font-semibold text-[var(--theme-text)] outline-none transition focus:border-[var(--color-teal-400)] focus:ring-2 focus:ring-[var(--color-teal-100)] disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {options.map((status) => (
+            <option key={status} value={status}>
+              {t(`property.status.${status}`)}
+            </option>
+          ))}
+        </select>
+        <ChevronRight className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 rotate-90 text-[var(--theme-text-muted)]" />
+      </div>
     </div>
   );
 }
