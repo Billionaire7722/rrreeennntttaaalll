@@ -5,6 +5,8 @@ type NominatimAddress = {
   neighbourhood?: string;
   suburb?: string;
   quarter?: string;
+  village?: string;
+  hamlet?: string;
   city?: string;
   town?: string;
   county?: string;
@@ -27,7 +29,7 @@ type AnchorLocation = {
   viewbox?: string;
 };
 
-type GeocodedLocation = {
+export type GeocodedLocation = {
   lat: number;
   lon: number;
   zoom: number;
@@ -46,6 +48,13 @@ type AddressTokens = {
   street: string;
   streetCore: string;
   houseNumber: string;
+};
+
+export type ReverseGeocodedAddress = {
+  displayName: string;
+  streetAddress: string;
+  ward: string;
+  city: string;
 };
 
 const VIETNAM_COUNTRY = "Vietnam";
@@ -84,14 +93,15 @@ function stripStreetTypeWords(value: string) {
 function stripLeadingAddressNoise(value: string) {
   let current = value.trim();
   const patterns = [
-    /^(?:so\s*nha|so|số\s*nhà)\s*[\dA-Za-z/-]+\s*,?\s*/i,
-    /^(?:hem|hẻm|ngo|ngõ|ngach|ngách|lane|alley)\s*[\dA-Za-z/-]+\s*,?\s*/i,
+    /^(?:so\s*nha|so)\s*[\dA-Za-z/-]+\s*,?\s*/i,
+    /^(?:hem|ngo|ngach|lane|alley)\s*[\dA-Za-z/-]+\s*,?\s*/i,
     /^[\dA-Za-z/-]+\s*,\s*/i,
   ];
 
   let changed = true;
   while (changed) {
     changed = false;
+
     for (const pattern of patterns) {
       const next = current.replace(pattern, "").trim();
       if (next !== current) {
@@ -105,7 +115,7 @@ function stripLeadingAddressNoise(value: string) {
 }
 
 function extractHouseNumber(value: string) {
-  const match = value.trim().match(/^(?:so\s*nha|số\s*nhà)?\s*([\dA-Za-z/-]+)/i);
+  const match = value.trim().match(/^(?:so\s*nha)?\s*([\dA-Za-z/-]+)/i);
   return match?.[1] ? normalizeForMatch(match[1]) : "";
 }
 
@@ -123,44 +133,28 @@ function buildAddressTokens(streetAddress: string, ward: string, city: string): 
   };
 }
 
-function buildQueries(streetAddress: string, ward: string, city: string) {
-  const trimmedStreet = streetAddress.trim();
-  const strippedStreet = stripLeadingAddressNoise(trimmedStreet);
-  const streetCore = stripStreetTypeWords(strippedStreet);
-  const area = [ward.trim(), city.trim(), VIETNAM_COUNTRY].filter(Boolean).join(", ");
-
-  return dedupe([
-    [trimmedStreet, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [strippedStreet, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [streetCore, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [trimmedStreet, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [strippedStreet, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [streetCore, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    area,
-  ]);
-}
-
 function toViewbox(boundingbox?: string[]) {
   if (!boundingbox || boundingbox.length !== 4) return undefined;
   const [south, north, west, east] = boundingbox;
   return `${west},${north},${east},${south}`;
 }
 
-async function searchNominatim(query: string, anchor?: AnchorLocation) {
+async function searchNominatim(query: string, options?: { anchor?: AnchorLocation; signal?: AbortSignal; limit?: number }) {
   const params = new URLSearchParams({
     q: query,
     format: "jsonv2",
     addressdetails: "1",
-    limit: "6",
+    limit: String(options?.limit ?? 6),
     countrycodes: "vn",
   });
 
-  if (anchor?.viewbox) {
-    params.set("viewbox", anchor.viewbox);
+  if (options?.anchor?.viewbox) {
+    params.set("viewbox", options.anchor.viewbox);
   }
 
   const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
     headers: DEFAULT_HEADERS,
+    signal: options?.signal,
   });
 
   if (!response.ok) return [] as NominatimResult[];
@@ -188,6 +182,8 @@ function scoreCandidate(candidate: NominatimResult, tokens: AddressTokens, ancho
       candidate.address?.neighbourhood,
       candidate.address?.suburb,
       candidate.address?.quarter,
+      candidate.address?.village,
+      candidate.address?.hamlet,
       candidate.address?.city,
       candidate.address?.town,
       candidate.address?.county,
@@ -217,14 +213,9 @@ function scoreCandidate(candidate: NominatimResult, tokens: AddressTokens, ancho
   return { score, streetMatched: streetMatched || looseStreetMatched };
 }
 
-async function resolveAnchor(ward: string, city: string) {
-  const queries = dedupe([
-    [ward.trim(), city.trim(), VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [city.trim(), VIETNAM_COUNTRY].filter(Boolean).join(", "),
-  ]);
-
-  for (const query of queries) {
-    const candidates = await searchNominatim(query);
+async function resolveAnchor(queries: string[], signal?: AbortSignal) {
+  for (const query of dedupe(queries)) {
+    const candidates = await searchNominatim(query, { signal, limit: 1 });
     const first = candidates[0];
     if (!first) continue;
 
@@ -242,43 +233,90 @@ async function resolveAnchor(ward: string, city: string) {
   return null;
 }
 
-export async function geocodeVietnameseAddress(input: { streetAddress?: string; ward?: string; city?: string }): Promise<GeocodedLocation | null> {
+function buildDetailedStageQueries(streetAddress: string, ward: string, city: string) {
+  const trimmedStreet = streetAddress.trim();
+  const strippedStreet = stripLeadingAddressNoise(trimmedStreet);
+  const streetCore = stripStreetTypeWords(strippedStreet);
+
+  return dedupe([
+    [trimmedStreet, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
+    [strippedStreet, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
+    [streetCore, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
+  ]);
+}
+
+export async function resolveVietnamProvinceCenter(city: string, signal?: AbortSignal): Promise<GeocodedLocation | null> {
+  const normalizedCity = city.trim();
+  if (!normalizedCity) return null;
+
+  const provinceAnchor = await resolveAnchor([[normalizedCity, VIETNAM_COUNTRY].join(", ")], signal);
+  return provinceAnchor ? { lat: provinceAnchor.lat, lon: provinceAnchor.lon, zoom: 11 } : null;
+}
+
+export async function resolveVietnamWardCenter(
+  input: { ward?: string; city?: string },
+  signal?: AbortSignal
+): Promise<GeocodedLocation | null> {
+  const ward = input.ward?.trim() || "";
+  const city = input.city?.trim() || "";
+
+  if (!city) return null;
+  if (!ward) return resolveVietnamProvinceCenter(city, signal);
+
+  const wardAnchor = await resolveAnchor(
+    [
+      [ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
+      [city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
+    ],
+    signal
+  );
+
+  if (!wardAnchor) return null;
+
+  return {
+    lat: wardAnchor.lat,
+    lon: wardAnchor.lon,
+    zoom: 14,
+  };
+}
+
+export async function resolveVietnamDetailedAddress(
+  input: { streetAddress?: string; ward?: string; city?: string },
+  signal?: AbortSignal
+): Promise<GeocodedLocation | null> {
   const streetAddress = input.streetAddress?.trim() || "";
   const ward = input.ward?.trim() || "";
   const city = input.city?.trim() || "";
 
-  if (!streetAddress && !ward && !city) return null;
+  if (!city) return null;
+  if (!streetAddress) return resolveVietnamWardCenter({ ward, city }, signal);
 
-  if (city && !ward && !streetAddress) {
-    const cityAnchor = await resolveAnchor("", city);
-    return cityAnchor ? { lat: cityAnchor.lat, lon: cityAnchor.lon, zoom: 12 } : null;
-  }
-
-  if (city && ward && !streetAddress) {
-    const wardAnchor = await resolveAnchor(ward, city);
-    if (wardAnchor) {
-      return { lat: wardAnchor.lat, lon: wardAnchor.lon, zoom: 14 };
-    }
-  }
-
-  const anchor = await resolveAnchor(ward, city);
+  const provinceAnchor = await resolveAnchor([[city, VIETNAM_COUNTRY].join(", ")], signal);
+  const wardAnchor = ward
+    ? await resolveAnchor(
+        [
+          [ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
+          [city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
+        ],
+        signal
+      )
+    : provinceAnchor;
+  const anchor = wardAnchor || provinceAnchor || undefined;
   const tokens = buildAddressTokens(streetAddress, ward, city);
-  const queries = buildQueries(streetAddress, ward, city);
 
   let bestMatch: BestMatch | null = null;
-
-  for (const query of queries) {
+  for (const query of buildDetailedStageQueries(streetAddress, ward, city)) {
     const variants = dedupe([query, removeVietnameseTones(query)]);
 
     for (const variant of variants) {
-      const candidates = await searchNominatim(variant, anchor || undefined);
+      const candidates = await searchNominatim(variant, { anchor, signal });
 
       for (const candidate of candidates) {
         const lat = Number.parseFloat(candidate.lat);
         const lon = Number.parseFloat(candidate.lon);
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
 
-        const scored = scoreCandidate(candidate, tokens, anchor || undefined);
+        const scored = scoreCandidate(candidate, tokens, anchor);
         if (!bestMatch || scored.score > bestMatch.score) {
           bestMatch = {
             lat,
@@ -290,36 +328,28 @@ export async function geocodeVietnameseAddress(input: { streetAddress?: string; 
       }
     }
 
-    const currentBest = bestMatch;
-    if (currentBest && currentBest.score >= 70 && (currentBest.streetMatched || !tokens.streetCore)) {
+    const currentBestMatch = bestMatch;
+    if (currentBestMatch && currentBestMatch.score >= 70 && currentBestMatch.streetMatched) {
       break;
     }
   }
 
   const finalBestMatch = bestMatch;
 
-  if (finalBestMatch && (!tokens.streetCore || finalBestMatch.streetMatched || finalBestMatch.score >= 65)) {
+  if (finalBestMatch && (finalBestMatch.streetMatched || finalBestMatch.score >= 65)) {
     return {
       lat: finalBestMatch.lat,
       lon: finalBestMatch.lon,
-      zoom: finalBestMatch.streetMatched ? 17 : 15,
+      zoom: finalBestMatch.streetMatched ? 17 : 16,
     };
   }
 
-  if (!streetAddress && anchor) {
-    return {
-      lat: anchor.lat,
-      lon: anchor.lon,
-      zoom: ward ? 14 : 12,
-    };
+  if (wardAnchor) {
+    return { lat: wardAnchor.lat, lon: wardAnchor.lon, zoom: 14 };
   }
 
-  if (anchor && finalBestMatch && finalBestMatch.score >= 20) {
-    return {
-      lat: anchor.lat,
-      lon: anchor.lon,
-      zoom: ward ? 14 : 12,
-    };
+  if (provinceAnchor) {
+    return { lat: provinceAnchor.lat, lon: provinceAnchor.lon, zoom: 11 };
   }
 
   return finalBestMatch
@@ -329,4 +359,54 @@ export async function geocodeVietnameseAddress(input: { streetAddress?: string; 
         zoom: 16,
       }
     : null;
+}
+
+export async function reverseGeocodeVietnamCoordinates(
+  input: { lat: number; lon: number },
+  signal?: AbortSignal
+): Promise<ReverseGeocodedAddress | null> {
+  const params = new URLSearchParams({
+    lat: String(input.lat),
+    lon: String(input.lon),
+    format: "jsonv2",
+    addressdetails: "1",
+    zoom: "18",
+  });
+
+  const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
+    headers: DEFAULT_HEADERS,
+    signal,
+  });
+
+  if (!response.ok) return null;
+  const payload = (await response.json()) as NominatimResult;
+
+  const address = payload.address || {};
+  const city = address.city || address.town || address.county || address.state || "";
+  const ward = address.suburb || address.quarter || address.neighbourhood || address.village || address.hamlet || "";
+  const streetAddress = [address.house_number, address.road || address.residential].filter(Boolean).join(" ").trim();
+
+  return {
+    displayName: payload.display_name || "",
+    streetAddress,
+    ward,
+    city,
+  };
+}
+
+export async function geocodeVietnameseAddress(input: {
+  streetAddress?: string;
+  ward?: string;
+  city?: string;
+  signal?: AbortSignal;
+}): Promise<GeocodedLocation | null> {
+  const streetAddress = input.streetAddress?.trim() || "";
+  const ward = input.ward?.trim() || "";
+  const city = input.city?.trim() || "";
+
+  if (!city && !ward && !streetAddress) return null;
+  if (!city) return null;
+  if (!ward && !streetAddress) return resolveVietnamProvinceCenter(city, input.signal);
+  if (!streetAddress) return resolveVietnamWardCenter({ ward, city }, input.signal);
+  return resolveVietnamDetailedAddress({ streetAddress, ward, city }, input.signal);
 }

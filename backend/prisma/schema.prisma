@@ -20,8 +20,10 @@ model House {
   property_type       String?
   address             String
   ward                String?
-  district            String
+  ward_code           String?
+  district            String?
   city                String
+  city_code           String?
   latitude            Float?
   longitude           Float?
   price               Int?
@@ -57,6 +59,8 @@ model House {
 
   @@index([city])
   @@index([district])
+  @@index([city_code])
+  @@index([ward_code])
   @@index([price])
   @@index([owner_id])
 }

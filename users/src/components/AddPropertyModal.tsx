@@ -10,51 +10,19 @@ import {
   Trash2,
   CheckCircle,
   XCircle,
-  MapPin,
-  Navigation,
   Eye,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import dynamic from "next/dynamic";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import { useMap } from "react-leaflet";
 import api, { resolvedApiBaseUrl } from "@/api/axios";
+import PropertyLocationSection from "@/components/PropertyLocationSection";
 import SafeImage from "@/components/SafeImage";
 import { useAuth } from "@/context/useAuth";
 import { useLanguage } from "@/context/LanguageContext";
+import { DEFAULT_PROPERTY_COORDINATES } from "@/hooks/usePropertyLocationPicker";
 import { normalizePropertyType, PROPERTY_TYPE_OPTIONS, toPropertyTypeApiValue } from "@/i18n";
-import { geocodeVietnameseAddress } from "@/utils/geocoding";
-import { getBestAvailableLocation } from "@/utils/location";
 import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from "@/utils/safeMedia";
 import RoomMiniApartmentFields, { EMPTY_ROOM_DETAILS } from "@/components/RoomMiniApartmentFields";
-
-const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
-
-const MapViewUpdater = ({ center, zoom }: { center: [number, number]; zoom: number }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    map.setView(center, zoom);
-  }, [center, map, zoom]);
-
-  return null;
-};
-
-const markerSvg = encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">' +
-    '<circle cx="12" cy="12" r="9" fill="#3b82f6" stroke="white" stroke-width="3"/>' +
-  "</svg>"
-);
-
-const customIcon = L.icon({
-  iconUrl: `data:image/svg+xml,${markerSvg}`,
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-});
 
 interface AddPropertyModalProps {
   isOpen: boolean;
@@ -72,8 +40,6 @@ const API_BASE = () => {
   return "http://localhost:3000";
 };
 
-const DEFAULT_COORDINATES: [number, number] = [21.0285, 105.8542];
-
 function createInitialFormData() {
   return {
     name: "",
@@ -81,6 +47,8 @@ function createInitialFormData() {
     street_address: "",
     ward: "",
     city: "",
+    ward_code: "",
+    city_code: "",
     price: "",
     square: "",
     bedrooms: "",
@@ -88,8 +56,8 @@ function createInitialFormData() {
     toilets: "",
     description: "",
     contact_phone: "",
-    latitude: DEFAULT_COORDINATES[0],
-    longitude: DEFAULT_COORDINATES[1],
+    latitude: DEFAULT_PROPERTY_COORDINATES[0],
+    longitude: DEFAULT_PROPERTY_COORDINATES[1],
     roomDetails: { ...EMPTY_ROOM_DETAILS },
   };
 }
@@ -114,18 +82,13 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
   const { t } = useLanguage();
   const [submitState, setSubmitState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [uploadingMedia, setUploadingMedia] = useState(false);
-  const [isGeocoding, setIsGeocoding] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<string[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
-  const markerRef = useRef<L.Marker | null>(null);
   const [formData, setFormData] = useState(createInitialFormData);
-  const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_COORDINATES);
-  const [mapZoom, setMapZoom] = useState(13);
-  const { street_address, ward, city } = formData;
   const isRoomMiniApartment = normalizePropertyType(formData.property_type) === "roomMiniApartment";
 
   const resetForm = useCallback(() => {
@@ -142,43 +105,10 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     setPreviewIndex(null);
     setSubmitState("idle");
     setUploadingMedia(false);
-    setIsGeocoding(false);
-    setMapCenter(DEFAULT_COORDINATES);
-    setMapZoom(13);
 
     if (imageInputRef.current) imageInputRef.current.value = "";
     if (videoInputRef.current) videoInputRef.current.value = "";
   }, [imagePreviews]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    if (!street_address && !ward && !city) return;
-
-    const timer = setTimeout(async () => {
-      setIsGeocoding(true);
-
-      try {
-        const result = await geocodeVietnameseAddress({
-          streetAddress: street_address,
-          ward,
-          city,
-        });
-
-        if (!result) return;
-
-        const { lat, lon, zoom } = result;
-        setFormData((previous) => ({ ...previous, latitude: lat, longitude: lon }));
-        setMapCenter([lat, lon]);
-        setMapZoom(zoom);
-      } catch (error) {
-        console.error("Geocoding error:", error);
-      } finally {
-        setIsGeocoding(false);
-      }
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [city, isOpen, street_address, ward]);
 
   useEffect(() => {
     if (previewIndex === null) return;
@@ -196,26 +126,6 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [imagePreviews.length, previewIndex]);
-
-  const handleUseCurrentLocation = useCallback(async () => {
-    try {
-      const location = await getBestAvailableLocation();
-      setFormData((previous) => ({ ...previous, latitude: location.lat, longitude: location.lng }));
-      setMapCenter([location.lat, location.lng]);
-      setMapZoom(16);
-    } catch (error) {
-      console.error("Error getting location:", error);
-      window.alert(t("property.form.locationError"));
-    }
-  }, [t]);
-
-  const handleDragEnd = () => {
-    const marker = markerRef.current;
-    if (!marker) return;
-
-    const position = marker.getLatLng();
-    setFormData((previous) => ({ ...previous, latitude: position.lat, longitude: position.lng }));
-  };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name } = event.target;
@@ -325,8 +235,9 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
         property_type: toPropertyTypeApiValue(formData.property_type),
         address: normalizedStreetAddress,
         ward: normalizedWard,
-        district: normalizedWard,
+        ward_code: formData.ward_code || null,
         city: normalizedCity,
+        city_code: formData.city_code || null,
         price: formData.price ? Number(String(formData.price).replace(/\./g, "")) : null,
         square: formData.square ? Number(formData.square) : null,
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
@@ -503,98 +414,30 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">
-                    {t("property.form.cityLabel")} <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    required
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder={t("property.form.cityLabel")}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">
-                    {t("property.form.wardLabel")} <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    required
-                    name="ward"
-                    value={formData.ward}
-                    onChange={handleChange}
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder={t("property.form.wardLabel")}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  {t("property.form.streetAddressLabel")} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  required
-                  name="street_address"
-                  value={formData.street_address}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={t("property.form.streetAddressLabel")}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <div className="mb-1 flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700">
-                    {t("property.form.exactLocationLabel")} <span className="text-red-500">*</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleUseCurrentLocation}
-                    className="flex items-center gap-1.5 text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
-                  >
-                    <Navigation size={12} />
-                    {t("property.form.useCurrentLocation")}
-                  </button>
-                </div>
-
-                <div className="relative">
-                  <div className="z-10 h-[200px] w-full overflow-hidden rounded-xl border border-gray-200">
-                    {typeof window !== "undefined" ? (
-                      <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: "100%", width: "100%" }}>
-                        <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
-                        <Marker
-                          draggable
-                          eventHandlers={{ dragend: handleDragEnd }}
-                          position={[formData.latitude, formData.longitude]}
-                          ref={markerRef}
-                          icon={customIcon}
-                        />
-                        <MapViewUpdater center={mapCenter} zoom={mapZoom} />
-                      </MapContainer>
-                    ) : null}
-                  </div>
-
-                  {isGeocoding ? (
-                    <div className="absolute inset-0 z-[1001] flex items-center justify-center rounded-xl bg-white/40 backdrop-blur-[1px]">
-                      <div className="flex items-center gap-2 rounded-full border border-blue-50/50 bg-white/90 px-3 py-1.5 shadow-sm">
-                        <Loader2 size={14} className="animate-spin text-blue-600" />
-                        <span className="text-[11px] font-medium uppercase tracking-tight text-blue-700">
-                          {t("property.form.geocodingLoading")}
-                        </span>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                <p className="mt-1.5 flex items-center gap-1 text-[10px] text-gray-400">
-                  <MapPin size={10} className="text-gray-300" />
-                  {t("property.form.dragPinHint")}
-                </p>
-              </div>
+              <PropertyLocationSection
+                isOpen={isOpen}
+                value={{
+                  city: formData.city,
+                  cityCode: formData.city_code,
+                  ward: formData.ward,
+                  wardCode: formData.ward_code,
+                  streetAddress: formData.street_address,
+                  latitude: formData.latitude,
+                  longitude: formData.longitude,
+                }}
+                onChange={(patch) =>
+                  setFormData((previous) => ({
+                    ...previous,
+                    ...(patch.city !== undefined ? { city: patch.city } : {}),
+                    ...(patch.cityCode !== undefined ? { city_code: patch.cityCode } : {}),
+                    ...(patch.ward !== undefined ? { ward: patch.ward } : {}),
+                    ...(patch.wardCode !== undefined ? { ward_code: patch.wardCode } : {}),
+                    ...(patch.streetAddress !== undefined ? { street_address: patch.streetAddress } : {}),
+                    ...(patch.latitude !== undefined ? { latitude: patch.latitude } : {}),
+                    ...(patch.longitude !== undefined ? { longitude: patch.longitude } : {}),
+                  }))
+                }
+              />
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">

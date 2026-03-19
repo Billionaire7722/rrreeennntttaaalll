@@ -120,7 +120,9 @@ export class HousesService {
                 { address: { contains: search, mode: 'insensitive' } },
                 { ward: { contains: search, mode: 'insensitive' } },
                 { district: { contains: search, mode: 'insensitive' } },
+                { ward_code: { contains: search, mode: 'insensitive' } },
                 { city: { contains: search, mode: 'insensitive' } },
+                { city_code: { contains: search, mode: 'insensitive' } },
             ];
         }
 
@@ -138,8 +140,10 @@ export class HousesService {
                     updated_at: true,
                     address: true,
                     ward: true,
+                    ward_code: true,
                     district: true,
                     city: true,
+                    city_code: true,
                     property_type: true,
                     price: true,
                     payment_method: true,
@@ -236,24 +240,26 @@ export class HousesService {
 
         const normalizedAddress = String(data.address || house.address || '').trim();
         const normalizedWard = String(data.ward || house.ward || '').trim();
-        const normalizedDistrict = String(data.district || house.district || '').trim();
+        const normalizedDistrict = String(data.district ?? '').trim();
         const normalizedCity = String(data.city || house.city || '').trim();
+        const normalizedWardCode = this.normalizeOptionalString(data.ward_code);
+        const normalizedCityCode = this.normalizeOptionalString(data.city_code);
         const nextPropertyType = data.property_type !== undefined ? data.property_type : house.property_type;
         const shouldHaveRoomDetails = this.isRoomMiniApartment(nextPropertyType);
         const shouldSyncRoomDetails = shouldHaveRoomDetails && (data.roomDetails !== undefined || data.property_type !== undefined);
         const normalizedRoomDetails = this.normalizeRoomDetails(data.roomDetails);
 
-        if ((data.latitude === undefined || data.longitude === undefined) && 
-            (data.address !== undefined || data.ward !== undefined || data.district !== undefined || data.city !== undefined)) {
+        if ((data.latitude === undefined || data.longitude === undefined) &&
+            (data.address !== undefined || data.ward !== undefined || data.city !== undefined)) {
             
             const searchQueries: string[] = [];
-            if (normalizedAddress && normalizedWard && normalizedDistrict && normalizedCity) {
-                searchQueries.push(`${normalizedAddress}, ${normalizedWard}, ${normalizedDistrict}, ${normalizedCity}`);
+            if (normalizedAddress && normalizedWard && normalizedCity) {
+                searchQueries.push(`${normalizedAddress}, ${normalizedWard}, ${normalizedCity}, Vietnam`);
             }
-            if (normalizedAddress && normalizedDistrict && normalizedCity) {
-                searchQueries.push(`${normalizedAddress}, ${normalizedDistrict}, ${normalizedCity}`);
+            if (normalizedWard && normalizedCity) {
+                searchQueries.push(`${normalizedWard}, ${normalizedCity}, Vietnam`);
             }
-            if (normalizedCity) searchQueries.push(normalizedCity);
+            if (normalizedCity) searchQueries.push(`${normalizedCity}, Vietnam`);
 
             const coords = await this.fetchCoordinatesFromAddress(searchQueries);
             if (coords) {
@@ -267,8 +273,12 @@ export class HousesService {
             ...(data.property_type !== undefined && { property_type: data.property_type }),
             ...(data.address !== undefined && { address: data.address }),
             ...(data.ward !== undefined && { ward: data.ward }),
+            ...(data.ward_code !== undefined && { ward_code: normalizedWardCode }),
             ...(data.city !== undefined && { city: data.city }),
-            ...(data.district !== undefined && { district: data.district }),
+            ...(data.city_code !== undefined && { city_code: normalizedCityCode }),
+            ...((data.address !== undefined || data.ward !== undefined || data.city !== undefined || data.district !== undefined) && {
+                district: normalizedDistrict || null,
+            }),
             ...(data.price !== undefined && { price: this.normalizeOptionalNumber(data.price) }),
             ...(data.bedrooms !== undefined && { bedrooms: this.normalizeOptionalNumber(data.bedrooms) }),
             ...(data.floors !== undefined && { floors: this.normalizeOptionalNumber(data.floors) }),
@@ -366,18 +376,21 @@ export class HousesService {
 
         const normalizedAddress = String(data.address || '').trim();
         const normalizedWard = String(data.ward || '').trim();
-        const normalizedDistrict = String(data.district || '').trim();
+        const normalizedDistrict = this.normalizeOptionalString(data.district);
         const normalizedCity = String(data.city || '').trim();
+        const normalizedWardCode = this.normalizeOptionalString(data.ward_code);
+        const normalizedCityCode = this.normalizeOptionalString(data.city_code);
 
         if (finalLat === null || finalLon === null) {
             const searchQueries: string[] = [];
-            if (normalizedAddress && normalizedWard && normalizedDistrict && normalizedCity) {
-                searchQueries.push(`${normalizedAddress}, ${normalizedWard}, ${normalizedDistrict}, ${normalizedCity}`);
-            } else if (normalizedAddress && normalizedDistrict && normalizedCity) {
-                searchQueries.push(`${normalizedAddress}, ${normalizedDistrict}, ${normalizedCity}`);
+            if (normalizedAddress && normalizedWard && normalizedCity) {
+                searchQueries.push(`${normalizedAddress}, ${normalizedWard}, ${normalizedCity}, Vietnam`);
             }
             
-            if (normalizedCity) searchQueries.push(normalizedCity);
+            if (normalizedWard && normalizedCity) {
+                searchQueries.push(`${normalizedWard}, ${normalizedCity}, Vietnam`);
+            }
+            if (normalizedCity) searchQueries.push(`${normalizedCity}, Vietnam`);
 
             const coords = await this.fetchCoordinatesFromAddress(searchQueries);
             if (coords) {
@@ -387,7 +400,6 @@ export class HousesService {
         }
 
         const fallbackCity = normalizedCity || '';
-        const fallbackDistrict = normalizedDistrict || '';
         const fallbackWard = normalizedWard || '';
         const propertyType = this.normalizeOptionalString(data.property_type);
         const shouldCreateRoomDetails = this.isRoomMiniApartment(propertyType);
@@ -399,6 +411,7 @@ export class HousesService {
                 name: data.name,
                 address: normalizedAddress,
                 ward: fallbackWard,
+                ward_code: normalizedWardCode,
                 latitude: finalLat,
                 longitude: finalLon,
                 price: this.normalizeOptionalNumber(data.price),
@@ -411,7 +424,8 @@ export class HousesService {
                 is_private_bathroom: data.is_private_bathroom,
                 status: data.status || 'available',
                 city: fallbackCity,
-                district: fallbackDistrict,
+                city_code: normalizedCityCode,
+                district: normalizedDistrict,
                 property_type: propertyType,
                 payment_method: shouldCreateRoomDetails ? normalizedRoomDetails.paymentMethod : this.normalizeOptionalString(data.payment_method),
                 image_url_1: data.image_url_1 || null,
