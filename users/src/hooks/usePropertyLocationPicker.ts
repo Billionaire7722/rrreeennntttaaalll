@@ -151,6 +151,17 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
   const selectedWard =
     findWardByCode(wards, value.wardCode) ||
     findWardByName(wards, value.ward, selectedProvince?.code ?? value.cityCode ?? undefined);
+  const cityAliases = useMemo(
+    () => [selectedProvince?.name_with_type, selectedProvince?.slug].filter((alias): alias is string => Boolean(alias)),
+    [selectedProvince?.name_with_type, selectedProvince?.slug]
+  );
+  const wardAliases = useMemo(
+    () =>
+      [selectedWard?.name_with_type, selectedWard?.path, selectedWard?.path_with_type, selectedWard?.slug].filter(
+        (alias): alias is string => Boolean(alias)
+      ),
+    [selectedWard?.name_with_type, selectedWard?.path, selectedWard?.path_with_type, selectedWard?.slug]
+  );
 
   const availableWards = useMemo(() => {
     const provinceCode = selectedProvince?.code ?? value.cityCode;
@@ -217,6 +228,8 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
           cityCode: "",
           ward: "",
           wardCode: "",
+          latitude: DEFAULT_PROPERTY_COORDINATES[0],
+          longitude: DEFAULT_PROPERTY_COORDINATES[1],
         });
         setMapState({ center: DEFAULT_PROPERTY_COORDINATES, zoom: DEFAULT_MAP_ZOOM });
         return;
@@ -225,7 +238,7 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
       const { controller, requestId } = beginRequest("province");
 
       try {
-        const result = await resolveVietnamProvinceCenter(nextCity, controller.signal);
+        const result = await resolveVietnamProvinceCenter(nextCity, controller.signal, cityAliases);
         if (!result) return;
 
         applyResolvedLocation(
@@ -245,7 +258,7 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
         finishRequest(requestId);
       }
     },
-    [applyResolvedLocation, beginRequest, cancelPendingWork, finishRequest, onChange]
+    [applyResolvedLocation, beginRequest, cancelPendingWork, cityAliases, finishRequest, onChange]
   );
 
   const resolveWardStage = useCallback(
@@ -255,7 +268,7 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
       const { controller, requestId } = beginRequest("ward");
 
       try {
-        const result = await resolveVietnamWardCenter({ ward: nextWard, city: nextCity }, controller.signal);
+        const result = await resolveVietnamWardCenter({ ward: nextWard, city: nextCity, wardAliases, cityAliases }, controller.signal);
         if (!result) return;
 
         applyResolvedLocation(
@@ -275,7 +288,7 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
         finishRequest(requestId);
       }
     },
-    [applyResolvedLocation, beginRequest, finishRequest]
+    [applyResolvedLocation, beginRequest, cityAliases, finishRequest, wardAliases]
   );
 
   const scheduleDetailResolution = useCallback(
@@ -295,6 +308,8 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
               streetAddress: nextValue.streetAddress,
               ward: nextValue.ward,
               city: nextValue.city,
+              wardAliases,
+              cityAliases,
             },
             controller.signal
           );
@@ -304,7 +319,6 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
           applyResolvedLocation(
             requestId,
             {
-              streetAddress: result.normalizedStreetAddress,
               latitude: result.lat,
               longitude: result.lon,
             },
@@ -320,59 +334,77 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
         }
       }, DETAIL_GEOCODE_DEBOUNCE_MS);
     },
-    [applyResolvedLocation, beginRequest, finishRequest]
+    [applyResolvedLocation, beginRequest, cityAliases, finishRequest, wardAliases]
   );
 
   const handleProvinceChange = useCallback(
     async (provinceCode: string) => {
       const province = findProvinceByCode(provinces, provinceCode);
       const nextCity = province?.name || "";
+      const nextValue = {
+        ...value,
+        city: nextCity,
+        cityCode: province?.code || "",
+        ward: "",
+        wardCode: "",
+      };
 
       setHasManualPinOverride(false);
       setLastResolution(null);
       setResolvedPinLabel("");
       onChange({
-        city: nextCity,
-        cityCode: province?.code || "",
+        city: nextValue.city,
+        cityCode: nextValue.cityCode,
         ward: "",
         wardCode: "",
       });
 
       await resolveProvinceStage(nextCity);
+      if (normalizeVietnamStreetAddressInput(nextValue.streetAddress, "", nextCity)) {
+        scheduleDetailResolution(nextValue);
+      }
     },
-    [onChange, provinces, resolveProvinceStage]
+    [onChange, provinces, resolveProvinceStage, scheduleDetailResolution, value]
   );
 
   const handleWardChange = useCallback(
     async (wardCode: string) => {
       const ward = findWardByCode(availableWards, wardCode);
       const nextWard = ward?.name || "";
-
-      setHasManualPinOverride(false);
-      setLastResolution(null);
-      setResolvedPinLabel("");
-      onChange({
-        ward: nextWard,
-        wardCode: ward?.code || "",
-      });
-
-      await resolveWardStage(nextWard, value.city);
-    },
-    [availableWards, onChange, resolveWardStage, value.city]
-  );
-
-  const handleStreetAddressChange = useCallback(
-    (streetAddress: string) => {
-      const normalizedStreetAddress = normalizeVietnamStreetAddressInput(streetAddress, value.ward, value.city);
       const nextValue = {
         ...value,
-        streetAddress: normalizedStreetAddress,
+        ward: nextWard,
+        wardCode: ward?.code || "",
       };
 
       setHasManualPinOverride(false);
       setLastResolution(null);
       setResolvedPinLabel("");
-      onChange({ streetAddress: normalizedStreetAddress });
+      onChange({
+        ward: nextValue.ward,
+        wardCode: nextValue.wardCode,
+      });
+
+      await resolveWardStage(nextWard, value.city);
+      if (normalizeVietnamStreetAddressInput(nextValue.streetAddress, nextWard, value.city)) {
+        scheduleDetailResolution(nextValue);
+      }
+    },
+    [availableWards, onChange, resolveWardStage, scheduleDetailResolution, value]
+  );
+
+  const handleStreetAddressChange = useCallback(
+    (streetAddress: string) => {
+      const nextValue = {
+        ...value,
+        streetAddress,
+      };
+      const normalizedStreetAddress = normalizeVietnamStreetAddressInput(streetAddress, value.ward, value.city);
+
+      setHasManualPinOverride(false);
+      setLastResolution(null);
+      setResolvedPinLabel("");
+      onChange({ streetAddress });
 
       if (normalizedStreetAddress.trim()) {
         scheduleDetailResolution(nextValue);

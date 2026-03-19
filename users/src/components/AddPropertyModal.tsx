@@ -21,6 +21,7 @@ import { useAuth } from "@/context/useAuth";
 import { useLanguage } from "@/context/LanguageContext";
 import { DEFAULT_PROPERTY_COORDINATES, type PropertyLocationStatus } from "@/hooks/usePropertyLocationPicker";
 import { normalizePropertyType, PROPERTY_TYPE_OPTIONS, toPropertyTypeApiValue } from "@/i18n";
+import { normalizeVietnamStreetAddressInput } from "@/utils/geocoding";
 import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from "@/utils/safeMedia";
 import RoomMiniApartmentFields, { EMPTY_ROOM_DETAILS } from "@/components/RoomMiniApartmentFields";
 
@@ -234,7 +235,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     setSubmitState("loading");
 
     try {
-      const normalizedStreetAddress = formData.street_address.trim();
+      const normalizedStreetAddress = normalizeVietnamStreetAddressInput(formData.street_address, formData.ward, formData.city);
       const normalizedWard = formData.ward.trim();
       const normalizedCity = formData.city.trim();
       const fullAddressString = [normalizedStreetAddress, normalizedWard, normalizedCity].filter(Boolean).join(", ");

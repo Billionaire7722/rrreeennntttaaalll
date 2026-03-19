@@ -47,6 +47,13 @@ type AddressTokens = {
   houseNumber: string;
 };
 
+type AdministrativeSearchInput = {
+  city?: string;
+  cityAliases?: string[];
+  ward?: string;
+  wardAliases?: string[];
+};
+
 type ValidatedCandidate = {
   lat: number;
   lon: number;
@@ -113,6 +120,13 @@ function normalizeForMatch(value: string) {
 
 function dedupe(items: string[]) {
   return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean)));
+}
+
+function includesNormalizedText(value: string, fragment: string) {
+  const normalizedValue = normalizeForMatch(value);
+  const normalizedFragment = normalizeForMatch(fragment);
+  if (!normalizedValue || !normalizedFragment) return false;
+  return normalizedValue.includes(normalizedFragment);
 }
 
 function normalizePunctuation(value: string) {
@@ -394,11 +408,85 @@ function buildStreetLevelQuery(streetAddress: string, ward: string, city: string
   return [withoutHouseNumber, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", ");
 }
 
-export async function resolveVietnamProvinceCenter(city: string, signal?: AbortSignal): Promise<LocationResolution | null> {
+function buildAdminLabelCandidates(primary: string, aliases: string[] = []) {
+  return dedupe([primary, ...aliases].map((value) => normalizePunctuation(value)).filter(Boolean));
+}
+
+function appendVietnamScope(query: string) {
+  if (!query) return "";
+  return includesNormalizedText(query, VIETNAM_COUNTRY) ? query : [query, VIETNAM_COUNTRY].filter(Boolean).join(", ");
+}
+
+function buildProvinceQueries(city: string, cityAliases: string[] = []) {
+  return dedupe(
+    buildAdminLabelCandidates(city, cityAliases).flatMap((label) => [appendVietnamScope(label), label])
+  );
+}
+
+function buildWardQueries(input: AdministrativeSearchInput) {
+  const cityLabels = buildAdminLabelCandidates(input.city || "", input.cityAliases || []);
+  const wardLabels = buildAdminLabelCandidates(input.ward || "", input.wardAliases || []);
+
+  const queries = wardLabels.flatMap((wardLabel) => {
+    if (cityLabels.length === 0) {
+      return [appendVietnamScope(wardLabel), wardLabel];
+    }
+
+    return cityLabels.flatMap((cityLabel) => {
+      const scoped = includesNormalizedText(wardLabel, cityLabel)
+        ? appendVietnamScope(wardLabel)
+        : appendVietnamScope([wardLabel, cityLabel].filter(Boolean).join(", "));
+
+      return [scoped, wardLabel];
+    });
+  });
+
+  return dedupe([
+    ...queries,
+    ...buildProvinceQueries(input.city || "", input.cityAliases || []),
+  ]);
+}
+
+function buildAddressQueries(
+  builder: (streetAddress: string, ward: string, city: string) => string,
+  streetAddress: string,
+  input: AdministrativeSearchInput
+) {
+  const cityLabels = buildAdminLabelCandidates(input.city || "", input.cityAliases || []);
+  const wardLabels = buildAdminLabelCandidates(input.ward || "", input.wardAliases || []);
+
+  if (wardLabels.length === 0) {
+    return dedupe(
+      cityLabels.flatMap((cityLabel) => {
+        const scoped = builder(streetAddress, "", cityLabel);
+        return [scoped, removeVietnameseTones(scoped)];
+      })
+    );
+  }
+
+  return dedupe(
+    wardLabels.flatMap((wardLabel) => {
+      const scopedWard = cityLabels.length === 0
+        ? [wardLabel]
+        : cityLabels.map((cityLabel) => (includesNormalizedText(wardLabel, cityLabel) ? wardLabel : [wardLabel, cityLabel].join(", ")));
+
+      return scopedWard.flatMap((wardScope) => {
+        const exact = builder(streetAddress, wardScope, "");
+        return [exact, removeVietnameseTones(exact)];
+      });
+    })
+  );
+}
+
+export async function resolveVietnamProvinceCenter(
+  city: string,
+  signal?: AbortSignal,
+  cityAliases: string[] = []
+): Promise<LocationResolution | null> {
   const normalizedCity = city.trim();
   if (!normalizedCity) return null;
 
-  const provinceAnchor = await resolveAnchor([[normalizedCity, VIETNAM_COUNTRY].join(", ")], signal);
+  const provinceAnchor = await resolveAnchor(buildProvinceQueries(normalizedCity, cityAliases), signal);
   if (!provinceAnchor) return null;
 
   return toResolution({
@@ -414,17 +502,18 @@ export async function resolveVietnamProvinceCenter(city: string, signal?: AbortS
 }
 
 export async function resolveVietnamWardCenter(
-  input: { ward?: string; city?: string },
+  input: AdministrativeSearchInput,
   signal?: AbortSignal
 ): Promise<LocationResolution | null> {
   const ward = input.ward?.trim() || "";
   const city = input.city?.trim() || "";
 
   if (!city) return null;
-  if (!ward) return resolveVietnamProvinceCenter(city, signal);
+  if (!ward) return resolveVietnamProvinceCenter(city, signal, input.cityAliases || []);
 
-  const wardQuery = [ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", ");
-  const wardAnchor = await resolveAnchor([wardQuery, [city, VIETNAM_COUNTRY].join(", ")], signal);
+  const wardQueries = buildWardQueries(input);
+  const wardQuery = wardQueries[0] || [ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", ");
+  const wardAnchor = await resolveAnchor(wardQueries, signal);
   if (!wardAnchor) return null;
 
   return toResolution({
@@ -440,7 +529,7 @@ export async function resolveVietnamWardCenter(
 }
 
 export async function resolveVietnamDetailedAddress(
-  input: { streetAddress?: string; ward?: string; city?: string },
+  input: AdministrativeSearchInput & { streetAddress?: string },
   signal?: AbortSignal
 ): Promise<LocationResolution | null> {
   const ward = input.ward?.trim() || "";
@@ -450,13 +539,10 @@ export async function resolveVietnamDetailedAddress(
   if (!city) return null;
   if (!normalizedStreetAddress) return resolveVietnamWardCenter({ ward, city }, signal);
 
-  const provinceAnchor = await resolveAnchor([[city, VIETNAM_COUNTRY].join(", ")], signal);
+  const provinceAnchor = await resolveAnchor(buildProvinceQueries(city, input.cityAliases || []), signal);
   const wardAnchor = ward
     ? await resolveAnchor(
-        [
-          [ward, city, VIETNAM_COUNTRY].join(", "),
-          [city, VIETNAM_COUNTRY].join(", "),
-        ],
+        buildWardQueries(input),
         signal
       )
     : provinceAnchor;
@@ -467,14 +553,26 @@ export async function resolveVietnamDetailedAddress(
   const exactQuery = buildExactQuery(normalizedStreetAddress, ward, city);
   const streetQuery = buildStreetLevelQuery(normalizedStreetAddress, ward, city);
   const queryStages = [
-    { query: exactQuery, precision: "exact" as const, requireHouseMatch: true },
-    { query: streetQuery, precision: "street" as const, requireHouseMatch: false },
+    {
+      queries: buildAddressQueries(buildExactQuery, normalizedStreetAddress, input),
+      fallbackQuery: exactQuery,
+      precision: "exact" as const,
+      requireHouseMatch: true,
+    },
+    {
+      queries: buildAddressQueries(buildStreetLevelQuery, normalizedStreetAddress, input),
+      fallbackQuery: streetQuery,
+      precision: "street" as const,
+      requireHouseMatch: false,
+    },
   ];
 
   let bestStreetCandidate: ValidatedCandidate | null = null;
 
   for (const stage of queryStages) {
-    const variants = dedupe([stage.query, removeVietnameseTones(stage.query)]);
+    const variants = stage.queries.length > 0
+      ? stage.queries
+      : dedupe([stage.fallbackQuery, removeVietnameseTones(stage.fallbackQuery)]);
 
     for (const variant of variants) {
       const candidates = await searchNominatim(variant, {
@@ -514,7 +612,7 @@ export async function resolveVietnamDetailedAddress(
       lon: bestStreetCandidate.lon,
       normalizedStreetAddress,
       displayName: bestStreetCandidate.displayName,
-      query: streetQuery,
+      query: queryStages[1]?.queries[0] || streetQuery,
       precision: "street",
       confidence: Math.min(0.88, 0.58 + bestStreetCandidate.streetScore * 0.24),
       requiresManualConfirmation: true,
