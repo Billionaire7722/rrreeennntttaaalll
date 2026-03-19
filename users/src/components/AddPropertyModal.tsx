@@ -116,6 +116,8 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     price: "",
     square: "",
     bedrooms: "",
+    floors: "",
+    toilets: "",
     description: "",
     contact_phone: "",
     latitude: 21.0285,
@@ -302,6 +304,8 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
         price: formData.price ? Number(String(formData.price).replace(/\./g, "")) : null,
         square: formData.square ? Number(formData.square) : null,
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
+        floors: formData.floors ? Number(formData.floors) : null,
+        toilets: formData.toilets ? Number(formData.toilets) : null,
         description: formData.description.trim() || null,
         contact_phone: formData.contact_phone.trim() || null,
         latitude: formData.latitude,
@@ -591,27 +595,58 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">{t("property.fields.bedrooms")}</label>
-                  <input
-                    type="number"
-                    name="bedrooms"
-                    value={formData.bedrooms}
-                    onChange={handleChange}
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="0"
-                  />
+              <div className="space-y-3 rounded-2xl border border-slate-200 bg-[linear-gradient(135deg,#f8fafc_0%,#eff6ff_100%)] p-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">{t("property.detail.houseDetailsTitle")}</p>
+                  <p className="mt-1 text-xs text-slate-500">{t("property.detail.houseDetailsHint")}</p>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">{t("property.form.contactPhoneLabel")}</label>
-                  <input
-                    name="contact_phone"
-                    value={formData.contact_phone}
-                    onChange={handleChange}
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="+84..."
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700">{t("property.fields.bedrooms")}</label>
+                    <input
+                      type="number"
+                      min="0"
+                      name="bedrooms"
+                      value={formData.bedrooms}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-white bg-white/90 px-4 py-2 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-blue-500"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700">{t("property.fields.floors")}</label>
+                    <input
+                      type="number"
+                      min="0"
+                      name="floors"
+                      value={formData.floors}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-white bg-white/90 px-4 py-2 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-blue-500"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700">{t("property.fields.toilets")}</label>
+                    <input
+                      type="number"
+                      min="0"
+                      name="toilets"
+                      value={formData.toilets}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-white bg-white/90 px-4 py-2 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-blue-500"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700">{t("property.form.contactPhoneLabel")}</label>
+                    <input
+                      name="contact_phone"
+                      value={formData.contact_phone}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-white bg-white/90 px-4 py-2 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-blue-500"
+                      placeholder="+84..."
+                    />
+                  </div>
                 </div>
               </div>
 

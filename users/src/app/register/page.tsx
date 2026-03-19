@@ -46,7 +46,6 @@ const passwordRules = (t: (key: string) => string) => [
     { id: 'uppercase', label: t('auth.register.passwordRules.uppercase'), test: (p: string) => /[A-Z]/.test(p) },
     { id: 'lowercase', label: t('auth.register.passwordRules.lowercase'), test: (p: string) => /[a-z]/.test(p) },
     { id: 'number', label: t('auth.register.passwordRules.number'), test: (p: string) => /\d/.test(p) },
-    { id: 'special', label: t('auth.register.passwordRules.special'), test: (p: string) => /[@$!%*?&]/.test(p) },
 ];
 
 export default function RegisterPage() {

@@ -203,7 +203,6 @@ export class AuthService {
         if (!/[A-Z]/.test(password)) errors.push('Mật khẩu phải có nhất một chữ hoa');
         if (!/[a-z]/.test(password)) errors.push('Mật khẩu phải có ít nhất một chữ thường');
         if (!/\d/.test(password)) errors.push('Mật khẩu phải có ít nhất một số');
-        if (!/[@$!%*?&]/.test(password)) errors.push('Mật khẩu phải có ít nhất một ký tự đặc biệt (@$!%*?&)');
         return errors;
     }
 
@@ -412,3 +411,4 @@ export class AuthService {
         return this.createSession(session.user, ip, ua);
     }
 }
+

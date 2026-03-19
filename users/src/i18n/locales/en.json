@@ -36,7 +36,9 @@
       "contactNow": "Contact Now",
       "manageListing": "Manage Listing",
       "roomDetailsTitle": "Room / Mini Apartment Details",
-      "notProvided": "Not provided"
+      "notProvided": "Not provided",
+      "houseDetailsTitle": "House Details",
+      "houseDetailsHint": "Add the key counts renters usually ask for first."
     },
     "status": {
       "available": "Available",
@@ -54,7 +56,9 @@
       "sharedBath": "Shared",
       "bathrooms": "Bathrooms",
       "area": "Area (m²)",
-      "description": "Description"
+      "description": "Description",
+      "floors": "Floors",
+      "toilets": "Toilets"
     },
     "filters": {
       "title": "Advanced Filter",
@@ -267,8 +271,7 @@
         "length": "8-12 characters",
         "uppercase": "Uppercase letter (A-Z)",
         "lowercase": "Lowercase letter (a-z)",
-        "number": "Number (0-9)",
-        "special": "Special character (@$!%*?&)"
+        "number": "Number (0-9)"
       },
       "acceptTermsLabel": "I agree to the Terms of Service and Privacy Policy"
     },

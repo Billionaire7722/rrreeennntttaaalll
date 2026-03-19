@@ -1,0 +1,3 @@
+ALTER TABLE "House"
+ADD COLUMN "floors" INTEGER,
+ADD COLUMN "toilets" INTEGER;

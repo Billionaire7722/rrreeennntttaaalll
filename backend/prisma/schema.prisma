@@ -27,6 +27,8 @@ model House {
   price               Int?
   payment_method      String?
   bedrooms            Int?
+  floors              Int?
+  toilets             Int?
   square              Float?
   image_url_1         String?
   image_url_2         String?

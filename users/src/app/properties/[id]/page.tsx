@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, MapPin, BedDouble, Bath, Share2, Heart, X, Square } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, BedDouble, Bath, Building2, Share2, Heart, X, Square } from "lucide-react";
 import api from "@/api/axios";
 import SafeImage from "@/components/SafeImage";
 import { useAuth } from "@/context/useAuth";
@@ -51,6 +51,8 @@ interface PropertyDetailsData {
   price?: number;
   payment_method?: string;
   bedrooms?: number;
+  floors?: number;
+  toilets?: number;
   bathrooms?: number;
   is_private_bathroom?: boolean;
   hasPrivateBathroom?: boolean;
@@ -228,10 +230,39 @@ export default function PropertyDetailsPage() {
   const postedByAdmins = Array.isArray(property.postedByAdmins) ? property.postedByAdmins : [];
   const owner = property.owner || postedByAdmins[0];
   const formattedPrice = `${formatNumber(property.price || 0)} VND`;
-  const bathroomValue = property.is_private_bathroom || property.hasPrivateBathroom ? t("property.fields.privateBath") : `${property.bathrooms || 1}`;
   const isRoomMiniApartment = normalizePropertyType(property.property_type) === "roomMiniApartment";
   const roomDetails = property.roomDetails;
   const paymentMethod = roomDetails?.paymentMethod || property.payment_method || t("property.detail.notProvided");
+  const metrics = [
+    {
+      key: "bedrooms",
+      icon: BedDouble,
+      label: t("property.fields.bedrooms"),
+      value: property.bedrooms ?? 0,
+      accent: "from-sky-500/15 to-cyan-500/10 text-sky-700",
+    },
+    {
+      key: "floors",
+      icon: Building2,
+      label: t("property.fields.floors"),
+      value: property.floors ?? 0,
+      accent: "from-violet-500/15 to-fuchsia-500/10 text-violet-700",
+    },
+    {
+      key: "toilets",
+      icon: Bath,
+      label: t("property.fields.toilets"),
+      value: property.toilets ?? 0,
+      accent: "from-emerald-500/15 to-teal-500/10 text-emerald-700",
+    },
+    {
+      key: "area",
+      icon: Square,
+      label: t("property.fields.area"),
+      value: `${property.square || 0} m²`,
+      accent: "from-amber-500/15 to-orange-500/10 text-amber-700",
+    },
+  ];
 
   const handleContactNow = () => {
     const query = new URLSearchParams();
@@ -382,31 +413,19 @@ export default function PropertyDetailsPage() {
         </div>
 
         <div className="mb-6 h-px w-full bg-gray-200" />
-
-        <div className="mb-6 flex flex-row justify-between px-2">
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex h-[50px] w-[50px] items-center justify-center rounded-full bg-[#EEF2F7]">
-              <BedDouble size={20} className="text-blue-600" />
-            </div>
-            <span className="text-[15px] font-bold text-gray-900">{property.bedrooms}</span>
-            <span className="text-[13px] text-gray-500">{t("property.fields.bedrooms")}</span>
-          </div>
-
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex h-[50px] w-[50px] items-center justify-center rounded-full bg-[#EEF2F7]">
-              <Bath size={20} className="text-blue-600" />
-            </div>
-            <span className="text-[15px] font-bold text-gray-900">{bathroomValue}</span>
-            <span className="text-[13px] text-gray-500">{t("property.fields.bathrooms")}</span>
-          </div>
-
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex h-[50px] w-[50px] items-center justify-center rounded-full bg-[#EEF2F7]">
-              <Square size={20} className="text-blue-600" />
-            </div>
-            <span className="text-[15px] font-bold text-gray-900">{property.square || 0} m²</span>
-            <span className="text-[13px] text-gray-500">{t("property.fields.area")}</span>
-          </div>
+        <div className="mb-6 grid grid-cols-2 gap-3">
+          {metrics.map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <div key={metric.key} className="rounded-3xl border border-slate-100 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${metric.accent}`}>
+                  <Icon size={20} />
+                </div>
+                <p className="mt-4 text-2xl font-black tracking-tight text-slate-900">{metric.value}</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{metric.label}</p>
+              </div>
+            );
+          })}
         </div>
 
         <div className="mb-6 h-px w-full bg-gray-200" />
