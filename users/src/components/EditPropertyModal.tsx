@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   X,
   Loader2,
@@ -10,16 +10,47 @@ import {
   Trash2,
   CheckCircle,
   XCircle,
+  MapPin,
+  Navigation,
 } from "lucide-react";
+import dynamic from "next/dynamic";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { useMap } from "react-leaflet";
 import api, { resolvedApiBaseUrl } from "@/api/axios";
-import PropertyLocationSection from "@/components/PropertyLocationSection";
 import SafeImage from "@/components/SafeImage";
 import RoomMiniApartmentFields, { EMPTY_ROOM_DETAILS } from "@/components/RoomMiniApartmentFields";
 import { useLanguage } from "@/context/LanguageContext";
-import { DEFAULT_PROPERTY_COORDINATES } from "@/hooks/usePropertyLocationPicker";
 import { normalizePropertyType, PROPERTY_TYPE_OPTIONS, toPropertyTypeApiValue } from "@/i18n";
-import { normalizeVietnamStreetAddressInput } from "@/utils/geocoding";
+import { geocodeVietnameseAddress } from "@/utils/geocoding";
+import { getBestAvailableLocation } from "@/utils/location";
 import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from "@/utils/safeMedia";
+
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
+
+const MapViewUpdater = ({ center, zoom }: { center: [number, number]; zoom: number }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, map, zoom]);
+
+  return null;
+};
+
+const markerSvg = encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">' +
+    '<circle cx="12" cy="12" r="9" fill="#3b82f6" stroke="white" stroke-width="3"/>' +
+  "</svg>"
+);
+
+const customIcon = L.icon({
+  iconUrl: `data:image/svg+xml,${markerSvg}`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
 
 interface House {
   id: string;
@@ -27,10 +58,8 @@ interface House {
   property_type?: string;
   address: string;
   ward?: string;
-  district?: string | null;
+  district: string;
   city: string;
-  ward_code?: string | null;
-  city_code?: string | null;
   price?: number;
   square?: number;
   bedrooms?: number;
@@ -92,19 +121,19 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
   const { t } = useLanguage();
   const [submitState, setSubmitState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<string[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const markerRef = useRef<L.Marker | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     property_type: "house",
     street_address: "",
     ward: "",
     city: "",
-    ward_code: "",
-    city_code: "",
     price: "",
     square: "",
     bedrooms: "",
@@ -112,10 +141,14 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
     toilets: "",
     description: "",
     contact_phone: "",
-    latitude: DEFAULT_PROPERTY_COORDINATES[0],
-    longitude: DEFAULT_PROPERTY_COORDINATES[1],
+    latitude: 21.0285,
+    longitude: 105.8542,
     roomDetails: { ...EMPTY_ROOM_DETAILS },
   });
+  const [mapCenter, setMapCenter] = useState<[number, number]>([21.0285, 105.8542]);
+  const [mapZoom, setMapZoom] = useState(13);
+  const [shouldGeocode, setShouldGeocode] = useState(false);
+  const { street_address, ward, city } = formData;
   const isRoomMiniApartment = normalizePropertyType(formData.property_type) === "roomMiniApartment";
 
   useEffect(() => {
@@ -127,8 +160,6 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
       street_address: house.address || "",
       ward: house.ward || house.district || "",
       city: house.city || "",
-      ward_code: house.ward_code || "",
-      city_code: house.city_code || "",
       price: house.price != null ? String(house.price).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "",
       square: house.square != null ? String(house.square) : "",
       bedrooms: house.bedrooms != null ? String(house.bedrooms) : "",
@@ -136,8 +167,8 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
       toilets: house.toilets != null ? String(house.toilets) : "",
       description: house.description || "",
       contact_phone: house.contact_phone || "",
-      latitude: house.latitude || DEFAULT_PROPERTY_COORDINATES[0],
-      longitude: house.longitude || DEFAULT_PROPERTY_COORDINATES[1],
+      latitude: house.latitude || 21.0285,
+      longitude: house.longitude || 105.8542,
       roomDetails: {
         electricityPrice: house.roomDetails?.electricityPrice != null ? String(house.roomDetails.electricityPrice) : "",
         waterPrice: house.roomDetails?.waterPrice != null ? String(house.roomDetails.waterPrice) : "",
@@ -145,6 +176,14 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
         otherFees: house.roomDetails?.otherFees || "",
       },
     });
+
+    if (house.latitude && house.longitude) {
+      setMapCenter([house.latitude, house.longitude]);
+      setMapZoom(16);
+    } else {
+      setMapCenter([21.0285, 105.8542]);
+      setMapZoom(13);
+    }
 
     const existingImages = [
       house.image_url_1,
@@ -162,6 +201,58 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
     setImagePreviews(existingImages);
     setVideos(existingVideos);
   }, [house]);
+
+  useEffect(() => {
+    if (!house || !shouldGeocode) return;
+
+    if (!street_address && !ward && !city) return;
+
+    const timer = setTimeout(async () => {
+      setIsGeocoding(true);
+
+      try {
+        const result = await geocodeVietnameseAddress({
+          streetAddress: street_address,
+          ward,
+          city,
+        });
+
+        if (!result) return;
+
+        const { lat, lon, zoom } = result;
+        setFormData((previous) => ({ ...previous, latitude: lat, longitude: lon }));
+        setMapCenter([lat, lon]);
+        setMapZoom(zoom);
+      } catch (error) {
+        console.error("Geocoding error:", error);
+      } finally {
+        setIsGeocoding(false);
+        setShouldGeocode(false);
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [city, house, shouldGeocode, street_address, ward]);
+
+  const handleUseCurrentLocation = useCallback(async () => {
+    try {
+      const location = await getBestAvailableLocation();
+      setFormData((previous) => ({ ...previous, latitude: location.lat, longitude: location.lng }));
+      setMapCenter([location.lat, location.lng]);
+      setMapZoom(16);
+    } catch (error) {
+      console.error("Error getting location:", error);
+      window.alert(t("property.form.locationError"));
+    }
+  }, [t]);
+
+  const handleDragEnd = () => {
+    const marker = markerRef.current;
+    if (!marker) return;
+
+    const position = marker.getLatLng();
+    setFormData((previous) => ({ ...previous, latitude: position.lat, longitude: position.lng }));
+  };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name } = event.target;
@@ -185,6 +276,10 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
     }
 
     setFormData((previous) => ({ ...previous, [name]: value }));
+
+    if (["street_address", "ward", "city"].includes(name)) {
+      setShouldGeocode(true);
+    }
   };
 
   const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,7 +349,7 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
     setSubmitState("loading");
 
     try {
-      const normalizedStreetAddress = normalizeVietnamStreetAddressInput(formData.street_address, formData.ward, formData.city);
+      const normalizedStreetAddress = formData.street_address.trim();
       const normalizedWard = formData.ward.trim();
       const normalizedCity = formData.city.trim();
       const fullAddressString = [normalizedStreetAddress, normalizedWard, normalizedCity].filter(Boolean).join(", ");
@@ -262,9 +357,8 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
         property_type: toPropertyTypeApiValue(formData.property_type),
         address: normalizedStreetAddress,
         ward: normalizedWard,
-        ward_code: formData.ward_code || null,
+        district: normalizedWard,
         city: normalizedCity,
-        city_code: formData.city_code || null,
         price: formData.price ? Number(String(formData.price).replace(/\./g, "")) : null,
         square: formData.square ? Number(formData.square) : null,
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
@@ -388,30 +482,98 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
               </select>
             </div>
 
-            <PropertyLocationSection
-              isOpen={Boolean(house)}
-              value={{
-                city: formData.city,
-                cityCode: formData.city_code,
-                ward: formData.ward,
-                wardCode: formData.ward_code,
-                streetAddress: formData.street_address,
-                latitude: formData.latitude,
-                longitude: formData.longitude,
-              }}
-              onChange={(patch) =>
-                setFormData((previous) => ({
-                  ...previous,
-                  ...(patch.city !== undefined ? { city: patch.city } : {}),
-                  ...(patch.cityCode !== undefined ? { city_code: patch.cityCode } : {}),
-                  ...(patch.ward !== undefined ? { ward: patch.ward } : {}),
-                  ...(patch.wardCode !== undefined ? { ward_code: patch.wardCode } : {}),
-                  ...(patch.streetAddress !== undefined ? { street_address: patch.streetAddress } : {}),
-                  ...(patch.latitude !== undefined ? { latitude: patch.latitude } : {}),
-                  ...(patch.longitude !== undefined ? { longitude: patch.longitude } : {}),
-                }))
-              }
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  {t("property.form.cityLabel")} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  required
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={t("property.form.cityLabel")}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  {t("property.form.wardLabel")} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  required
+                  name="ward"
+                  value={formData.ward}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={t("property.form.wardLabel")}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                {t("property.form.streetAddressLabel")} <span className="text-red-500">*</span>
+              </label>
+              <input
+                required
+                name="street_address"
+                value={formData.street_address}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder={t("property.form.streetAddressLabel")}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="mb-1 flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">
+                  {t("property.form.exactLocationLabel")} <span className="text-red-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleUseCurrentLocation}
+                  className="flex items-center gap-1.5 text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
+                >
+                  <Navigation size={12} />
+                  {t("property.form.useCurrentLocation")}
+                </button>
+              </div>
+
+              <div className="relative">
+                <div className="z-10 h-[200px] w-full overflow-hidden rounded-xl border border-gray-200">
+                  {typeof window !== "undefined" ? (
+                    <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: "100%", width: "100%" }}>
+                      <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+                      <Marker
+                        draggable
+                        eventHandlers={{ dragend: handleDragEnd }}
+                        position={[formData.latitude, formData.longitude]}
+                        ref={markerRef}
+                        icon={customIcon}
+                      />
+                      <MapViewUpdater center={mapCenter} zoom={mapZoom} />
+                    </MapContainer>
+                  ) : null}
+                </div>
+
+                {isGeocoding ? (
+                  <div className="absolute inset-0 z-[1001] flex items-center justify-center rounded-xl bg-white/40 backdrop-blur-[1px]">
+                    <div className="flex items-center gap-2 rounded-full border border-blue-50/50 bg-white/90 px-3 py-1.5 shadow-sm">
+                      <Loader2 size={14} className="animate-spin text-blue-600" />
+                      <span className="text-[11px] font-medium uppercase tracking-tight text-blue-700">
+                        {t("property.form.geocodingLoading")}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <p className="mt-1.5 flex items-center gap-1 text-[10px] text-gray-400">
+                <MapPin size={10} className="text-gray-300" />
+                {t("property.form.dragPinHint")}
+              </p>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
