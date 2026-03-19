@@ -35,6 +35,8 @@
       "noDescription": "Chưa có mô tả.",
       "contactNow": "Liên hệ ngay",
       "manageListing": "Quản lý tin đăng",
+      "houseDetailsTitle": "Chi tiết căn nhà",
+      "houseDetailsHint": "Thêm các thông tin mà người thuê thường hỏi đầu tiên.",
       "roomDetailsTitle": "Chi tiết phòng / mini apartment",
       "notProvided": "Chưa cập nhật"
     },
@@ -50,6 +52,8 @@
     },
     "fields": {
       "bedrooms": "Phòng ngủ",
+      "floors": "Tầng",
+      "toilets": "Nhà vệ sinh",
       "privateBath": "Khép kín",
       "sharedBath": "Chung",
       "bathrooms": "Phòng tắm",
