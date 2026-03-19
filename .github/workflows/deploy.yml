@@ -86,6 +86,18 @@ jobs:
           \$DC --env-file .env.production up -d --build
           \$DC ps
           if command -v curl >/dev/null 2>&1; then
-            curl --fail --silent --show-error --max-time 20 http://127.0.0.1:3002/profile >/dev/null
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              if curl --fail --silent --show-error --max-time 20 http://127.0.0.1:3002/profile >/dev/null; then
+                break
+              fi
+
+              if [ "\$attempt" -eq 12 ]; then
+                echo "Users health check failed after 12 attempts"
+                \$DC logs users --tail=100 || true
+                exit 1
+              fi
+
+              sleep 5
+            done
           fi
           EOF
