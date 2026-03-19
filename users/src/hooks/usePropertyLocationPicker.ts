@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getBestAvailableLocation } from "@/utils/location";
 import {
+  normalizeVietnamStreetAddressInput,
+  type LocationPrecision,
+  type LocationResolution,
   resolveVietnamDetailedAddress,
   resolveVietnamProvinceCenter,
   resolveVietnamWardCenter,
@@ -48,6 +51,15 @@ type UsePropertyLocationPickerOptions = {
   onChange: (patch: PropertyLocationPatch) => void;
 };
 
+export type PropertyLocationStatus = {
+  precision: LocationPrecision;
+  confidence: number;
+  requiresManualPinConfirmation: boolean;
+  hasManualPinOverride: boolean;
+  resolvedLabel: string;
+  normalizedStreetAddress: string;
+};
+
 function hasValidCoordinates(latitude: number, longitude: number) {
   return Number.isFinite(latitude) && Number.isFinite(longitude) && !(latitude === 0 && longitude === 0);
 }
@@ -62,6 +74,8 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
     zoom: DEFAULT_MAP_ZOOM,
   });
   const [resolvedPinLabel, setResolvedPinLabel] = useState("");
+  const [lastResolution, setLastResolution] = useState<LocationResolution | null>(null);
+  const [hasManualPinOverride, setHasManualPinOverride] = useState(false);
   const [lastStage, setLastStage] = useState<GeocodingStage>(null);
   const requestIdRef = useRef(0);
   const activeControllerRef = useRef<AbortController | null>(null);
@@ -113,7 +127,7 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
       findWardByCode(wards, value.wardCode) ||
       findWardByName(wards, value.ward, selectedProvince?.code ?? value.cityCode ?? undefined);
 
-    const patch: PropertyLocationPatch = {};
+      const patch: PropertyLocationPatch = {};
     if (selectedProvince && selectedProvince.code !== value.cityCode) {
       patch.cityCode = selectedProvince.code;
     }
@@ -181,9 +195,12 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
   }, []);
 
   const applyResolvedLocation = useCallback(
-    (requestId: number, patch: PropertyLocationPatch, nextMapState: MapState) => {
+    (requestId: number, patch: PropertyLocationPatch, nextMapState: MapState, resolution: LocationResolution) => {
       if (requestId !== requestIdRef.current) return false;
 
+      setHasManualPinOverride(false);
+      setLastResolution(resolution);
+      setResolvedPinLabel(resolution.displayName);
       onChange(patch);
       setMapState(nextMapState);
       return true;
@@ -217,7 +234,8 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
             latitude: result.lat,
             longitude: result.lon,
           },
-          { center: [result.lat, result.lon], zoom: result.zoom }
+          { center: [result.lat, result.lon], zoom: result.zoom },
+          result
         );
       } catch {
         if (!controller.signal.aborted) {
@@ -246,7 +264,8 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
             latitude: result.lat,
             longitude: result.lon,
           },
-          { center: [result.lat, result.lon], zoom: result.zoom }
+          { center: [result.lat, result.lon], zoom: result.zoom },
+          result
         );
       } catch {
         if (!controller.signal.aborted) {
@@ -285,10 +304,12 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
           applyResolvedLocation(
             requestId,
             {
+              streetAddress: result.normalizedStreetAddress,
               latitude: result.lat,
               longitude: result.lon,
             },
-            { center: [result.lat, result.lon], zoom: result.zoom }
+            { center: [result.lat, result.lon], zoom: result.zoom },
+            result
           );
         } catch {
           if (!controller.signal.aborted) {
@@ -307,6 +328,9 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
       const province = findProvinceByCode(provinces, provinceCode);
       const nextCity = province?.name || "";
 
+      setHasManualPinOverride(false);
+      setLastResolution(null);
+      setResolvedPinLabel("");
       onChange({
         city: nextCity,
         cityCode: province?.code || "",
@@ -324,6 +348,9 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
       const ward = findWardByCode(availableWards, wardCode);
       const nextWard = ward?.name || "";
 
+      setHasManualPinOverride(false);
+      setLastResolution(null);
+      setResolvedPinLabel("");
       onChange({
         ward: nextWard,
         wardCode: ward?.code || "",
@@ -336,14 +363,18 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
 
   const handleStreetAddressChange = useCallback(
     (streetAddress: string) => {
+      const normalizedStreetAddress = normalizeVietnamStreetAddressInput(streetAddress, value.ward, value.city);
       const nextValue = {
         ...value,
-        streetAddress,
+        streetAddress: normalizedStreetAddress,
       };
 
-      onChange({ streetAddress });
+      setHasManualPinOverride(false);
+      setLastResolution(null);
+      setResolvedPinLabel("");
+      onChange({ streetAddress: normalizedStreetAddress });
 
-      if (streetAddress.trim()) {
+      if (normalizedStreetAddress.trim()) {
         scheduleDetailResolution(nextValue);
         return;
       }
@@ -363,6 +394,7 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
   const handleManualCoordinatesChange = useCallback(
     async (latitude: number, longitude: number, options?: { refreshLabel?: boolean }) => {
       cancelPendingWork();
+      setHasManualPinOverride(true);
       onChange({ latitude, longitude });
       setMapState((current) => ({
         center: [latitude, longitude],
@@ -376,6 +408,16 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
         const reversed = await reverseGeocodeVietnamCoordinates({ lat: latitude, lon: longitude }, controller.signal);
         if (requestId === requestIdRef.current) {
           setResolvedPinLabel(reversed?.displayName || "");
+          setLastResolution((previous) =>
+            previous
+              ? {
+                  ...previous,
+                  lat: latitude,
+                  lon: longitude,
+                  displayName: reversed?.displayName || previous.displayName,
+                }
+              : null
+          );
         }
       } catch {
         if (!controller.signal.aborted) {
@@ -393,6 +435,25 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
     await handleManualCoordinatesChange(location.lat, location.lng, { refreshLabel: true });
   }, [handleManualCoordinatesChange]);
 
+  const locationStatus = useMemo<PropertyLocationStatus>(() => {
+    const normalizedStreetAddress = normalizeVietnamStreetAddressInput(value.streetAddress, value.ward, value.city);
+    const resolution = lastResolution;
+    const hasTypedStreet = Boolean(normalizedStreetAddress);
+    const derivedPrecision: LocationPrecision = resolution?.precision || (value.ward ? "ward" : "province");
+    const requiresManualPinConfirmation = resolution
+      ? resolution.requiresManualConfirmation && !hasManualPinOverride
+      : hasTypedStreet && !hasManualPinOverride;
+
+    return {
+      precision: derivedPrecision,
+      confidence: resolution?.confidence || 0,
+      requiresManualPinConfirmation,
+      hasManualPinOverride,
+      resolvedLabel: resolvedPinLabel,
+      normalizedStreetAddress,
+    };
+  }, [hasManualPinOverride, lastResolution, resolvedPinLabel, value.city, value.streetAddress, value.ward]);
+
   return {
     provinces,
     availableWards,
@@ -401,6 +462,7 @@ export function usePropertyLocationPicker({ isOpen, value, onChange }: UseProper
     lastStage,
     mapState,
     resolvedPinLabel,
+    locationStatus,
     selectedProvinceCode: selectedProvince?.code || value.cityCode,
     selectedWardCode: selectedWard?.code || value.wardCode,
     handleProvinceChange,

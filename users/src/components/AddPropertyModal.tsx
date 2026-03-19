@@ -19,7 +19,7 @@ import PropertyLocationSection from "@/components/PropertyLocationSection";
 import SafeImage from "@/components/SafeImage";
 import { useAuth } from "@/context/useAuth";
 import { useLanguage } from "@/context/LanguageContext";
-import { DEFAULT_PROPERTY_COORDINATES } from "@/hooks/usePropertyLocationPicker";
+import { DEFAULT_PROPERTY_COORDINATES, type PropertyLocationStatus } from "@/hooks/usePropertyLocationPicker";
 import { normalizePropertyType, PROPERTY_TYPE_OPTIONS, toPropertyTypeApiValue } from "@/i18n";
 import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from "@/utils/safeMedia";
 import RoomMiniApartmentFields, { EMPTY_ROOM_DETAILS } from "@/components/RoomMiniApartmentFields";
@@ -89,6 +89,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState(createInitialFormData);
+  const [locationStatus, setLocationStatus] = useState<PropertyLocationStatus | null>(null);
   const isRoomMiniApartment = normalizePropertyType(formData.property_type) === "roomMiniApartment";
 
   const resetForm = useCallback(() => {
@@ -105,6 +106,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
     setPreviewIndex(null);
     setSubmitState("idle");
     setUploadingMedia(false);
+    setLocationStatus(null);
 
     if (imageInputRef.current) imageInputRef.current.value = "";
     if (videoInputRef.current) videoInputRef.current.value = "";
@@ -224,6 +226,11 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
       return;
     }
 
+    if (locationStatus?.requiresManualPinConfirmation && !locationStatus.hasManualPinOverride) {
+      window.alert(t("property.form.locationNeedsPinConfirmation"));
+      return;
+    }
+
     setSubmitState("loading");
 
     try {
@@ -280,7 +287,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
       console.error(error);
       setSubmitState("error");
     }
-  }, [formData, images, isRoomMiniApartment, onClose, onSuccess, resetForm, t, user, videos]);
+  }, [formData, images, isRoomMiniApartment, locationStatus, onClose, onSuccess, resetForm, t, user, videos]);
 
   if (!isOpen) return null;
 
@@ -437,6 +444,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                     ...(patch.longitude !== undefined ? { longitude: patch.longitude } : {}),
                   }))
                 }
+                onStatusChange={setLocationStatus}
               />
 
               <div className="grid grid-cols-2 gap-4">

@@ -1,6 +1,7 @@
 type NominatimAddress = {
   house_number?: string;
   road?: string;
+  pedestrian?: string;
   residential?: string;
   neighbourhood?: string;
   suburb?: string;
@@ -23,23 +24,19 @@ type NominatimResult = {
   type?: string;
 };
 
+type BoundingBox = {
+  south: number;
+  north: number;
+  west: number;
+  east: number;
+};
+
 type AnchorLocation = {
   lat: number;
   lon: number;
   viewbox?: string;
-};
-
-export type GeocodedLocation = {
-  lat: number;
-  lon: number;
-  zoom: number;
-};
-
-type BestMatch = {
-  lat: number;
-  lon: number;
-  score: number;
-  streetMatched: boolean;
+  bounds?: BoundingBox;
+  displayName?: string;
 };
 
 type AddressTokens = {
@@ -48,6 +45,29 @@ type AddressTokens = {
   street: string;
   streetCore: string;
   houseNumber: string;
+};
+
+type ValidatedCandidate = {
+  lat: number;
+  lon: number;
+  displayName: string;
+  streetName: string;
+  streetScore: number;
+  houseMatched: boolean;
+};
+
+export type LocationPrecision = "province" | "ward" | "street" | "exact";
+
+export type LocationResolution = {
+  lat: number;
+  lon: number;
+  zoom: number;
+  precision: LocationPrecision;
+  confidence: number;
+  requiresManualConfirmation: boolean;
+  normalizedStreetAddress: string;
+  displayName: string;
+  query: string;
 };
 
 export type ReverseGeocodedAddress = {
@@ -62,6 +82,18 @@ const DEFAULT_HEADERS = {
   "User-Agent": "RentalApp/1.0",
   "Accept-Language": "vi,en",
 };
+
+const ADMIN_LABEL_PATTERNS = [
+  /\b(?:viet\s*nam)\b/gi,
+  /\b(?:thanh\s*pho|tp)\b/gi,
+  /\b(?:tinh)\b/gi,
+  /\b(?:phuong|p)\b/gi,
+  /\b(?:xa|x)\b/gi,
+  /\b(?:thi\s*tran|tt)\b/gi,
+  /\b(?:quan|q)\b/gi,
+  /\b(?:huyen|h)\b/gi,
+  /\b(?:thi\s*xa|tx)\b/gi,
+];
 
 function removeVietnameseTones(value: string) {
   return value
@@ -83,6 +115,27 @@ function dedupe(items: string[]) {
   return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean)));
 }
 
+function normalizePunctuation(value: string) {
+  return value
+    .replace(/[;|]+/g, ",")
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/,+/g, ",")
+    .replace(/\s+/g, " ")
+    .replace(/,\s*,/g, ", ")
+    .replace(/^,\s*|\s*,$/g, "")
+    .trim();
+}
+
+function normalizeStreetAbbreviations(value: string) {
+  return value
+    .replace(/\b(?:đ|d)\.\s*/gi, "duong ")
+    .replace(/\b(?:st|street)\b/gi, "duong")
+    .replace(/\b(?:rd|road)\b/gi, "duong")
+    .replace(/\b(?:ave|avenue)\b/gi, "duong")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function stripStreetTypeWords(value: string) {
   return value
     .replace(/\b(?:duong|street|st|road|rd|avenue|ave|pho)\b/gi, " ")
@@ -90,37 +143,55 @@ function stripStreetTypeWords(value: string) {
     .trim();
 }
 
-function stripLeadingAddressNoise(value: string) {
-  let current = value.trim();
-  const patterns = [
-    /^(?:so\s*nha|so)\s*[\dA-Za-z/-]+\s*,?\s*/i,
-    /^(?:hem|ngo|ngach|lane|alley)\s*[\dA-Za-z/-]+\s*,?\s*/i,
-    /^[\dA-Za-z/-]+\s*,\s*/i,
-  ];
+function removeAdministrativeSegment(value: string, ward: string, city: string) {
+  const cleaned = normalizeStreetAbbreviations(normalizePunctuation(value));
+  const segments = cleaned.split(",").map((segment) => segment.trim()).filter(Boolean);
+  const normalizedWard = normalizeForMatch(ward);
+  const normalizedCity = normalizeForMatch(city);
 
-  let changed = true;
-  while (changed) {
-    changed = false;
+  const filteredSegments = segments.filter((segment) => {
+    const normalizedSegment = normalizeForMatch(segment);
+    if (!normalizedSegment) return false;
 
-    for (const pattern of patterns) {
-      const next = current.replace(pattern, "").trim();
-      if (next !== current) {
-        current = next;
-        changed = true;
-      }
+    if (normalizedWard && (normalizedSegment === normalizedWard || normalizedSegment.includes(normalizedWard))) {
+      return false;
     }
+
+    if (normalizedCity && (normalizedSegment === normalizedCity || normalizedSegment.includes(normalizedCity))) {
+      return false;
+    }
+
+    if (normalizedSegment === normalizeForMatch(VIETNAM_COUNTRY)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const firstSegment = filteredSegments[0] || cleaned;
+  let normalized = firstSegment;
+
+  for (const pattern of ADMIN_LABEL_PATTERNS) {
+    normalized = normalized.replace(pattern, " ");
   }
 
-  return current;
+  return normalizePunctuation(normalized).replace(/\s+/g, " ").trim();
+}
+
+export function normalizeVietnamStreetAddressInput(value: string, ward: string, city: string) {
+  return removeAdministrativeSegment(value, ward, city)
+    .replace(/\s+/g, " ")
+    .replace(/^,\s*|\s*,$/g, "")
+    .trim();
 }
 
 function extractHouseNumber(value: string) {
-  const match = value.trim().match(/^(?:so\s*nha)?\s*([\dA-Za-z/-]+)/i);
+  const match = value.trim().match(/^([\dA-Za-z/-]+)/i);
   return match?.[1] ? normalizeForMatch(match[1]) : "";
 }
 
 function buildAddressTokens(streetAddress: string, ward: string, city: string): AddressTokens {
-  const cleanedStreet = stripLeadingAddressNoise(streetAddress);
+  const cleanedStreet = normalizeVietnamStreetAddressInput(streetAddress, ward, city);
   const normalizedStreet = normalizeForMatch(cleanedStreet);
   const streetCore = normalizeForMatch(stripStreetTypeWords(cleanedStreet)) || normalizedStreet;
 
@@ -129,27 +200,51 @@ function buildAddressTokens(streetAddress: string, ward: string, city: string): 
     ward: normalizeForMatch(ward),
     street: normalizedStreet,
     streetCore,
-    houseNumber: extractHouseNumber(streetAddress),
+    houseNumber: extractHouseNumber(cleanedStreet),
   };
 }
 
-function toViewbox(boundingbox?: string[]) {
+function toBounds(boundingbox?: string[]) {
   if (!boundingbox || boundingbox.length !== 4) return undefined;
-  const [south, north, west, east] = boundingbox;
-  return `${west},${north},${east},${south}`;
+
+  const [south, north, west, east] = boundingbox.map((value) => Number.parseFloat(value));
+  if ([south, north, west, east].some((value) => !Number.isFinite(value))) return undefined;
+
+  return { south, north, west, east } satisfies BoundingBox;
 }
 
-async function searchNominatim(query: string, options?: { anchor?: AnchorLocation; signal?: AbortSignal; limit?: number }) {
+function toViewbox(bounds?: BoundingBox) {
+  if (!bounds) return undefined;
+  return `${bounds.west},${bounds.north},${bounds.east},${bounds.south}`;
+}
+
+function pointIsInsideBounds(lat: number, lon: number, bounds?: BoundingBox) {
+  if (!bounds) return true;
+  return lat >= bounds.south && lat <= bounds.north && lon >= bounds.west && lon <= bounds.east;
+}
+
+async function searchNominatim(
+  query: string,
+  options?: {
+    anchor?: AnchorLocation;
+    bounded?: boolean;
+    signal?: AbortSignal;
+    limit?: number;
+  }
+) {
   const params = new URLSearchParams({
     q: query,
     format: "jsonv2",
     addressdetails: "1",
-    limit: String(options?.limit ?? 6),
+    limit: String(options?.limit ?? 8),
     countrycodes: "vn",
   });
 
   if (options?.anchor?.viewbox) {
     params.set("viewbox", options.anchor.viewbox);
+  }
+  if (options?.bounded) {
+    params.set("bounded", "1");
   }
 
   const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
@@ -159,58 +254,6 @@ async function searchNominatim(query: string, options?: { anchor?: AnchorLocatio
 
   if (!response.ok) return [] as NominatimResult[];
   return (await response.json()) as NominatimResult[];
-}
-
-function haversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const toRadians = (value: number) => (value * Math.PI) / 180;
-  const earthRadiusKm = 6371;
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  return 2 * earthRadiusKm * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function scoreCandidate(candidate: NominatimResult, tokens: AddressTokens, anchor?: AnchorLocation) {
-  const addressText = normalizeForMatch(
-    [
-      candidate.display_name,
-      candidate.address?.house_number,
-      candidate.address?.road,
-      candidate.address?.residential,
-      candidate.address?.neighbourhood,
-      candidate.address?.suburb,
-      candidate.address?.quarter,
-      candidate.address?.village,
-      candidate.address?.hamlet,
-      candidate.address?.city,
-      candidate.address?.town,
-      candidate.address?.county,
-      candidate.address?.state,
-    ]
-      .filter(Boolean)
-      .join(" ")
-  );
-
-  const streetMatched = Boolean(tokens.streetCore && addressText.includes(tokens.streetCore));
-  const looseStreetMatched = Boolean(tokens.street && addressText.includes(tokens.street));
-  let score = 0;
-
-  if (tokens.city && addressText.includes(tokens.city)) score += 35;
-  if (tokens.ward && addressText.includes(tokens.ward)) score += 24;
-  if (streetMatched) score += 55;
-  else if (looseStreetMatched) score += 35;
-  if (tokens.houseNumber && addressText.includes(tokens.houseNumber)) score += 10;
-  if (candidate.type === "road" || candidate.class === "highway") score += 8;
-
-  const lat = Number.parseFloat(candidate.lat);
-  const lon = Number.parseFloat(candidate.lon);
-  if (anchor && Number.isFinite(lat) && Number.isFinite(lon)) {
-    score -= Math.min(haversineDistanceKm(anchor.lat, anchor.lon, lat, lon) * 1.4, 30);
-  }
-
-  return { score, streetMatched: streetMatched || looseStreetMatched };
 }
 
 async function resolveAnchor(queries: string[], signal?: AbortSignal) {
@@ -223,142 +266,288 @@ async function resolveAnchor(queries: string[], signal?: AbortSignal) {
     const lon = Number.parseFloat(first.lon);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
 
+    const bounds = toBounds(first.boundingbox);
+
     return {
       lat,
       lon,
-      viewbox: toViewbox(first.boundingbox),
+      bounds,
+      viewbox: toViewbox(bounds),
+      displayName: first.display_name,
     } satisfies AnchorLocation;
   }
 
   return null;
 }
 
-function buildDetailedStageQueries(streetAddress: string, ward: string, city: string) {
-  const trimmedStreet = streetAddress.trim();
-  const strippedStreet = stripLeadingAddressNoise(trimmedStreet);
-  const streetCore = stripStreetTypeWords(strippedStreet);
-
-  return dedupe([
-    [trimmedStreet, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [strippedStreet, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [streetCore, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-  ]);
+function extractCandidateStreetName(candidate: NominatimResult) {
+  return (
+    candidate.address?.road ||
+    candidate.address?.pedestrian ||
+    candidate.address?.residential ||
+    candidate.address?.neighbourhood ||
+    candidate.address?.suburb ||
+    candidate.display_name.split(",")[0] ||
+    ""
+  );
 }
 
-export async function resolveVietnamProvinceCenter(city: string, signal?: AbortSignal): Promise<GeocodedLocation | null> {
+function computeStreetMatchScore(expectedStreet: string, candidateStreet: string) {
+  const normalizedExpected = normalizeForMatch(stripStreetTypeWords(expectedStreet));
+  const normalizedCandidate = normalizeForMatch(stripStreetTypeWords(candidateStreet));
+
+  if (!normalizedExpected || !normalizedCandidate) return 0;
+  if (normalizedExpected === normalizedCandidate) return 1;
+  if (normalizedCandidate.includes(normalizedExpected) || normalizedExpected.includes(normalizedCandidate)) return 0.92;
+
+  const expectedTokens = normalizedExpected.split(" ").filter(Boolean);
+  const candidateTokens = normalizedCandidate.split(" ").filter(Boolean);
+  if (expectedTokens.length === 0 || candidateTokens.length === 0) return 0;
+
+  const candidateSet = new Set(candidateTokens);
+  const overlap = expectedTokens.filter((token) => candidateSet.has(token)).length;
+  const overlapScore = overlap / Math.max(expectedTokens.length, candidateTokens.length);
+
+  const firstExpected = expectedTokens[0];
+  const firstCandidate = candidateTokens[0];
+  const prefixBonus = firstExpected === firstCandidate ? 0.08 : 0;
+
+  return Math.min(1, overlapScore + prefixBonus);
+}
+
+function validateCandidate(
+  candidate: NominatimResult,
+  tokens: AddressTokens,
+  bounds?: BoundingBox
+): ValidatedCandidate | null {
+  const lat = Number.parseFloat(candidate.lat);
+  const lon = Number.parseFloat(candidate.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (!pointIsInsideBounds(lat, lon, bounds)) return null;
+
+  const streetName = extractCandidateStreetName(candidate);
+  const streetScore = computeStreetMatchScore(tokens.streetCore || tokens.street, streetName);
+  if (streetScore < 0.72) return null;
+
+  const candidateText = normalizeForMatch(
+    [
+      candidate.display_name,
+      candidate.address?.house_number,
+      candidate.address?.road,
+      candidate.address?.pedestrian,
+      candidate.address?.residential,
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+  const houseMatched = Boolean(tokens.houseNumber) && candidateText.includes(tokens.houseNumber);
+
+  return {
+    lat,
+    lon,
+    displayName: candidate.display_name,
+    streetName,
+    streetScore,
+    houseMatched,
+  };
+}
+
+function toResolution(
+  input: {
+    lat: number;
+    lon: number;
+    normalizedStreetAddress: string;
+    displayName: string;
+    query: string;
+    precision: LocationPrecision;
+    confidence: number;
+    requiresManualConfirmation: boolean;
+  }
+): LocationResolution {
+  const zoomByPrecision: Record<LocationPrecision, number> = {
+    province: 11,
+    ward: 14,
+    street: 16,
+    exact: 17,
+  };
+
+  return {
+    lat: input.lat,
+    lon: input.lon,
+    zoom: zoomByPrecision[input.precision],
+    precision: input.precision,
+    confidence: input.confidence,
+    requiresManualConfirmation: input.requiresManualConfirmation,
+    normalizedStreetAddress: input.normalizedStreetAddress,
+    displayName: input.displayName,
+    query: input.query,
+  };
+}
+
+function buildExactQuery(streetAddress: string, ward: string, city: string) {
+  return [streetAddress, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", ");
+}
+
+function buildStreetLevelQuery(streetAddress: string, ward: string, city: string) {
+  const stripped = stripStreetTypeWords(streetAddress);
+  const withoutHouseNumber = stripped.replace(/^([\dA-Za-z/-]+)\s+/, "").trim() || stripped;
+  return [withoutHouseNumber, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", ");
+}
+
+export async function resolveVietnamProvinceCenter(city: string, signal?: AbortSignal): Promise<LocationResolution | null> {
   const normalizedCity = city.trim();
   if (!normalizedCity) return null;
 
   const provinceAnchor = await resolveAnchor([[normalizedCity, VIETNAM_COUNTRY].join(", ")], signal);
-  return provinceAnchor ? { lat: provinceAnchor.lat, lon: provinceAnchor.lon, zoom: 11 } : null;
+  if (!provinceAnchor) return null;
+
+  return toResolution({
+    lat: provinceAnchor.lat,
+    lon: provinceAnchor.lon,
+    normalizedStreetAddress: "",
+    displayName: provinceAnchor.displayName || normalizedCity,
+    query: [normalizedCity, VIETNAM_COUNTRY].join(", "),
+    precision: "province",
+    confidence: 0.45,
+    requiresManualConfirmation: true,
+  });
 }
 
 export async function resolveVietnamWardCenter(
   input: { ward?: string; city?: string },
   signal?: AbortSignal
-): Promise<GeocodedLocation | null> {
+): Promise<LocationResolution | null> {
   const ward = input.ward?.trim() || "";
   const city = input.city?.trim() || "";
 
   if (!city) return null;
   if (!ward) return resolveVietnamProvinceCenter(city, signal);
 
-  const wardAnchor = await resolveAnchor(
-    [
-      [ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-      [city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    ],
-    signal
-  );
-
+  const wardQuery = [ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", ");
+  const wardAnchor = await resolveAnchor([wardQuery, [city, VIETNAM_COUNTRY].join(", ")], signal);
   if (!wardAnchor) return null;
 
-  return {
+  return toResolution({
     lat: wardAnchor.lat,
     lon: wardAnchor.lon,
-    zoom: 14,
-  };
+    normalizedStreetAddress: "",
+    displayName: wardAnchor.displayName || wardQuery,
+    query: wardQuery,
+    precision: "ward",
+    confidence: 0.68,
+    requiresManualConfirmation: true,
+  });
 }
 
 export async function resolveVietnamDetailedAddress(
   input: { streetAddress?: string; ward?: string; city?: string },
   signal?: AbortSignal
-): Promise<GeocodedLocation | null> {
-  const streetAddress = input.streetAddress?.trim() || "";
+): Promise<LocationResolution | null> {
   const ward = input.ward?.trim() || "";
   const city = input.city?.trim() || "";
+  const normalizedStreetAddress = normalizeVietnamStreetAddressInput(input.streetAddress || "", ward, city);
 
   if (!city) return null;
-  if (!streetAddress) return resolveVietnamWardCenter({ ward, city }, signal);
+  if (!normalizedStreetAddress) return resolveVietnamWardCenter({ ward, city }, signal);
 
   const provinceAnchor = await resolveAnchor([[city, VIETNAM_COUNTRY].join(", ")], signal);
   const wardAnchor = ward
     ? await resolveAnchor(
         [
-          [ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-          [city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
+          [ward, city, VIETNAM_COUNTRY].join(", "),
+          [city, VIETNAM_COUNTRY].join(", "),
         ],
         signal
       )
     : provinceAnchor;
-  const anchor = wardAnchor || provinceAnchor || undefined;
-  const tokens = buildAddressTokens(streetAddress, ward, city);
+  const strictAnchor = wardAnchor || provinceAnchor || undefined;
+  const strictBounds = wardAnchor?.bounds || provinceAnchor?.bounds;
+  const tokens = buildAddressTokens(normalizedStreetAddress, ward, city);
 
-  let bestMatch: BestMatch | null = null;
-  for (const query of buildDetailedStageQueries(streetAddress, ward, city)) {
-    const variants = dedupe([query, removeVietnameseTones(query)]);
+  const exactQuery = buildExactQuery(normalizedStreetAddress, ward, city);
+  const streetQuery = buildStreetLevelQuery(normalizedStreetAddress, ward, city);
+  const queryStages = [
+    { query: exactQuery, precision: "exact" as const, requireHouseMatch: true },
+    { query: streetQuery, precision: "street" as const, requireHouseMatch: false },
+  ];
+
+  let bestStreetCandidate: ValidatedCandidate | null = null;
+
+  for (const stage of queryStages) {
+    const variants = dedupe([stage.query, removeVietnameseTones(stage.query)]);
 
     for (const variant of variants) {
-      const candidates = await searchNominatim(variant, { anchor, signal });
+      const candidates = await searchNominatim(variant, {
+        anchor: strictAnchor,
+        bounded: Boolean(strictAnchor?.viewbox),
+        signal,
+        limit: 8,
+      });
 
       for (const candidate of candidates) {
-        const lat = Number.parseFloat(candidate.lat);
-        const lon = Number.parseFloat(candidate.lon);
-        if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+        const validated = validateCandidate(candidate, tokens, strictBounds);
+        if (!validated) continue;
 
-        const scored = scoreCandidate(candidate, tokens, anchor);
-        if (!bestMatch || scored.score > bestMatch.score) {
-          bestMatch = {
-            lat,
-            lon,
-            score: scored.score,
-            streetMatched: scored.streetMatched,
-          };
+        if (stage.precision === "exact" && stage.requireHouseMatch && validated.houseMatched) {
+          return toResolution({
+            lat: validated.lat,
+            lon: validated.lon,
+            normalizedStreetAddress,
+            displayName: validated.displayName,
+            query: variant,
+            precision: "exact",
+            confidence: Math.min(0.99, 0.82 + validated.streetScore * 0.17),
+            requiresManualConfirmation: false,
+          });
+        }
+
+        if (!bestStreetCandidate || validated.streetScore > bestStreetCandidate.streetScore) {
+          bestStreetCandidate = validated;
         }
       }
     }
-
-    const currentBestMatch = bestMatch;
-    if (currentBestMatch && currentBestMatch.score >= 70 && currentBestMatch.streetMatched) {
-      break;
-    }
   }
 
-  const finalBestMatch = bestMatch;
-
-  if (finalBestMatch && (finalBestMatch.streetMatched || finalBestMatch.score >= 65)) {
-    return {
-      lat: finalBestMatch.lat,
-      lon: finalBestMatch.lon,
-      zoom: finalBestMatch.streetMatched ? 17 : 16,
-    };
+  if (bestStreetCandidate) {
+    return toResolution({
+      lat: bestStreetCandidate.lat,
+      lon: bestStreetCandidate.lon,
+      normalizedStreetAddress,
+      displayName: bestStreetCandidate.displayName,
+      query: streetQuery,
+      precision: "street",
+      confidence: Math.min(0.88, 0.58 + bestStreetCandidate.streetScore * 0.24),
+      requiresManualConfirmation: true,
+    });
   }
 
   if (wardAnchor) {
-    return { lat: wardAnchor.lat, lon: wardAnchor.lon, zoom: 14 };
+    return toResolution({
+      lat: wardAnchor.lat,
+      lon: wardAnchor.lon,
+      normalizedStreetAddress,
+      displayName: wardAnchor.displayName || [ward, city].filter(Boolean).join(", "),
+      query: exactQuery,
+      precision: "ward",
+      confidence: 0.52,
+      requiresManualConfirmation: true,
+    });
   }
 
   if (provinceAnchor) {
-    return { lat: provinceAnchor.lat, lon: provinceAnchor.lon, zoom: 11 };
+    return toResolution({
+      lat: provinceAnchor.lat,
+      lon: provinceAnchor.lon,
+      normalizedStreetAddress,
+      displayName: provinceAnchor.displayName || city,
+      query: exactQuery,
+      precision: "province",
+      confidence: 0.38,
+      requiresManualConfirmation: true,
+    });
   }
 
-  return finalBestMatch
-    ? {
-        lat: finalBestMatch.lat,
-        lon: finalBestMatch.lon,
-        zoom: 16,
-      }
-    : null;
+  return null;
 }
 
 export async function reverseGeocodeVietnamCoordinates(
@@ -380,11 +569,14 @@ export async function reverseGeocodeVietnamCoordinates(
 
   if (!response.ok) return null;
   const payload = (await response.json()) as NominatimResult;
-
   const address = payload.address || {};
   const city = address.city || address.town || address.county || address.state || "";
   const ward = address.suburb || address.quarter || address.neighbourhood || address.village || address.hamlet || "";
-  const streetAddress = [address.house_number, address.road || address.residential].filter(Boolean).join(" ").trim();
+  const streetAddress = normalizeVietnamStreetAddressInput(
+    [address.house_number, address.road || address.pedestrian || address.residential].filter(Boolean).join(" "),
+    ward,
+    city
+  );
 
   return {
     displayName: payload.display_name || "",
@@ -399,7 +591,7 @@ export async function geocodeVietnameseAddress(input: {
   ward?: string;
   city?: string;
   signal?: AbortSignal;
-}): Promise<GeocodedLocation | null> {
+}): Promise<LocationResolution | null> {
   const streetAddress = input.streetAddress?.trim() || "";
   const ward = input.ward?.trim() || "";
   const city = input.city?.trim() || "";

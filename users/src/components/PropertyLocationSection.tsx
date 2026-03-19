@@ -10,6 +10,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import {
   DEFAULT_PROPERTY_COORDINATES,
   usePropertyLocationPicker,
+  type PropertyLocationStatus,
   type PropertyLocationFormValue,
 } from "@/hooks/usePropertyLocationPicker";
 
@@ -33,6 +34,7 @@ type PropertyLocationSectionProps = {
   isOpen: boolean;
   value: PropertyLocationFormValue;
   onChange: (patch: Partial<PropertyLocationFormValue>) => void;
+  onStatusChange?: (status: PropertyLocationStatus) => void;
 };
 
 function MapViewportController({
@@ -80,7 +82,16 @@ function MapInteractionHandler({
   return null;
 }
 
-export default function PropertyLocationSection({ isOpen, value, onChange }: PropertyLocationSectionProps) {
+function getPrecisionLabel(status: PropertyLocationStatus, t: (key: string) => string) {
+  if (status.hasManualPinOverride) return t("property.form.locationPrecision.manual");
+
+  if (status.precision === "exact") return t("property.form.locationPrecision.exact");
+  if (status.precision === "street") return t("property.form.locationPrecision.street");
+  if (status.precision === "ward") return t("property.form.locationPrecision.ward");
+  return t("property.form.locationPrecision.province");
+}
+
+export default function PropertyLocationSection({ isOpen, value, onChange, onStatusChange }: PropertyLocationSectionProps) {
   const { t } = useLanguage();
   const {
     provinces,
@@ -89,6 +100,7 @@ export default function PropertyLocationSection({ isOpen, value, onChange }: Pro
     isGeocoding,
     mapState,
     resolvedPinLabel,
+    locationStatus,
     selectedProvinceCode,
     selectedWardCode,
     handleProvinceChange,
@@ -102,6 +114,10 @@ export default function PropertyLocationSection({ isOpen, value, onChange }: Pro
     onChange,
   });
 
+  useEffect(() => {
+    onStatusChange?.(locationStatus);
+  }, [locationStatus, onStatusChange]);
+
   const markerPosition = useMemo<[number, number]>(() => {
     const hasExplicitCoordinates = Number.isFinite(value.latitude) && Number.isFinite(value.longitude);
     if (hasExplicitCoordinates) {
@@ -110,6 +126,22 @@ export default function PropertyLocationSection({ isOpen, value, onChange }: Pro
 
     return DEFAULT_PROPERTY_COORDINATES;
   }, [value.latitude, value.longitude]);
+
+  const helperTone = locationStatus.requiresManualPinConfirmation ? "text-amber-700" : "text-emerald-700";
+  const helperBg = locationStatus.requiresManualPinConfirmation ? "bg-amber-50 border-amber-200" : "bg-emerald-50 border-emerald-200";
+  const hasStreetAddress = Boolean(value.streetAddress.trim());
+
+  const helperText = !hasStreetAddress
+    ? locationStatus.precision === "ward"
+      ? t("property.form.locationWardCentered")
+      : t("property.form.locationProvinceCentered")
+    : locationStatus.requiresManualPinConfirmation
+      ? t("property.form.locationNeedsPinConfirmation")
+      : locationStatus.hasManualPinOverride
+        ? t("property.form.locationPinConfirmed")
+        : locationStatus.precision === "exact"
+          ? t("property.form.locationExactResolved")
+          : t("property.form.locationStreetResolved");
 
   return (
     <>
@@ -165,8 +197,9 @@ export default function PropertyLocationSection({ isOpen, value, onChange }: Pro
           value={value.streetAddress}
           onChange={(event) => handleStreetAddressChange(event.target.value)}
           className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder={t("property.form.streetAddressLabel")}
+          placeholder={t("property.form.streetAddressHint")}
         />
+        <p className="text-[11px] text-gray-500">{t("property.form.streetAddressOnlyHint")}</p>
       </div>
 
       <div className="space-y-1">
@@ -224,7 +257,16 @@ export default function PropertyLocationSection({ isOpen, value, onChange }: Pro
           {t("property.form.dragPinHint")}
         </p>
 
-        {resolvedPinLabel ? <p className="text-xs text-gray-500">{resolvedPinLabel}</p> : null}
+        <div className={`mt-2 rounded-xl border px-3 py-2 ${helperBg}`}>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+              {t("property.form.locationPrecisionLabel")}
+            </span>
+            <span className={`text-xs font-semibold ${helperTone}`}>{getPrecisionLabel(locationStatus, t)}</span>
+          </div>
+          <p className={`mt-1 text-xs ${helperTone}`}>{helperText}</p>
+          {resolvedPinLabel ? <p className="mt-1 text-[11px] text-gray-500">{resolvedPinLabel}</p> : null}
+        </div>
       </div>
     </>
   );
