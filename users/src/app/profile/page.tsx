@@ -125,6 +125,11 @@ type FeedbackMessage = {
   text: string;
 };
 
+type PropertyToast = {
+  type: "success" | "error" | "";
+  text: string;
+};
+
 type UploadTarget = "avatar" | "cover";
 type HouseStatus = "available" | "rented" | "pending";
 
@@ -233,10 +238,13 @@ export default function ProfilePage() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState({ type: "", text: "" });
   const [feedbackMessage, setFeedbackMessage] = useState<FeedbackMessage>({ type: "", text: "" });
+  const [propertyToast, setPropertyToast] = useState<PropertyToast>({ type: "", text: "" });
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [avatarDraft, setAvatarDraft] = useState<AvatarDraft | null>(null);
   const [updatingHouseStatusIds, setUpdatingHouseStatusIds] = useState<Record<string, boolean>>({});
+  const [deleteTargetHouse, setDeleteTargetHouse] = useState<MyHouse | null>(null);
+  const [deletingHouseId, setDeletingHouseId] = useState<string | null>(null);
   const [editingHouse, setEditingHouse] = useState<MyHouse | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLangExpanded, setIsLangExpanded] = useState(false);
@@ -261,6 +269,10 @@ export default function ProfilePage() {
 
   const showFeedbackMessage = useCallback((type: FeedbackMessage["type"], text: string) => {
     setFeedbackMessage({ type, text });
+  }, []);
+
+  const showPropertyToast = useCallback((type: PropertyToast["type"], text: string) => {
+    setPropertyToast({ type, text });
   }, []);
 
   const formatConversationTime = useCallback(
@@ -329,16 +341,9 @@ export default function ProfilePage() {
     }
   }, []);
 
-  const handleDeleteHouse = async (houseId: string) => {
-    if (!window.confirm(t("property.messages.deleteConfirm"))) return;
-
-    try {
-      await api.delete(`/houses/${houseId}`);
-      setMyHouses((previous) => previous.filter((house) => house.id !== houseId));
-    } catch {
-      window.alert(t("property.messages.deleteFailed"));
-    }
-  };
+  const handleDeleteHouse = useCallback((house: MyHouse) => {
+    setDeleteTargetHouse(house);
+  }, []);
 
   useEffect(() => {
     const savedTab = localStorage.getItem(PROFILE_TAB_STORAGE_KEY) as ProfileTabKey | null;
@@ -360,6 +365,16 @@ export default function ProfilePage() {
 
     return () => window.clearTimeout(timer);
   }, [feedbackMessage]);
+
+  useEffect(() => {
+    if (!propertyToast.text) return;
+
+    const timer = window.setTimeout(() => {
+      setPropertyToast({ type: "", text: "" });
+    }, 4000);
+
+    return () => window.clearTimeout(timer);
+  }, [propertyToast]);
 
   useEffect(() => {
     return () => {
@@ -422,11 +437,6 @@ export default function ProfilePage() {
     const currentStatus = normalizeHouseStatus(house.status);
     if (currentStatus === nextStatus) return;
 
-    const nextStatusLabel = t(`property.status.${nextStatus}`);
-    const confirmationMessage = `Set "${house.name}" as ${nextStatusLabel.toLowerCase()}?`;
-
-    if (!window.confirm(confirmationMessage)) return;
-
     const previousStatus = house.status || "AVAILABLE";
 
     setUpdatingHouseStatusIds((previous) => ({ ...previous, [house.id]: true }));
@@ -444,19 +454,26 @@ export default function ProfilePage() {
     try {
       const response = await api.patch(`/houses/${house.id}/status`, { status: nextStatus });
       const savedStatus = response.data?.status || nextStatus;
+      const normalizedSavedStatus = normalizeHouseStatus(savedStatus);
 
       setMyHouses((previous) =>
         previous.map((item) =>
           item.id === house.id
             ? {
                 ...item,
-                status: savedStatus,
+                status: normalizedSavedStatus,
               }
             : item
         )
       );
 
-      showFeedbackMessage("success", `"${house.name}" is now ${nextStatusLabel}.`);
+      showPropertyToast(
+        "success",
+        t("profile.listingStatusUpdated", {
+          name: house.name,
+          status: t(`property.status.${normalizedSavedStatus === "available" ? "available" : "rented"}`),
+        })
+      );
     } catch (error) {
       setMyHouses((previous) =>
         previous.map((item) =>
@@ -469,7 +486,7 @@ export default function ProfilePage() {
         )
       );
 
-      showFeedbackMessage("error", getApiErrorMessage(error) || `Couldn't update "${house.name}".`);
+      showPropertyToast("error", getApiErrorMessage(error) || t("profile.listingStatusFailed", { name: house.name }));
     } finally {
       setUpdatingHouseStatusIds((previous) => {
         const next = { ...previous };
@@ -478,6 +495,24 @@ export default function ProfilePage() {
       });
     }
   };
+
+  const confirmDeleteHouse = useCallback(async () => {
+    if (!deleteTargetHouse || deletingHouseId) return;
+
+    const houseToDelete = deleteTargetHouse;
+    setDeletingHouseId(houseToDelete.id);
+
+    try {
+      await api.delete(`/houses/${houseToDelete.id}`);
+      setMyHouses((previous) => previous.filter((house) => house.id !== houseToDelete.id));
+      setDeleteTargetHouse(null);
+      showPropertyToast("success", t("profile.listingDeleted", { name: houseToDelete.name }));
+    } catch (error) {
+      showPropertyToast("error", getApiErrorMessage(error) || t("profile.listingDeleteFailed", { name: houseToDelete.name }));
+    } finally {
+      setDeletingHouseId(null);
+    }
+  }, [deleteTargetHouse, deletingHouseId, showPropertyToast, t]);
 
   const uploadAndSaveProfileImage = useCallback(async (file: Blob | File, target: UploadTarget) => {
     const uploadFile =
@@ -713,85 +748,73 @@ export default function ProfilePage() {
                           const locationText = [house.address, house.ward || house.district, house.city].filter(Boolean).join(", ");
                           const imageSrc = house.image_url_1 || house.image_url_2 || "/images/defaultimage.jpg";
                           const priceText = house.price ? `${formatNumber(house.price)} VND${t("property.units.monthAbbr")}` : t("property.detail.notProvided");
-                          const statusClass =
-                            status === "available"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : status === "pending"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-rose-100 text-rose-700";
-
                           return (
-                            <div key={house.id} className="rounded-[1.5rem] border border-[var(--theme-border)] bg-[var(--theme-surface-2)] p-3 sm:p-4">
-                              <div className="flex items-start gap-3">
-                                <Link href={`/properties/${house.id}`} className="h-20 w-24 flex-shrink-0 overflow-hidden rounded-[1rem] bg-slate-200 sm:h-24 sm:w-28">
+                            <div key={house.id} className="rounded-[1.5rem] border border-[var(--theme-border)] bg-[var(--theme-surface-2)] p-3 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-4">
+                              <div className="flex flex-col gap-4 sm:flex-row">
+                                <Link href={`/properties/${house.id}`} className="h-40 w-full flex-shrink-0 overflow-hidden rounded-[1.1rem] bg-slate-200 sm:h-28 sm:w-32 lg:h-32 lg:w-36">
                                   <SafeImage src={imageSrc} alt={house.name} className="h-full w-full object-cover" fallbackSrc="/images/defaultimage.jpg" />
                                 </Link>
 
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0">
-                                      <Link href={`/properties/${house.id}`} className="line-clamp-2 text-sm font-bold text-[var(--theme-text)] transition-colors hover:text-[var(--color-teal-600)] sm:text-base">
-                                        {house.name}
-                                      </Link>
-                                      <p className="mt-1 flex items-start gap-1 text-xs text-[var(--theme-text-muted)]">
-                                        <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
-                                        <span className="line-clamp-2">{locationText}</span>
-                                      </p>
-                                    </div>
-                                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${statusClass}`}>
-                                      {t(`property.status.${status}`)}
-                                    </span>
+                                  <div className="min-w-0">
+                                    <Link href={`/properties/${house.id}`} className="line-clamp-2 text-base font-bold leading-6 text-[var(--theme-text)] transition-colors hover:text-[var(--color-teal-600)]">
+                                      {house.name}
+                                    </Link>
+                                    <p className="mt-2 flex items-start gap-1.5 text-sm text-[var(--theme-text-muted)]">
+                                      <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                                      <span className="line-clamp-2">{locationText}</span>
+                                    </p>
                                   </div>
 
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-teal-700)]">
+                                  <div className="mt-4 flex flex-wrap items-center gap-2.5">
+                                    <span className="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-[var(--color-teal-700)] shadow-sm">
                                       {priceText}
                                     </span>
                                     {house.bedrooms != null ? (
-                                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-[var(--theme-text-muted)]">
+                                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-[var(--theme-text-muted)] shadow-sm">
                                         <Bed className="h-3.5 w-3.5 text-[var(--color-teal-600)]" />
                                         {house.bedrooms} {t("property.fields.bedrooms")}
                                       </span>
                                     ) : null}
                                     {house.square != null ? (
-                                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-[var(--theme-text-muted)]">
+                                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-[var(--theme-text-muted)] shadow-sm">
                                         <Square className="h-3.5 w-3.5 text-[var(--color-teal-600)]" />
                                         {house.square} m²
                                       </span>
                                     ) : null}
                                   </div>
+                                  <p className="mt-3 text-xs text-[var(--theme-text-muted)]">
+                                    {t("profile.createdOn", {
+                                      date: formatDate(house.created_at, { day: "2-digit", month: "2-digit", year: "numeric" }),
+                                    })}
+                                  </p>
                                 </div>
                               </div>
 
-                              <div className="mt-3 flex flex-col gap-3 border-t border-[var(--theme-border)] pt-3 lg:flex-row lg:items-center lg:justify-between">
-                                <p className="text-xs text-[var(--theme-text-muted)]">
-                                  {t("profile.createdOn", {
-                                    date: formatDate(house.created_at, { day: "2-digit", month: "2-digit", year: "numeric" }),
-                                  })}
-                                </p>
-                                <div className="flex flex-wrap items-center gap-2">
+                              <div className="mt-4 flex flex-col gap-3 border-t border-[var(--theme-border)] pt-4 xl:flex-row xl:items-center xl:justify-between">
+                                <HouseStatusToggle
+                                  currentStatus={status}
+                                  isUpdating={Boolean(updatingHouseStatusIds[house.id])}
+                                  onChange={(nextStatus) => handleHouseStatusChange(house, nextStatus)}
+                                  t={t}
+                                />
+                                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap xl:justify-end">
                                   <button
                                     type="button"
                                     onClick={() => setEditingHouse(house)}
-                                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--theme-border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--theme-text)] transition-colors hover:border-[var(--color-teal-300)] hover:text-[var(--color-teal-700)]"
+                                    className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[var(--theme-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--theme-text)] transition-colors hover:border-[var(--color-teal-300)] hover:text-[var(--color-teal-700)]"
                                   >
-                                    <Pencil className="h-3.5 w-3.5" />
+                                    <Pencil className="h-4 w-4" />
                                     {t("common.edit")}
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => handleDeleteHouse(house.id)}
-                                    className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50"
+                                    onClick={() => handleDeleteHouse(house)}
+                                    className="inline-flex items-center justify-center gap-1.5 rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50"
                                   >
-                                    <Trash2 className="h-3.5 w-3.5" />
+                                    <Trash2 className="h-4 w-4" />
                                     {t("common.delete")}
                                   </button>
-                                  <HouseStatusToggle
-                                    currentStatus={status}
-                                    isUpdating={Boolean(updatingHouseStatusIds[house.id])}
-                                    onChange={(nextStatus) => handleHouseStatusChange(house, nextStatus)}
-                                    t={t}
-                                  />
                                 </div>
                               </div>
                             </div>
@@ -857,6 +880,19 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <DeleteListingModal
+        house={deleteTargetHouse}
+        isDeleting={Boolean(deleteTargetHouse && deletingHouseId === deleteTargetHouse.id)}
+        onClose={() => {
+          if (!deletingHouseId) {
+            setDeleteTargetHouse(null);
+          }
+        }}
+        onConfirm={confirmDeleteHouse}
+        t={t}
+      />
+      <PropertyToastBar toast={propertyToast} onDismiss={() => setPropertyToast({ type: "", text: "" })} />
 
       {editingHouse ? <EditPropertyModal house={editingHouse} onClose={() => setEditingHouse(null)} onSuccess={() => { setEditingHouse(null); fetchMyHouses(); }} /> : null}
       {avatarDraft ? (
@@ -951,45 +987,107 @@ function HouseStatusToggle({
   currentStatus: HouseStatus;
   isUpdating: boolean;
   onChange: (status: Exclude<HouseStatus, "pending">) => void;
-  t: (key: string) => string;
+  t: (key: string, values?: Record<string, string>) => string;
 }) {
-  const options: Array<Exclude<HouseStatus, "pending">> = ["available", "rented"];
-  const selectableStatus = options.includes(currentStatus as Exclude<HouseStatus, "pending">) ? (currentStatus as Exclude<HouseStatus, "pending">) : "available";
-  const statusClass =
-    currentStatus === "available"
-      ? "bg-emerald-100 text-emerald-700"
-      : currentStatus === "pending"
-        ? "bg-amber-100 text-amber-700"
-        : "bg-rose-100 text-rose-700";
+  const isAvailable = currentStatus === "available";
+  const statusLabel = isAvailable ? t("property.status.available") : t("property.status.rented");
 
   return (
-    <div className="flex min-w-[190px] items-center justify-between gap-3 rounded-2xl border border-[var(--theme-border)] bg-white px-3 py-2">
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isAvailable}
+      disabled={isUpdating}
+      onClick={() => onChange(isAvailable ? "rented" : "available")}
+      className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-[var(--theme-border)] bg-white px-4 py-3 text-left transition hover:border-[var(--color-teal-300)] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:min-w-[250px]"
+    >
       <div className="min-w-0">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--theme-text-muted)]">{t("common.status")}</p>
-        <span className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${statusClass}`}>
-          {isUpdating ? t("common.loading") : t(`property.status.${currentStatus}`)}
-        </span>
+        <p className="mt-1 truncate text-sm font-semibold text-[var(--theme-text)]">{isUpdating ? t("common.loading") : statusLabel}</p>
       </div>
+      <span
+        className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition ${
+          isAvailable ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"
+        }`}
+      >
+        <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform ${isAvailable ? "translate-x-6" : "translate-x-1"}`} />
+      </span>
+    </button>
+  );
+}
 
-      <div className="relative">
-        <select
-          value={selectableStatus}
-          disabled={isUpdating}
-          onChange={(event) => {
-            const nextStatus = event.target.value as Exclude<HouseStatus, "pending">;
-            if (nextStatus !== selectableStatus) {
-              onChange(nextStatus);
-            }
-          }}
-          className="min-w-[112px] appearance-none rounded-xl border border-[var(--theme-border)] bg-[var(--theme-surface)] px-3 py-2 pr-8 text-xs font-semibold text-[var(--theme-text)] outline-none transition focus:border-[var(--color-teal-400)] focus:ring-2 focus:ring-[var(--color-teal-100)] disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {options.map((status) => (
-            <option key={status} value={status}>
-              {t(`property.status.${status}`)}
-            </option>
-          ))}
-        </select>
-        <ChevronRight className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 rotate-90 text-[var(--theme-text-muted)]" />
+function DeleteListingModal({
+  house,
+  isDeleting,
+  onClose,
+  onConfirm,
+  t,
+}: {
+  house: MyHouse | null;
+  isDeleting: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  t: (key: string, values?: Record<string, string>) => string;
+}) {
+  if (!house) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/50 px-4 pb-4 pt-10 backdrop-blur-sm sm:items-center sm:px-6">
+      <div className="absolute inset-0" onClick={isDeleting ? undefined : onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-[1.75rem] border border-[var(--theme-border)] bg-[var(--theme-surface)] p-5 shadow-[0_24px_80px_rgba(15,23,42,0.24)] sm:p-6">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+          <Trash2 className="h-5 w-5" />
+        </div>
+        <h3 className="mt-4 text-xl font-bold text-[var(--theme-text)]">{t("profile.deleteListingTitle")}</h3>
+        <p className="mt-2 text-sm leading-6 text-[var(--theme-text-muted)]">{t("profile.deleteListingDescription", { name: house.name })}</p>
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isDeleting}
+            className="inline-flex items-center justify-center rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface-2)] px-4 py-2.5 text-sm font-semibold text-[var(--theme-text)] transition hover:bg-[var(--theme-surface)] disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {t("common.cancel")}
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="inline-flex items-center justify-center rounded-full bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isDeleting ? t("common.loading") : t("profile.deleteListingConfirm")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PropertyToastBar({
+  toast,
+  onDismiss,
+}: {
+  toast: PropertyToast;
+  onDismiss: () => void;
+}) {
+  if (!toast.text) return null;
+
+  const isSuccess = toast.type === "success";
+
+  return (
+    <div className="pointer-events-none fixed inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[65] flex justify-center sm:inset-x-6 sm:justify-end">
+      <div
+        className={`pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-[1.25rem] border px-4 py-3 shadow-[0_18px_45px_rgba(15,23,42,0.18)] ${
+          isSuccess
+            ? "border-emerald-200 bg-[var(--theme-surface)] text-emerald-700"
+            : "border-rose-200 bg-[var(--theme-surface)] text-rose-700"
+        }`}
+      >
+        {isSuccess ? <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0" /> : <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />}
+        <p className="min-w-0 flex-1 text-sm font-semibold leading-6 text-[var(--theme-text)]">{toast.text}</p>
+        <button type="button" onClick={onDismiss} className="rounded-full p-1 text-[var(--theme-text-muted)] transition hover:bg-[var(--theme-surface-2)]">
+          <X className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );

@@ -230,7 +230,14 @@
     "uploadAvatarError": "Failed to upload profile picture. Please try again.",
     "uploadCoverError": "Failed to upload cover image.",
     "createdOn": "Created {date}",
-    "summaryTitle": "Summary"
+    "summaryTitle": "Summary",
+    "deleteListingTitle": "Delete listing?",
+    "deleteListingDescription": "\"{name}\" will be removed permanently. This action cannot be undone.",
+    "deleteListingConfirm": "Delete listing",
+    "listingDeleted": "\"{name}\" was deleted.",
+    "listingDeleteFailed": "Couldn't delete \"{name}\".",
+    "listingStatusUpdated": "\"{name}\" is now {status}.",
+    "listingStatusFailed": "Couldn't update \"{name}\"."
   },
   "auth": {
     "loginPrompt": {

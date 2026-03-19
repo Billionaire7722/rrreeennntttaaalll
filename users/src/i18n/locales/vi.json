@@ -230,7 +230,14 @@
     "uploadAvatarError": "Tải ảnh đại diện thất bại. Vui lòng thử lại.",
     "uploadCoverError": "Tải ảnh bìa thất bại.",
     "createdOn": "Đăng ngày {date}",
-    "summaryTitle": "Tổng quan"
+    "summaryTitle": "Tổng quan",
+    "deleteListingTitle": "Xóa tin đăng?",
+    "deleteListingDescription": "\"{name}\" sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.",
+    "deleteListingConfirm": "Xóa tin đăng",
+    "listingDeleted": "Đã xóa \"{name}\".",
+    "listingDeleteFailed": "Không thể xóa \"{name}\".",
+    "listingStatusUpdated": "\"{name}\" hiện là {status}.",
+    "listingStatusFailed": "Không thể cập nhật \"{name}\"."
   },
   "auth": {
     "loginPrompt": {
