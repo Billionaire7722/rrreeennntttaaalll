@@ -32,12 +32,12 @@ export const LOCALE_METADATA: Record<
   Locale,
   { label: string; nativeLabel: string; intl: string; flagUrl: string }
 > = {
-  vi: { label: "Vietnamese", nativeLabel: "Tieng Viet", intl: "vi-VN", flagUrl: "https://flagcdn.com/w20/vn.png" },
-  en: { label: "English", nativeLabel: "English", intl: "en-US", flagUrl: "https://flagcdn.com/w20/gb.png" },
-  es: { label: "Spanish", nativeLabel: "Espanol", intl: "es-ES", flagUrl: "https://flagcdn.com/w20/es.png" },
+  vi: { label: "Vietnamese", nativeLabel: "Tiếng Việt", intl: "vi-VN", flagUrl: "https://flagcdn.com/w20/vn.png" },
+  en: { label: "English", nativeLabel: "English", intl: "en-US", flagUrl: "https://flagcdn.com/w20/us.png" },
+  es: { label: "Spanish", nativeLabel: "Español", intl: "es-ES", flagUrl: "https://flagcdn.com/w20/es.png" },
   "zh-CN": { label: "Simplified Chinese", nativeLabel: "\u7b80\u4f53\u4e2d\u6587", intl: "zh-CN", flagUrl: "https://flagcdn.com/w20/cn.png" },
   "zh-TW": { label: "Traditional Chinese", nativeLabel: "\u7e41\u9ad4\u4e2d\u6587", intl: "zh-TW", flagUrl: "https://flagcdn.com/w20/tw.png" },
-  fr: { label: "French", nativeLabel: "Francais", intl: "fr-FR", flagUrl: "https://flagcdn.com/w20/fr.png" },
+  fr: { label: "French", nativeLabel: "Français", intl: "fr-FR", flagUrl: "https://flagcdn.com/w20/fr.png" },
   ko: { label: "Korean", nativeLabel: "\ud55c\uad6d\uc5b4", intl: "ko-KR", flagUrl: "https://flagcdn.com/w20/kr.png" },
   ja: { label: "Japanese", nativeLabel: "\u65e5\u672c\u8a9e", intl: "ja-JP", flagUrl: "https://flagcdn.com/w20/jp.png" },
   th: { label: "Thai", nativeLabel: "\u0e44\u0e17\u0e22", intl: "th-TH", flagUrl: "https://flagcdn.com/w20/th.png" },

@@ -145,9 +145,11 @@ export class HousesService {
                     city: true,
                     city_code: true,
                     property_type: true,
+                    building_name: true,
                     price: true,
                     payment_method: true,
                     bedrooms: true,
+                    frontage: true,
                     floors: true,
                     toilets: true,
                     square: true,
@@ -271,6 +273,7 @@ export class HousesService {
         const houseUpdateData: any = {
             ...(data.name !== undefined && { name: data.name }),
             ...(data.property_type !== undefined && { property_type: data.property_type }),
+            ...(data.building_name !== undefined && { building_name: this.normalizeOptionalString(data.building_name) }),
             ...(data.address !== undefined && { address: data.address }),
             ...(data.ward !== undefined && { ward: data.ward }),
             ...(data.ward_code !== undefined && { ward_code: normalizedWardCode }),
@@ -281,6 +284,7 @@ export class HousesService {
             }),
             ...(data.price !== undefined && { price: this.normalizeOptionalNumber(data.price) }),
             ...(data.bedrooms !== undefined && { bedrooms: this.normalizeOptionalNumber(data.bedrooms) }),
+            ...(data.frontage !== undefined && { frontage: this.normalizeOptionalNumber(data.frontage) }),
             ...(data.floors !== undefined && { floors: this.normalizeOptionalNumber(data.floors) }),
             ...(data.toilets !== undefined && { toilets: this.normalizeOptionalNumber(data.toilets) }),
             ...(data.square !== undefined && { square: this.normalizeOptionalNumber(data.square) }),
@@ -405,47 +409,51 @@ export class HousesService {
         const shouldCreateRoomDetails = this.isRoomMiniApartment(propertyType);
         const normalizedRoomDetails = this.normalizeRoomDetails(data.roomDetails);
 
+        const houseCreateData: any = {
+            original_id: data.original_id || Math.random().toString(36).substring(7),
+            name: data.name,
+            building_name: this.normalizeOptionalString(data.building_name),
+            address: normalizedAddress,
+            ward: fallbackWard,
+            ward_code: normalizedWardCode,
+            latitude: finalLat,
+            longitude: finalLon,
+            price: this.normalizeOptionalNumber(data.price),
+            bedrooms: this.normalizeOptionalNumber(data.bedrooms),
+            frontage: this.normalizeOptionalNumber(data.frontage),
+            floors: this.normalizeOptionalNumber(data.floors),
+            toilets: this.normalizeOptionalNumber(data.toilets),
+            square: this.normalizeOptionalNumber(data.square),
+            description: data.description,
+            contact_phone: data.contact_phone,
+            is_private_bathroom: data.is_private_bathroom,
+            status: data.status || 'available',
+            city: fallbackCity,
+            city_code: normalizedCityCode,
+            district: normalizedDistrict,
+            property_type: propertyType,
+            payment_method: shouldCreateRoomDetails ? normalizedRoomDetails.paymentMethod : this.normalizeOptionalString(data.payment_method),
+            image_url_1: data.image_url_1 || null,
+            image_url_2: data.image_url_2 || null,
+            image_url_3: data.image_url_3 || null,
+            image_url_4: data.image_url_4 || null,
+            image_url_5: data.image_url_5 || null,
+            image_url_6: data.image_url_6 || null,
+            image_url_7: data.image_url_7 || null,
+            video_url_1: data.video_url_1 || null,
+            video_url_2: data.video_url_2 || null,
+            owner_id: actorId,
+            ...(shouldCreateRoomDetails
+                ? {
+                    roomDetails: {
+                        create: normalizedRoomDetails,
+                    },
+                }
+                : {}),
+        };
+
         const createdHouse = await this.prisma.house.create({
-            data: {
-                original_id: data.original_id || Math.random().toString(36).substring(7),
-                name: data.name,
-                address: normalizedAddress,
-                ward: fallbackWard,
-                ward_code: normalizedWardCode,
-                latitude: finalLat,
-                longitude: finalLon,
-                price: this.normalizeOptionalNumber(data.price),
-                bedrooms: this.normalizeOptionalNumber(data.bedrooms),
-                floors: this.normalizeOptionalNumber(data.floors),
-                toilets: this.normalizeOptionalNumber(data.toilets),
-                square: this.normalizeOptionalNumber(data.square),
-                description: data.description,
-                contact_phone: data.contact_phone,
-                is_private_bathroom: data.is_private_bathroom,
-                status: data.status || 'available',
-                city: fallbackCity,
-                city_code: normalizedCityCode,
-                district: normalizedDistrict,
-                property_type: propertyType,
-                payment_method: shouldCreateRoomDetails ? normalizedRoomDetails.paymentMethod : this.normalizeOptionalString(data.payment_method),
-                image_url_1: data.image_url_1 || null,
-                image_url_2: data.image_url_2 || null,
-                image_url_3: data.image_url_3 || null,
-                image_url_4: data.image_url_4 || null,
-                image_url_5: data.image_url_5 || null,
-                image_url_6: data.image_url_6 || null,
-                image_url_7: data.image_url_7 || null,
-                video_url_1: data.video_url_1 || null,
-                video_url_2: data.video_url_2 || null,
-                owner_id: actorId,
-                ...(shouldCreateRoomDetails
-                    ? {
-                        roomDetails: {
-                            create: normalizedRoomDetails,
-                        },
-                    }
-                    : {}),
-            }
+            data: houseCreateData,
         });
 
         const populatedHouse = await prismaAny.house.findFirst({

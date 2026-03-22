@@ -37,7 +37,7 @@
       "contactNow": "Liên hệ ngay",
       "manageListing": "Quản lý tin đăng",
       "houseDetailsTitle": "Chi tiết căn nhà",
-      "houseDetailsHint": "Thêm các thông tin mà người thuê thường hỏi đầu tiên.",
+      "houseDetailsHint": "Chỉ những thông tin bạn nhập ở đây mới hiển thị trên tin đăng.",
       "roomDetailsTitle": "Chi tiết phòng / mini apartment",
       "notProvided": "Chưa cập nhật"
     },
@@ -53,6 +53,7 @@
     },
     "fields": {
       "bedrooms": "Phòng ngủ",
+      "frontage": "Mặt tiền",
       "floors": "Tầng",
       "toilets": "Nhà vệ sinh",
       "privateBath": "Khép kín",
@@ -101,6 +102,8 @@
       "dragPinHint": "Kéo ghim để chọn đúng vị trí bất động sản",
       "priceLabel": "Giá (VNĐ)",
       "contactPhoneLabel": "Số điện thoại liên hệ",
+      "apartmentCondoNameLabel": "Tên căn hộ / chung cư",
+      "apartmentCondoNamePlaceholder": "Nhập tên căn hộ hoặc chung cư",
       "photosLabel": "Hình ảnh",
       "videosLabel": "Video",
       "addPhotosHint": "Nhấn để thêm ảnh (tối đa 7)",

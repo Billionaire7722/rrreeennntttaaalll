@@ -24,11 +24,13 @@ import api, { resolvedApiBaseUrl } from "@/api/axios";
 import SafeImage from "@/components/SafeImage";
 import { useAuth } from "@/context/useAuth";
 import { useLanguage } from "@/context/LanguageContext";
-import { normalizePropertyType, PROPERTY_TYPE_OPTIONS, toPropertyTypeApiValue } from "@/i18n";
+import { PROPERTY_TYPE_OPTIONS, toPropertyTypeApiValue } from "@/i18n";
 import { geocodeVietnameseAddress } from "@/utils/geocoding";
 import { getBestAvailableLocation } from "@/utils/location";
 import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from "@/utils/safeMedia";
+import PropertyDetailsFields from "@/components/PropertyDetailsFields";
 import RoomMiniApartmentFields, { EMPTY_ROOM_DETAILS } from "@/components/RoomMiniApartmentFields";
+import { getPropertyTypeRules } from "@/utils/propertyTypeRules";
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
@@ -78,12 +80,14 @@ function createInitialFormData() {
   return {
     name: "",
     property_type: "house",
+    building_name: "",
     street_address: "",
     ward: "",
     city: "",
     price: "",
     square: "",
     bedrooms: "",
+    frontage: "",
     floors: "",
     toilets: "",
     description: "",
@@ -126,7 +130,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
   const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_COORDINATES);
   const [mapZoom, setMapZoom] = useState(13);
   const { street_address, ward, city } = formData;
-  const isRoomMiniApartment = normalizePropertyType(formData.property_type) === "roomMiniApartment";
+  const { isApartmentLike, isCommercialSpace, isRoomMiniApartment } = getPropertyTypeRules(formData.property_type);
 
   const resetForm = useCallback(() => {
     imagePreviews.forEach((preview) => {
@@ -238,6 +242,19 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
       return;
     }
 
+    if (name === "property_type") {
+      const rules = getPropertyTypeRules(value);
+      setFormData((previous) => ({
+        ...previous,
+        property_type: value,
+        building_name: rules.isApartmentLike ? previous.building_name : "",
+        bedrooms: rules.isCommercialSpace ? "" : previous.bedrooms,
+        frontage: rules.isCommercialSpace ? previous.frontage : "",
+        floors: rules.isApartmentLike ? "" : previous.floors,
+      }));
+      return;
+    }
+
     setFormData((previous) => ({ ...previous, [name]: value }));
   };
 
@@ -320,23 +337,26 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
       const normalizedStreetAddress = formData.street_address.trim();
       const normalizedWard = formData.ward.trim();
       const normalizedCity = formData.city.trim();
+      const normalizedBuildingName = formData.building_name.trim();
       const fullAddressString = [normalizedStreetAddress, normalizedWard, normalizedCity].filter(Boolean).join(", ");
       const payload: Record<string, unknown> = {
         property_type: toPropertyTypeApiValue(formData.property_type),
+        building_name: isApartmentLike ? normalizedBuildingName || null : null,
         address: normalizedStreetAddress,
         ward: normalizedWard,
         district: normalizedWard,
         city: normalizedCity,
         price: formData.price ? Number(String(formData.price).replace(/\./g, "")) : null,
         square: formData.square ? Number(formData.square) : null,
-        bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
-        floors: formData.floors ? Number(formData.floors) : null,
+        bedrooms: !isCommercialSpace && formData.bedrooms ? Number(formData.bedrooms) : null,
+        frontage: isCommercialSpace && formData.frontage ? Number(formData.frontage) : null,
+        floors: !isApartmentLike && formData.floors ? Number(formData.floors) : null,
         toilets: formData.toilets ? Number(formData.toilets) : null,
         description: formData.description.trim() || null,
         contact_phone: formData.contact_phone.trim() || null,
         latitude: formData.latitude,
         longitude: formData.longitude,
-        name: fullAddressString || formData.street_address || formData.name,
+        name: normalizedBuildingName || fullAddressString || formData.street_address || formData.name,
         ...(isRoomMiniApartment
           ? {
               roomDetails: {
@@ -621,60 +641,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSuccess }: AddProp
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-2xl border border-slate-200 bg-[linear-gradient(135deg,#f8fafc_0%,#eff6ff_100%)] p-4">
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">{t("property.detail.houseDetailsTitle")}</p>
-                  <p className="mt-1 text-xs text-slate-500">{t("property.detail.houseDetailsHint")}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">{t("property.fields.bedrooms")}</label>
-                    <input
-                      type="number"
-                      min="0"
-                      name="bedrooms"
-                      value={formData.bedrooms}
-                      onChange={handleChange}
-                      className="w-full rounded-xl border border-white bg-white/90 px-4 py-2 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-blue-500"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">{t("property.fields.floors")}</label>
-                    <input
-                      type="number"
-                      min="0"
-                      name="floors"
-                      value={formData.floors}
-                      onChange={handleChange}
-                      className="w-full rounded-xl border border-white bg-white/90 px-4 py-2 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-blue-500"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">{t("property.fields.toilets")}</label>
-                    <input
-                      type="number"
-                      min="0"
-                      name="toilets"
-                      value={formData.toilets}
-                      onChange={handleChange}
-                      className="w-full rounded-xl border border-white bg-white/90 px-4 py-2 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-blue-500"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">{t("property.form.contactPhoneLabel")}</label>
-                    <input
-                      name="contact_phone"
-                      value={formData.contact_phone}
-                      onChange={handleChange}
-                      className="w-full rounded-xl border border-white bg-white/90 px-4 py-2 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-blue-500"
-                      placeholder="+84..."
-                    />
-                  </div>
-                </div>
-              </div>
+              <PropertyDetailsFields propertyType={formData.property_type} value={formData} onChange={handleChange} t={t} />
 
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">{t("property.fields.description")}</label>

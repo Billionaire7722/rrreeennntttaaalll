@@ -75,15 +75,7 @@ export class HousesController {
 
     @Get(':id')
     async getHouseById(@Param('id') id: string, @Request() req: any) {
-        const { role, userId } = this.getUserFromRequest(req);
-        const house = await this.housesService.getHouseById(id, undefined);
-        if (house) {
-            const isAdmin = role === Role.SUPER_ADMIN;
-            if (!isAdmin) {
-                delete (house as any).contact_phone;
-            }
-        }
-        return house;
+        return this.housesService.getHouseById(id, undefined);
     }
 
     @Post()

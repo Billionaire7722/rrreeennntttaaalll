@@ -61,7 +61,8 @@ CREATE TABLE houses (
     id                  UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
     original_id         TEXT        NOT NULL UNIQUE,  -- stable external/seed ID
     name                TEXT        NOT NULL,
-    property_type       TEXT,       -- house | apartment | condominium | commercial space | hotel
+    property_type       TEXT,       -- house | apartment | condominium | commercial space | hotel | room/mini apartment
+    building_name       TEXT,
     address             TEXT        NOT NULL,
     district            TEXT        NOT NULL,
     city                TEXT        NOT NULL,
@@ -70,6 +71,7 @@ CREATE TABLE houses (
     price               INTEGER,    -- VND per month
     payment_method      TEXT,
     bedrooms            INTEGER,
+    frontage            DOUBLE PRECISION,  -- frontage in m²
     square              DOUBLE PRECISION,  -- area in m²
     -- Up to 7 Cloudinary image URLs
     image_url_1         TEXT,
@@ -99,7 +101,7 @@ CREATE TABLE houses (
 
 COMMENT ON TABLE  houses                 IS 'Property listings available for rent';
 COMMENT ON COLUMN houses.original_id     IS 'Stable external identifier used during seeding or import';
-COMMENT ON COLUMN houses.property_type   IS 'house | apartment | condominium | commercial space | hotel';
+COMMENT ON COLUMN houses.property_type   IS 'house | apartment | condominium | commercial space | hotel | room/mini apartment';
 COMMENT ON COLUMN houses.price           IS 'Monthly rent in Vietnamese Dong (VND)';
 COMMENT ON COLUMN houses.owner_id        IS 'User who created/owns this listing; NULL if owner was deleted';
 COMMENT ON COLUMN houses.deleted_at      IS 'Soft-delete timestamp; NULL means the listing is active';

@@ -18,6 +18,7 @@ model House {
   original_id         String   @unique
   name                String
   property_type       String?
+  building_name       String?
   address             String
   ward                String?
   ward_code           String?
@@ -29,6 +30,7 @@ model House {
   price               Int?
   payment_method      String?
   bedrooms            Int?
+  frontage            Float?
   floors              Int?
   toilets             Int?
   square              Float?

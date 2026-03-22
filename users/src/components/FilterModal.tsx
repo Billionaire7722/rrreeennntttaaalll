@@ -85,8 +85,8 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-[calc(env(safe-area-inset-top)+0.75rem)] backdrop-blur-sm transition-all duration-300 sm:items-center sm:px-4 sm:py-4">
-      <div className="mt-auto flex w-full max-w-lg min-h-0 max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-[1.75rem] bg-white shadow-2xl animate-in slide-in-from-bottom-5 sm:mt-0 sm:max-h-[min(720px,calc(100dvh-2rem))]">
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-[calc(env(safe-area-inset-top)+0.75rem)] backdrop-blur-sm transition-all duration-300 sm:px-4 sm:pb-4 sm:pt-6">
+      <div className="mt-auto w-full max-w-md overflow-hidden rounded-[1.5rem] bg-white shadow-2xl animate-in slide-in-from-bottom-4">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
           <h2 className="text-lg font-bold text-gray-900">{t("property.filters.title")}</h2>
           <button onClick={onClose} className="rounded-full p-2 transition hover:bg-gray-100">
@@ -94,7 +94,7 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
           </button>
         </div>
 
-        <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+        <div className="max-h-[min(62dvh,30rem)] space-y-6 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-800">{t("property.filters.priceRange")}</h3>
             <div className="flex items-center gap-3">
@@ -188,7 +188,7 @@ export default function FilterModal({ visible, onClose, filters, applyFilters }:
 
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-800">{t("property.fields.area")}</h3>
-            <div className="flex max-w-[220px] items-center gap-3">
+            <div className="flex items-center gap-3">
               <input
                 type="number"
                 placeholder={t("common.from")}

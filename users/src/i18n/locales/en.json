@@ -39,7 +39,7 @@
       "roomDetailsTitle": "Room / Mini Apartment Details",
       "notProvided": "Not provided",
       "houseDetailsTitle": "House Details",
-      "houseDetailsHint": "Add the key counts renters usually ask for first."
+      "houseDetailsHint": "Only the details you add here will appear on the listing."
     },
     "status": {
       "available": "Available",
@@ -53,6 +53,7 @@
     },
     "fields": {
       "bedrooms": "Bedrooms",
+      "frontage": "Frontage",
       "privateBath": "Private",
       "sharedBath": "Shared",
       "bathrooms": "Bathrooms",
@@ -101,6 +102,8 @@
       "dragPinHint": "Drag the pin to the exact property location",
       "priceLabel": "Price (VND)",
       "contactPhoneLabel": "Contact Phone",
+      "apartmentCondoNameLabel": "Apartment / Condominium Name",
+      "apartmentCondoNamePlaceholder": "Enter the apartment or condominium name",
       "photosLabel": "Photos",
       "videosLabel": "Videos",
       "addPhotosHint": "Click to add photos (max 7)",

@@ -1,0 +1,3 @@
+ALTER TABLE "House"
+ADD COLUMN "building_name" TEXT,
+ADD COLUMN "frontage" DOUBLE PRECISION;

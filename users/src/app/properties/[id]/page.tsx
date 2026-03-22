@@ -5,12 +5,13 @@ export const dynamic = "force-dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, MapPin, BedDouble, Bath, Building2, Share2, Heart, X, Square } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, BedDouble, Bath, Building2, Share2, Heart, X, Square, Phone } from "lucide-react";
 import api from "@/api/axios";
 import SafeImage from "@/components/SafeImage";
 import { useAuth } from "@/context/useAuth";
 import { useLanguage } from "@/context/LanguageContext";
-import { getPropertyStatusTranslationKey, getPropertyTypeTranslationKey, normalizePropertyType } from "@/i18n";
+import { getPropertyStatusTranslationKey, getPropertyTypeTranslationKey } from "@/i18n";
+import { getPropertyTypeRules } from "@/utils/propertyTypeRules";
 
 function getInitials(name: string): string {
   return (name || "")
@@ -42,6 +43,7 @@ interface PropertyDetailsData {
   image_url?: string;
   status?: string;
   property_type?: string;
+  building_name?: string;
   name?: string;
   title?: string;
   address?: string;
@@ -51,6 +53,7 @@ interface PropertyDetailsData {
   price?: number;
   payment_method?: string;
   bedrooms?: number;
+  frontage?: number;
   floors?: number;
   toilets?: number;
   bathrooms?: number;
@@ -58,6 +61,7 @@ interface PropertyDetailsData {
   hasPrivateBathroom?: boolean;
   square?: number;
   description?: string;
+  contact_phone?: string;
   roomDetails?: {
     electricityPrice?: number | null;
     waterPrice?: number | null;
@@ -65,6 +69,22 @@ interface PropertyDetailsData {
     otherFees?: string | null;
   } | null;
 }
+
+type DetailTag = {
+  key: string;
+  label: string;
+  value: string;
+  icon: typeof Building2;
+  href?: string;
+};
+
+type DetailMetric = {
+  key: string;
+  icon: typeof BedDouble;
+  label: string;
+  value: string;
+  accent: string;
+};
 
 export default function PropertyDetailsPage() {
   const params = useParams();
@@ -225,44 +245,82 @@ export default function PropertyDetailsPage() {
       : property.status?.toLowerCase() === "pending"
         ? "bg-amber-500"
         : "bg-red-500";
-  const title = propertyTypeKey ? t(propertyTypeKey) : property.property_type || property.name || property.title;
+  const propertyTypeLabel = propertyTypeKey ? t(propertyTypeKey) : property.property_type || property.name || property.title;
+  const title = property.building_name || propertyTypeLabel;
   const address = [property.address, property.ward || property.district, property.city].filter(Boolean).join(", ");
   const postedByAdmins = Array.isArray(property.postedByAdmins) ? property.postedByAdmins : [];
   const owner = property.owner || postedByAdmins[0];
   const formattedPrice = `${formatNumber(property.price || 0)} VND`;
-  const isRoomMiniApartment = normalizePropertyType(property.property_type) === "roomMiniApartment";
+  const { isApartmentLike, isCommercialSpace, isRoomMiniApartment } = getPropertyTypeRules(property.property_type);
   const roomDetails = property.roomDetails;
   const paymentMethod = roomDetails?.paymentMethod || property.payment_method || t("property.detail.notProvided");
-  const metrics = [
-    {
-      key: "bedrooms",
-      icon: BedDouble,
-      label: t("property.fields.bedrooms"),
-      value: property.bedrooms ?? 0,
-      accent: "from-sky-500/15 to-cyan-500/10 text-sky-700",
-    },
-    {
-      key: "floors",
-      icon: Building2,
-      label: t("property.fields.floors"),
-      value: property.floors ?? 0,
-      accent: "from-violet-500/15 to-fuchsia-500/10 text-violet-700",
-    },
-    {
-      key: "toilets",
-      icon: Bath,
-      label: t("property.fields.toilets"),
-      value: property.toilets ?? 0,
-      accent: "from-emerald-500/15 to-teal-500/10 text-emerald-700",
-    },
-    {
-      key: "area",
-      icon: Square,
-      label: t("property.fields.area"),
-      value: `${property.square || 0} m²`,
-      accent: "from-amber-500/15 to-orange-500/10 text-amber-700",
-    },
-  ];
+  const detailTags: DetailTag[] = [
+    property.building_name
+      ? {
+          key: "building_name",
+          label: t("property.form.apartmentCondoNameLabel"),
+          value: property.building_name,
+          icon: Building2,
+        }
+      : null,
+    property.contact_phone
+      ? {
+          key: "contact_phone",
+          label: t("property.form.contactPhoneLabel"),
+          value: property.contact_phone,
+          icon: Phone,
+          href: `tel:${property.contact_phone}`,
+        }
+      : null,
+  ].filter(Boolean) as DetailTag[];
+  const detailMetrics: DetailMetric[] = [
+    !isCommercialSpace && property.bedrooms != null
+      ? {
+          key: "bedrooms",
+          icon: BedDouble,
+          label: t("property.fields.bedrooms"),
+          value: String(property.bedrooms),
+          accent: "from-sky-500/15 to-cyan-500/10 text-sky-700",
+        }
+      : null,
+    isCommercialSpace && property.frontage != null
+      ? {
+          key: "frontage",
+          icon: Building2,
+          label: t("property.fields.frontage"),
+          value: `${formatNumber(property.frontage)} m²`,
+          accent: "from-rose-500/15 to-orange-500/10 text-rose-700",
+        }
+      : null,
+    !isApartmentLike && property.floors != null
+      ? {
+          key: "floors",
+          icon: Building2,
+          label: t("property.fields.floors"),
+          value: String(property.floors),
+          accent: "from-violet-500/15 to-fuchsia-500/10 text-violet-700",
+        }
+      : null,
+    property.toilets != null
+      ? {
+          key: "toilets",
+          icon: Bath,
+          label: t("property.fields.toilets"),
+          value: String(property.toilets),
+          accent: "from-emerald-500/15 to-teal-500/10 text-emerald-700",
+        }
+      : null,
+    property.square != null
+      ? {
+          key: "area",
+          icon: Square,
+          label: t("property.fields.area"),
+          value: `${formatNumber(property.square)} m²`,
+          accent: "from-amber-500/15 to-orange-500/10 text-amber-700",
+        }
+      : null,
+  ].filter(Boolean) as DetailMetric[];
+  const hasHouseDetails = detailTags.length > 0 || detailMetrics.length > 0;
 
   const handleContactNow = () => {
     const query = new URLSearchParams();
@@ -382,7 +440,12 @@ export default function PropertyDetailsPage() {
           <span className="ml-1 text-sm font-medium text-gray-500">{t("property.units.monthAbbr")}</span>
         </div>
 
-        <h1 className="mb-3 text-[22px] font-bold leading-8 text-gray-900">{title}</h1>
+        <h1 className="mb-1 text-[22px] font-bold leading-8 text-gray-900">{title}</h1>
+        {propertyTypeLabel && title !== propertyTypeLabel ? (
+          <p className="mb-3 text-sm font-medium uppercase tracking-[0.18em] text-gray-500">{propertyTypeLabel}</p>
+        ) : (
+          <div className="mb-3" />
+        )}
 
         <div className="mb-6 flex items-start gap-1.5 text-gray-500">
           <MapPin size={16} className="mt-1 flex-shrink-0" />
@@ -412,26 +475,66 @@ export default function PropertyDetailsPage() {
           )}
         </div>
 
-        <div className="mb-6 h-px w-full bg-gray-200" />
-        <div className="mb-6 grid grid-cols-2 gap-3">
-          {metrics.map((metric) => {
-            const Icon = metric.icon;
-            return (
-              <div key={metric.key} className="rounded-3xl border border-slate-100 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
-                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${metric.accent}`}>
-                  <Icon size={20} />
-                </div>
-                <p className="mt-4 text-2xl font-black tracking-tight text-slate-900">{metric.value}</p>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{metric.label}</p>
-              </div>
-            );
-          })}
-        </div>
+        {hasHouseDetails ? (
+          <>
+            <div className="mb-6 h-px w-full bg-gray-200" />
 
-        <div className="mb-6 h-px w-full bg-gray-200" />
+            <div className="mb-6">
+              <h2 className="mb-3 text-lg font-bold text-gray-900">{t("property.detail.houseDetailsTitle")}</h2>
+
+              {detailTags.length > 0 ? (
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {detailTags.map((tag) => {
+                    const Icon = tag.icon;
+                    const content = (
+                      <>
+                        <Icon size={14} className="text-slate-500" />
+                        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{tag.label}</span>
+                        <span className="text-sm font-semibold text-slate-900">{tag.value}</span>
+                      </>
+                    );
+
+                    return tag.href ? (
+                      <a
+                        key={tag.key}
+                        href={tag.href}
+                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 transition-colors hover:border-blue-200 hover:bg-blue-50"
+                      >
+                        {content}
+                      </a>
+                    ) : (
+                      <div key={tag.key} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+                        {content}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {detailMetrics.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {detailMetrics.map((metric) => {
+                    const Icon = metric.icon;
+                    return (
+                      <div key={metric.key} className="rounded-3xl border border-slate-100 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
+                        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${metric.accent}`}>
+                          <Icon size={20} />
+                        </div>
+                        <p className="mt-4 text-2xl font-black tracking-tight text-slate-900">{metric.value}</p>
+                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{metric.label}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          </>
+        ) : null}
 
         {isRoomMiniApartment ? (
           <>
+            <div className="mb-6 h-px w-full bg-gray-200" />
+
             <div className="mb-6">
               <h2 className="mb-3 text-lg font-bold text-gray-900">{t("property.detail.roomDetailsTitle")}</h2>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -459,8 +562,6 @@ export default function PropertyDetailsPage() {
                 </div>
               </div>
             </div>
-
-            <div className="mb-6 h-px w-full bg-gray-200" />
           </>
         ) : null}
 
