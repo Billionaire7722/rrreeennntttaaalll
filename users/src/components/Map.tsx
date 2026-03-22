@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useRouter } from "next/navigation";
 import { Bed, Square, MapPin, Locate } from "lucide-react";
 import SafeImage from "@/components/SafeImage";
+import MapLibreBasemap from "@/components/MapLibreBasemap";
 import { useAuth } from "@/context/useAuth";
 import { useLanguage } from "@/context/LanguageContext";
 import { getBestAvailableLocation } from "@/utils/location";
@@ -145,10 +146,7 @@ export default function InteractiveMap({
         className="z-0 h-full w-full rounded-xl shadow-sm"
         ref={setMapInstance}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}{r}.png"
-        />
+        <MapLibreBasemap />
 
         {userLocation ? <Marker position={userLocation} icon={userIcon} zIndexOffset={1000} /> : null}
 

@@ -18,6 +18,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useMap } from "react-leaflet";
 import api, { resolvedApiBaseUrl } from "@/api/axios";
+import MapLibreBasemap from "@/components/MapLibreBasemap";
 import PropertyDetailsFields from "@/components/PropertyDetailsFields";
 import SafeImage from "@/components/SafeImage";
 import RoomMiniApartmentFields, { EMPTY_ROOM_DETAILS } from "@/components/RoomMiniApartmentFields";
@@ -29,7 +30,6 @@ import { SAFE_IMAGE_ACCEPT, isSafeImageFile } from "@/utils/safeMedia";
 import { getPropertyTypeRules } from "@/utils/propertyTypeRules";
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
 
 const MapViewUpdater = ({ center, zoom }: { center: [number, number]; zoom: number }) => {
@@ -567,10 +567,7 @@ export default function EditPropertyModal({ house, onClose, onSuccess }: EditPro
                 <div className="z-10 h-[200px] w-full overflow-hidden rounded-xl border border-gray-200">
                   {typeof window !== "undefined" ? (
                     <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: "100%", width: "100%" }}>
-                      <TileLayer
-                        url="https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}{r}.png"
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                      />
+                      <MapLibreBasemap />
                       <Marker
                         draggable
                         eventHandlers={{ dragend: handleDragEnd }}
