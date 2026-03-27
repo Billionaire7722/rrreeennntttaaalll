@@ -1,7 +1,9 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, ZoomIn } from "lucide-react";
+import { getSafeImageUrl } from "@/utils/safeMedia";
 
 const CROP_SIZE = 280;
 const OUTPUT_SIZE = 512;
@@ -40,16 +42,27 @@ export default function AvatarCropModal({
   const [offset, setOffset] = useState<Offset>({ x: 0, y: 0 });
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [isPreparing, setIsPreparing] = useState(false);
+  const safePreviewUrl = useMemo(
+    () => getSafeImageUrl(previewUrl, { allowBlob: true, fallback: "" }),
+    [previewUrl]
+  );
 
   useEffect(() => {
+    if (!safePreviewUrl) {
+      setNaturalSize({ width: 0, height: 0 });
+      setZoom(1);
+      setOffset({ x: 0, y: 0 });
+      return;
+    }
+
     const image = new Image();
     image.onload = () => {
       setNaturalSize({ width: image.naturalWidth, height: image.naturalHeight });
       setZoom(1);
       setOffset({ x: 0, y: 0 });
     };
-    image.src = previewUrl;
-  }, [previewUrl]);
+    image.src = safePreviewUrl;
+  }, [safePreviewUrl]);
 
   const baseScale = useMemo(() => {
     if (!naturalSize.width || !naturalSize.height) return 1;
@@ -58,7 +71,7 @@ export default function AvatarCropModal({
 
   const effectiveScale = baseScale * zoom;
 
-  const clampOffset = (value: Offset, nextScale = effectiveScale) => {
+  const clampOffset = useCallback((value: Offset, nextScale = effectiveScale) => {
     if (!naturalSize.width || !naturalSize.height) {
       return { x: 0, y: 0 };
     }
@@ -72,11 +85,11 @@ export default function AvatarCropModal({
       x: Math.min(maxX, Math.max(-maxX, value.x)),
       y: Math.min(maxY, Math.max(-maxY, value.y)),
     };
-  };
+  }, [effectiveScale, naturalSize.height, naturalSize.width]);
 
   useEffect(() => {
     setOffset((current) => clampOffset(current));
-  }, [effectiveScale, naturalSize.height, naturalSize.width]);
+  }, [clampOffset]);
 
   const renderedWidth = naturalSize.width * effectiveScale;
   const renderedHeight = naturalSize.height * effectiveScale;
@@ -207,12 +220,12 @@ export default function AvatarCropModal({
           >
             {naturalSize.width ? (
               <>
-                <img
-                  ref={imageRef}
-                  src={previewUrl}
-                  alt={t("profile.editProfile")}
-                  className="absolute max-w-none select-none"
-                  draggable={false}
+                  <img
+                    ref={imageRef}
+                    src={safePreviewUrl}
+                    alt={t("profile.editProfile")}
+                    className="absolute max-w-none select-none"
+                    draggable={false}
                   style={{
                     width: renderedWidth,
                     height: renderedHeight,

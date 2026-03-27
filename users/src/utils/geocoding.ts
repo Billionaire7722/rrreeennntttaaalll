@@ -43,12 +43,14 @@ type BestMatch = {
 type AddressTokens = {
   city: string;
   ward: string;
-  street: string;
-  streetCore: string;
+  streetVariants: string[];
+  streetCoreVariants: string[];
   houseNumber: string;
 };
 
 const VIETNAM_COUNTRY = "Vietnam";
+const HOUSE_LABEL_PREFIXES = new Set(["so", "nha"]);
+const ALLEY_PREFIXES = new Set(["hem", "ngo", "ngach", "lane", "alley"]);
 const DEFAULT_HEADERS = {
   "User-Agent": "RentalApp/1.0",
   "Accept-Language": "vi,en",
@@ -75,67 +77,111 @@ function dedupe(items: string[]) {
 }
 
 function stripStreetTypeWords(value: string) {
-  return value
+  return removeVietnameseTones(value)
     .replace(/\b(?:duong|street|st|road|rd|avenue|ave|pho)\b/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function stripLeadingAddressNoise(value: string) {
-  let current = value.trim();
-  const patterns = [
-    /^(?:so\s*nha|so|số\s*nhà)\s*[\dA-Za-z/-]+\s*,?\s*/i,
-    /^(?:hem|hẻm|ngo|ngõ|ngach|ngách|lane|alley)\s*[\dA-Za-z/-]+\s*,?\s*/i,
-    /^[\dA-Za-z/-]+\s*,\s*/i,
-  ];
-
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const pattern of patterns) {
-      const next = current.replace(pattern, "").trim();
-      if (next !== current) {
-        current = next;
-        changed = true;
-      }
-    }
-  }
-
-  return current;
+function looksLikeAddressUnitToken(value: string) {
+  return /^[0-9A-Za-z]+(?:[/-][0-9A-Za-z]+)*$/.test(value.trim());
 }
 
 function extractHouseNumber(value: string) {
-  const match = value.trim().match(/^(?:so\s*nha|số\s*nhà)?\s*([\dA-Za-z/-]+)/i);
-  return match?.[1] ? normalizeForMatch(match[1]) : "";
+  const parts = value.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "";
+
+  const normalizedParts = parts.map((part) => normalizeForMatch(part));
+  let index = 0;
+
+  if (normalizedParts[index] === "so" && normalizedParts[index + 1] === "nha") {
+    index += 2;
+  } else if (HOUSE_LABEL_PREFIXES.has(normalizedParts[index])) {
+    index += 1;
+  }
+
+  if (ALLEY_PREFIXES.has(normalizedParts[index] || "")) {
+    index += 1;
+  }
+
+  const candidate = parts[index];
+  return candidate && looksLikeAddressUnitToken(candidate) ? normalizeForMatch(candidate) : "";
+}
+
+function buildStreetVariants(streetAddress: string) {
+  const trimmedStreet = streetAddress.trim().replace(/\s+/g, " ");
+  if (!trimmedStreet) return [] as string[];
+
+  const variants = [trimmedStreet];
+  const commaSeparatedParts = trimmedStreet.split(",").map((part) => part.trim()).filter(Boolean);
+  if (commaSeparatedParts.length > 1) {
+    variants.push(commaSeparatedParts.slice(1).join(" "));
+  }
+
+  const parts = trimmedStreet.split(/\s+/).filter(Boolean);
+  const normalizedParts = parts.map((part) => normalizeForMatch(part));
+  const pushVariant = (startIndex: number) => {
+    if (startIndex <= 0 || startIndex >= parts.length) return;
+    variants.push(parts.slice(startIndex).join(" "));
+  };
+
+  if (normalizedParts[0] === "so" && normalizedParts[1] === "nha") {
+    pushVariant(2);
+    if (looksLikeAddressUnitToken(parts[2] || "")) {
+      pushVariant(3);
+    }
+  } else if (HOUSE_LABEL_PREFIXES.has(normalizedParts[0])) {
+    pushVariant(1);
+    if (looksLikeAddressUnitToken(parts[1] || "")) {
+      pushVariant(2);
+    }
+  }
+
+  if (ALLEY_PREFIXES.has(normalizedParts[0])) {
+    pushVariant(1);
+    if (looksLikeAddressUnitToken(parts[1] || "")) {
+      pushVariant(2);
+    }
+  }
+
+  if (looksLikeAddressUnitToken(parts[0]) && parts.length > 1) {
+    pushVariant(1);
+  }
+
+  return dedupe(
+    variants.flatMap((variant) => {
+      const compactVariant = variant.trim().replace(/\s+/g, " ");
+      const strippedStreetType = stripStreetTypeWords(compactVariant);
+      return [compactVariant, strippedStreetType];
+    })
+  );
 }
 
 function buildAddressTokens(streetAddress: string, ward: string, city: string): AddressTokens {
-  const cleanedStreet = stripLeadingAddressNoise(streetAddress);
-  const normalizedStreet = normalizeForMatch(cleanedStreet);
-  const streetCore = normalizeForMatch(stripStreetTypeWords(cleanedStreet)) || normalizedStreet;
+  const streetVariants = buildStreetVariants(streetAddress);
+  const normalizedStreetVariants = dedupe(streetVariants.map((variant) => normalizeForMatch(variant)));
+  const normalizedStreetCoreVariants = dedupe(
+    streetVariants.map((variant) => normalizeForMatch(stripStreetTypeWords(variant)))
+  );
 
   return {
     city: normalizeForMatch(city),
     ward: normalizeForMatch(ward),
-    street: normalizedStreet,
-    streetCore,
+    streetVariants: normalizedStreetVariants,
+    streetCoreVariants: normalizedStreetCoreVariants.length ? normalizedStreetCoreVariants : normalizedStreetVariants,
     houseNumber: extractHouseNumber(streetAddress),
   };
 }
 
 function buildQueries(streetAddress: string, ward: string, city: string) {
-  const trimmedStreet = streetAddress.trim();
-  const strippedStreet = stripLeadingAddressNoise(trimmedStreet);
-  const streetCore = stripStreetTypeWords(strippedStreet);
+  const streetVariants = buildStreetVariants(streetAddress);
   const area = [ward.trim(), city.trim(), VIETNAM_COUNTRY].filter(Boolean).join(", ");
 
   return dedupe([
-    [trimmedStreet, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [strippedStreet, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [streetCore, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [trimmedStreet, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [strippedStreet, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
-    [streetCore, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
+    ...streetVariants.flatMap((streetVariant) => [
+      [streetVariant, ward, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
+      [streetVariant, city, VIETNAM_COUNTRY].filter(Boolean).join(", "),
+    ]),
     area,
   ]);
 }
@@ -197,8 +243,8 @@ function scoreCandidate(candidate: NominatimResult, tokens: AddressTokens, ancho
       .join(" ")
   );
 
-  const streetMatched = Boolean(tokens.streetCore && addressText.includes(tokens.streetCore));
-  const looseStreetMatched = Boolean(tokens.street && addressText.includes(tokens.street));
+  const streetMatched = tokens.streetCoreVariants.some((streetVariant) => streetVariant && addressText.includes(streetVariant));
+  const looseStreetMatched = tokens.streetVariants.some((streetVariant) => streetVariant && addressText.includes(streetVariant));
   let score = 0;
 
   if (tokens.city && addressText.includes(tokens.city)) score += 35;
@@ -264,6 +310,7 @@ export async function geocodeVietnameseAddress(input: { streetAddress?: string; 
   const anchor = await resolveAnchor(ward, city);
   const tokens = buildAddressTokens(streetAddress, ward, city);
   const queries = buildQueries(streetAddress, ward, city);
+  const hasStreetTokens = tokens.streetCoreVariants.length > 0 || tokens.streetVariants.length > 0;
 
   let bestMatch: BestMatch | null = null;
 
@@ -291,14 +338,14 @@ export async function geocodeVietnameseAddress(input: { streetAddress?: string; 
     }
 
     const currentBest = bestMatch;
-    if (currentBest && currentBest.score >= 70 && (currentBest.streetMatched || !tokens.streetCore)) {
+    if (currentBest && currentBest.score >= 70 && (currentBest.streetMatched || !hasStreetTokens)) {
       break;
     }
   }
 
   const finalBestMatch = bestMatch;
 
-  if (finalBestMatch && (!tokens.streetCore || finalBestMatch.streetMatched || finalBestMatch.score >= 65)) {
+  if (finalBestMatch && (!hasStreetTokens || finalBestMatch.streetMatched || finalBestMatch.score >= 65)) {
     return {
       lat: finalBestMatch.lat,
       lon: finalBestMatch.lon,

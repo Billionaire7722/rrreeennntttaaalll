@@ -388,6 +388,12 @@ function camelCase(value) {
   return value.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
+const UNSAFE_OBJECT_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+function isUnsafeObjectKey(key) {
+  return typeof key === "string" && UNSAFE_OBJECT_KEYS.has(key);
+}
+
 function setDeep(target, pathValue, value) {
   const parts = pathValue.split(".");
   let cursor = target;
@@ -396,13 +402,16 @@ function setDeep(target, pathValue, value) {
     const isLast = index === parts.length - 1;
     const isArrayIndex = /^\d+$/.test(part);
     const key = isArrayIndex ? Number(part) : part;
+    if (isUnsafeObjectKey(key)) {
+      throw new Error(`Unsafe translation path segment: ${part}`);
+    }
     if (isLast) {
       cursor[key] = value;
       return;
     }
     const nextPart = parts[index + 1];
     const nextIsArrayIndex = /^\d+$/.test(nextPart);
-    if (cursor[key] == null) cursor[key] = nextIsArrayIndex ? [] : {};
+    if (cursor[key] == null) cursor[key] = nextIsArrayIndex ? [] : Object.create(null);
     cursor = cursor[key];
   }
 }
@@ -414,8 +423,11 @@ function mergeDeep(target, source) {
     return source.map((item, index) => mergeDeep(baseArray[index], item));
   }
   if (typeof source !== "object") return source;
-  const output = Array.isArray(target) ? [...target] : { ...(target || {}) };
-  for (const [key, value] of Object.entries(source)) output[key] = mergeDeep(output[key], value);
+  const output = Array.isArray(target) ? [...target] : Object.assign(Object.create(null), target || {});
+  for (const [key, value] of Object.entries(source)) {
+    if (isUnsafeObjectKey(key)) continue;
+    output[key] = mergeDeep(output[key], value);
+  }
   return output;
 }
 
@@ -468,7 +480,7 @@ function mapLegacyKeyToPath(key) {
 }
 
 function buildLocalePayload(legacyLocaleMessages) {
-  const output = {};
+  const output = Object.create(null);
   for (const [legacyKey, translatedValue] of Object.entries(legacyLocaleMessages)) {
     const newPath = mapLegacyKeyToPath(legacyKey);
     if (!newPath) continue;
@@ -479,8 +491,8 @@ function buildLocalePayload(legacyLocaleMessages) {
 
 function main() {
   const legacyDictionaries = extractLegacyDictionaries();
-  const aliases = {};
-  const builtLocales = {};
+  const aliases = Object.create(null);
+  const builtLocales = Object.create(null);
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
   for (const [legacyLocale, translatedMessages] of Object.entries(legacyDictionaries)) {
