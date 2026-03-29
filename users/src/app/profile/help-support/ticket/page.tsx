@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Send, AlertCircle, CheckCircle2, Flag, MessageSquare, Subtitles } from "lucide-react";
+import { ChevronLeft, Send, AlertCircle, CheckCircle2, MessageSquare, Subtitles } from "lucide-react";
 import api from "@/api/axios";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -11,7 +11,6 @@ export default function SupportTicketPage() {
   const router = useRouter();
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [priority, setPriority] = useState("MEDIUM");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
 
@@ -21,11 +20,10 @@ export default function SupportTicketPage() {
     setStatus("idle");
 
     try {
-      await api.post("/support/tickets", { subject, message, priority });
+      await api.post("/support/tickets", { subject, message });
       setStatus("success");
       setSubject("");
       setMessage("");
-      setPriority("MEDIUM");
       setTimeout(() => router.push("/profile/help-support"), 3000);
     } catch (error) {
       console.error("Failed to submit ticket:", error);
@@ -90,33 +88,6 @@ export default function SupportTicketPage() {
                     placeholder={t("help.ticket.subjectPlaceholder")}
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-6 py-4 font-medium text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                   />
-                </div>
-
-                <div className="space-y-3">
-                  <label className="ml-1 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-slate-900">
-                    <Flag className="h-4 w-4 text-slate-400" />
-                    {t("help.ticket.priorityLabel")}
-                  </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { id: "LOW", label: t("help.ticket.priorities.low") },
-                      { id: "MEDIUM", label: t("help.ticket.priorities.medium") },
-                      { id: "HIGH", label: t("help.ticket.priorities.high") },
-                    ].map((option) => (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => setPriority(option.id)}
-                        className={`h-12 rounded-xl border-2 text-sm font-bold transition-all ${
-                          priority === option.id
-                            ? "border-slate-900 bg-slate-900 text-white shadow-lg"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 <div className="space-y-3">
