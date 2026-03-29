@@ -1114,10 +1114,12 @@ function SectionLoading() {
 
 function EmptyState({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="rounded-[1.75rem] border border-dashed border-emerald-200 bg-[var(--theme-surface-2)] p-8 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white">{icon}</div>
-      <h3 className="mt-5 text-lg font-bold text-[var(--theme-text)]">{title}</h3>
-      <p className="mt-2 text-sm text-[var(--theme-text-muted)]">{description}</p>
+    <div className="rounded-[1.75rem] border border-dashed border-[var(--color-teal-300)] bg-[var(--theme-surface)] p-8 text-center shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--color-teal-200)] bg-[var(--theme-surface-2)] text-[var(--color-teal-500)] shadow-sm">
+        {icon}
+      </div>
+      <h3 className="mt-5 text-lg font-bold text-[var(--color-teal-500)]">{title}</h3>
+      <p className="mt-2 text-sm text-[var(--color-teal-500)] opacity-80">{description}</p>
     </div>
   );
 }

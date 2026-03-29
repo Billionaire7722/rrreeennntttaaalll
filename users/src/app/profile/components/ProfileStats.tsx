@@ -40,15 +40,6 @@ export default function ProfileStats({
 }: ProfileStatsProps) {
   return (
     <section className="space-y-3">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--theme-text-muted)]">
-          {t("navigation.profile")}
-        </p>
-        <h2 className="mt-1 text-lg font-bold text-[var(--theme-text)]">
-          {t("profile.summaryTitle")}
-        </h2>
-      </div>
-
       <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
         <StatCard
           label={t("navigation.saved")}
