@@ -40,7 +40,6 @@ import AvatarCropModal from "./components/AvatarCropModal";
 import EditProfileForm from "./components/EditProfileForm";
 import ProfileAbout from "./components/ProfileAbout";
 import ProfileHeader from "./components/ProfileHeader";
-import ProfileStats from "./components/ProfileStats";
 
 type ProfileTabKey = "favorites" | "my-properties" | "messages";
 
@@ -686,10 +685,7 @@ export default function ProfilePage() {
             {isEditingProfile ? (
               <EditProfileForm firstName={editFirstName} lastName={editLastName} bio={editBio} setFirstName={setEditFirstName} setLastName={setEditLastName} setBio={setEditBio} onSave={handleSaveSettings} onCancel={() => setIsEditingProfile(false)} isSaving={savingSettings} message={settingsMessage} t={t} />
             ) : (
-              <>
-                <ProfileAbout bio={editBio} t={t} />
-                <ProfileStats favoritesCount={favorites.length} listingsCount={myHouses.length} chatsCount={conversations.length} t={t} />
-              </>
+              <ProfileAbout bio={editBio} t={t} />
             )}
           </div>
 
